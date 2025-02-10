@@ -23,6 +23,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/accessmanager.php');
+require_once($CFG->dirroot . '/mod/assignquiz/accessrule/seb/rule.php');
+
 class aiquiz_access_manager extends quiz_access_manager
 {
     public static function load_quiz_and_settings($quizid) {
@@ -68,5 +70,16 @@ class aiquiz_access_manager extends quiz_access_manager
         }
 
         return array("SELECT $allfields FROM $alljoins WHERE assignquiz.id = :quizid", $allparams);
+    }
+
+    public static function save_settings($quiz)
+    {
+        $rules = self::get_rule_classes();
+        $rules['quizaccess_seb'] = $rules['assignquizaccess_seb'];
+        unset($rules["quizaccess_seb"]);
+        $rules['assignquizaccess_seb'] = 'assignquizaccess_seb';
+        foreach ($rules as $rule) {
+            $rule::save_settings($quiz);
+        }
     }
 }

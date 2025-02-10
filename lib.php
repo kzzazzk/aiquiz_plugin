@@ -77,10 +77,71 @@ function assignquiz_add_instance($moduleinstance, $mform)
 {
     global $DB, $USER;
     $moduleinstance->timemodified = time();
+
+    quiz_process_options($moduleinstance);
     $assignquizid = $DB->insert_record('assignquiz', $moduleinstance);
-    assignquiz_grade_item_update($moduleinstance);
-    error_log("ASSIGNQUIZ = ".print_r($moduleinstance, true));
+    $moduleinstance->id = $assignquizid;
+    assignquiz_after_add_or_update($moduleinstance);
     return $assignquizid;
+}
+
+
+/**
+ * Updates an instance of the mod_assignquiz in the database.
+ *
+ * Given an object containing all the necessary data (defined in mod_form.php),
+ * this function will update an existing instance with new data.
+ *
+ * @param object $moduleinstance An object from the form in mod_form.php.
+ * @param mod_assignquiz_mod_form $mform The form.
+ * @return bool True if successful, false otherwise.
+ */
+function assignquiz_update_instance($moduleinstance, $mform = null)
+{
+
+    global $DB;
+    $moduleinstance->timemodified = time();
+    $moduleinstance->id = $moduleinstance->instance;
+    quiz_process_options($moduleinstance);
+    $assignquiz = $DB->update_record('assignquiz', $moduleinstance);
+    assignquiz_after_add_or_update($moduleinstance);
+    return $assignquiz;
+}
+function assignquiz_after_add_or_update($assignquiz) {
+    global $DB;
+    $cmid = $assignquiz->coursemodule;
+
+    // We need to use context now, so we need to make sure all needed info is already in db.
+    $DB->set_field('course_modules', 'instance', $assignquiz->id, array('id'=>$cmid));
+    $context = context_module::instance($cmid);
+
+    // Save the feedback.
+    $DB->delete_records('aiquiz_feedback', array('quizid' => $assignquiz->id));
+
+    for ($i = 0; $i <= $assignquiz->feedbackboundarycount; $i++) {
+        $feedback = new stdClass();
+        $feedback->quizid = $assignquiz->id;
+        $feedback->feedbacktext = $assignquiz->feedbacktext[$i]['text'];
+        $feedback->feedbacktextformat = $assignquiz->feedbacktext[$i]['format'];
+        $feedback->mingrade = $assignquiz->feedbackboundaries[$i];
+        $feedback->maxgrade = $assignquiz->feedbackboundaries[$i - 1];
+        $feedback->id = $DB->insert_record('aiquiz_feedback', $feedback);
+        $feedbacktext = file_save_draft_area_files((int)$assignquiz->feedbacktext[$i]['itemid'],
+            $context->id, 'mod_assignquiz', 'feedback', $feedback->id,
+            array('subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0),
+            $assignquiz->feedbacktext[$i]['text']);
+        $DB->set_field('aiquiz_feedback', 'feedbacktext', $feedbacktext,
+            array('id' => $feedback->id));
+    }
+
+    // Store any settings belonging to the access rules.
+    aiquiz_access_manager::save_settings($assignquiz);
+
+    // Update the events relating to this quiz.
+//    quiz_update_events($assignquiz);
+    $completionexpected = (!empty($assignquiz->completionexpected)) ? $assignquiz->completionexpected : null;
+    \core_completion\api::update_completion_date_event($assignquiz->coursemodule, 'quiz', $assignquiz->id, $completionexpected);
+    assignquiz_grade_item_update($assignquiz);
 }
 
 function assignquiz_grade_item_update($assignquiz, $grades = null) {
@@ -178,35 +239,6 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
     return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->instance, 0, $grades, $params);
 }
 
-function assignquiz_grade_item_delete($quiz) {
-    global $CFG;
-    require_once($CFG->libdir . '/gradelib.php');
-
-    return grade_update('mod/assignquiz', $quiz->course, 'mod', 'assignquiz', $quiz->instance, 0,
-        null, array('deleted' => 1));
-}
-
-/**
- * Updates an instance of the mod_assignquiz in the database.
- *
- * Given an object containing all the necessary data (defined in mod_form.php),
- * this function will update an existing instance with new data.
- *
- * @param object $moduleinstance An object from the form in mod_form.php.
- * @param mod_assignquiz_mod_form $mform The form.
- * @return bool True if successful, false otherwise.
- */
-function assignquiz_update_instance($moduleinstance, $mform = null)
-{
-
-    global $DB;
-    $moduleinstance->timemodified = time();
-    $assignquiz = $DB->update_record('assignquiz', $moduleinstance);
-    assignquiz_grade_item_update($moduleinstance);
-    error_log("ASSIGNQUIZ = ".print_r($moduleinstance, true));
-    return $assignquiz;
-}
-
 
 /**
  * Removes an instance of the mod_assignquiz from the database.
@@ -227,6 +259,16 @@ function assignquiz_delete_instance($id)
     $DB->delete_records('assignquiz', array('id' => $id));
     return true;
 }
+
+
+function assignquiz_grade_item_delete($assignquiz) {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+
+    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->instance, 0,
+        null, array('deleted' => 1));
+}
+
 //displays info on course view
 function assignquiz_get_coursemodule_info($coursemodule) {
     global $DB;
@@ -243,9 +285,6 @@ function assignquiz_get_coursemodule_info($coursemodule) {
 
     // Create a new course module info object
     $info = new cached_cm_info();
-
-    // Debugging log (safe version)
-    error_log("AIQuiz Record ID: " . $assignquiz_record->id);
 
     // Set the name of the activity (this is required)
     $info->name = $assignquiz_record->name;
