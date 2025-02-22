@@ -38,6 +38,8 @@ $id = optional_param('id', 0, PARAM_INT);
 // Activity instance id.
 $a = optional_param('a', 0, PARAM_INT);
 
+
+
 if ($id) {
     $cm = get_coursemodule_from_id('assignquiz', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);

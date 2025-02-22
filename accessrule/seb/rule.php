@@ -65,5 +65,34 @@ class assignquizaccess_seb extends quizaccess_seb{
             $quizsettings->delete();
         }
     }
-
+    public static function get_settings_sql($quizid) : array {
+        return [
+            'seb.requiresafeexambrowser AS seb_requiresafeexambrowser, '
+            . 'seb.showsebtaskbar AS seb_showsebtaskbar, '
+            . 'seb.showwificontrol AS seb_showwificontrol, '
+            . 'seb.showreloadbutton AS seb_showreloadbutton, '
+            . 'seb.showtime AS seb_showtime, '
+            . 'seb.showkeyboardlayout AS seb_showkeyboardlayout, '
+            . 'seb.allowuserquitseb AS seb_allowuserquitseb, '
+            . 'seb.quitpassword AS seb_quitpassword, '
+            . 'seb.linkquitseb AS seb_linkquitseb, '
+            . 'seb.userconfirmquit AS seb_userconfirmquit, '
+            . 'seb.enableaudiocontrol AS seb_enableaudiocontrol, '
+            . 'seb.muteonstartup AS seb_muteonstartup, '
+            . 'seb.allowspellchecking AS seb_allowspellchecking, '
+            . 'seb.allowreloadinexam AS seb_allowreloadinexam, '
+            . 'seb.activateurlfiltering AS seb_activateurlfiltering, '
+            . 'seb.filterembeddedcontent AS seb_filterembeddedcontent, '
+            . 'seb.expressionsallowed AS seb_expressionsallowed, '
+            . 'seb.regexallowed AS seb_regexallowed, '
+            . 'seb.expressionsblocked AS seb_expressionsblocked, '
+            . 'seb.regexblocked AS seb_regexblocked, '
+            . 'seb.allowedbrowserexamkeys AS seb_allowedbrowserexamkeys, '
+            . 'seb.showsebdownloadlink AS seb_showsebdownloadlink, '
+            . 'sebtemplate.id AS seb_templateid '
+            , 'LEFT JOIN {aiquizaccess_seb_settings} seb ON seb.quizid = quiz.id '
+            . 'LEFT JOIN {aiquizaccess_seb_template} sebtemplate ON seb.templateid = sebtemplate.id '
+            , []
+        ];
+    }
 }

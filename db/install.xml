@@ -53,7 +53,7 @@
         <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="assignquiz_slots" COMMENT="Stores the question used in a quiz, with the order, and for each question, which page it appears on, and the maximum mark (weight).">
+    <TABLE NAME="aiquiz_slots" COMMENT="Stores the question used in a quiz, with the order, and for each question, which page it appears on, and the maximum mark (weight).">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="slot" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Where this question comes in order in the list of questions in this quiz. Like question_attempts.slot."/>

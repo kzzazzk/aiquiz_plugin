@@ -30,6 +30,7 @@ class aiquiz_access_manager extends quiz_access_manager
     public static function load_quiz_and_settings($quizid) {
         global $DB;
         $rules = self::get_rule_classes();
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
         list($sql, $params) = self::get_load_sql($quizid, $rules, 'assignquiz.*');
         $quiz = $DB->get_record_sql($sql, $params, MUST_EXIST);
 
@@ -40,6 +41,26 @@ class aiquiz_access_manager extends quiz_access_manager
         }
 
         return $quiz;
+    }
+
+    public static function load_settings($quizid) {
+        global $DB;
+
+        $rules = self::get_rule_classes();
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
+        list($sql, $params) = self::get_load_sql($quizid, $rules, '');
+
+        if ($sql) {
+            $data = (array) $DB->get_record_sql($sql, $params);
+        } else {
+            $data = array();
+        }
+
+        foreach ($rules as $rule) {
+            $data += $rule::get_extra_settings($quizid);
+        }
+
+        return $data;
     }
     protected static function get_load_sql($quizid, $rules, $basefields) {
         global $DB;
@@ -75,11 +96,16 @@ class aiquiz_access_manager extends quiz_access_manager
     public static function save_settings($quiz)
     {
         $rules = self::get_rule_classes();
-        $rules['quizaccess_seb'] = $rules['assignquizaccess_seb'];
-        unset($rules["quizaccess_seb"]);
-        $rules['assignquizaccess_seb'] = 'assignquizaccess_seb';
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
         foreach ($rules as $rule) {
             $rule::save_settings($quiz);
         }
     }
+
+    //Function that switches the name of the rule
+    public static function name_reset_rule($rules, $previousname, $newname, $value) {
+        unset($rules[$previousname]);
+        return $rules + [$newname => $value];
+    }
+
 }

@@ -28,6 +28,11 @@
  * @param string $feature Constant representing the feature.
  * @return true | null True if the feature is supported, null otherwise.
  */
+
+
+use mod_assignquiz\question\bank\assignquiz_custom_view;
+use mod_quiz\question\bank\custom_view;
+
 require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
 function assignquiz_supports($feature) {
     switch ($feature) {
@@ -77,14 +82,18 @@ function assignquiz_add_instance($moduleinstance, $mform)
 {
     global $DB, $USER;
     $moduleinstance->timemodified = time();
-
-    quiz_process_options($moduleinstance);
+    $result = quiz_process_options($moduleinstance);
+    if ($result && is_string($result)) {
+        return $result;
+    }
     $assignquizid = $DB->insert_record('assignquiz', $moduleinstance);
+    $DB->insert_record('aiquiz_sections', array('quizid' => $assignquizid,
+        'firstslot' => 1, 'heading' => '', 'shufflequestions' => 0));
+
     $moduleinstance->id = $assignquizid;
     assignquiz_after_add_or_update($moduleinstance);
     return $assignquizid;
 }
-
 
 /**
  * Updates an instance of the mod_assignquiz in the database.
@@ -98,7 +107,6 @@ function assignquiz_add_instance($moduleinstance, $mform)
  */
 function assignquiz_update_instance($moduleinstance, $mform = null)
 {
-
     global $DB;
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
@@ -116,23 +124,23 @@ function assignquiz_after_add_or_update($assignquiz) {
     $context = context_module::instance($cmid);
 
     // Save the feedback.
-    $DB->delete_records('aiquiz_feedback', array('quizid' => $assignquiz->id));
-
-    for ($i = 0; $i <= $assignquiz->feedbackboundarycount; $i++) {
-        $feedback = new stdClass();
-        $feedback->quizid = $assignquiz->id;
-        $feedback->feedbacktext = $assignquiz->feedbacktext[$i]['text'];
-        $feedback->feedbacktextformat = $assignquiz->feedbacktext[$i]['format'];
-        $feedback->mingrade = $assignquiz->feedbackboundaries[$i];
-        $feedback->maxgrade = $assignquiz->feedbackboundaries[$i - 1];
-        $feedback->id = $DB->insert_record('aiquiz_feedback', $feedback);
-        $feedbacktext = file_save_draft_area_files((int)$assignquiz->feedbacktext[$i]['itemid'],
-            $context->id, 'mod_assignquiz', 'feedback', $feedback->id,
-            array('subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0),
-            $assignquiz->feedbacktext[$i]['text']);
-        $DB->set_field('aiquiz_feedback', 'feedbacktext', $feedbacktext,
-            array('id' => $feedback->id));
-    }
+//    $DB->delete_records('aiquiz_feedback', array('quizid' => $assignquiz->id));
+//
+//    for ($i = 0; $i <= $assignquiz->feedbackboundarycount; $i++) {
+//        $feedback = new stdClass();
+//        $feedback->quizid = $assignquiz->id;
+//        $feedback->feedbacktext = $assignquiz->feedbacktext[$i]['text'];
+//        $feedback->feedbacktextformat = $assignquiz->feedbacktext[$i]['format'];
+//        $feedback->mingrade = $assignquiz->feedbackboundaries[$i];
+//        $feedback->maxgrade = $assignquiz->feedbackboundaries[$i - 1];
+//        $feedback->id = $DB->insert_record('aiquiz_feedback', $feedback);
+//        $feedbacktext = file_save_draft_area_files((int)$assignquiz->feedbacktext[$i]['itemid'],
+//            $context->id, 'mod_assignquiz', 'feedback', $feedback->id,
+//            array('subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0),
+//            $assignquiz->feedbacktext[$i]['text']);
+////        $DB->set_field('aiquiz_feedback', 'feedbacktext', $feedbacktext,
+////            array('id' => $feedback->id));
+//    }
 
     // Store any settings belonging to the access rules.
     aiquiz_access_manager::save_settings($assignquiz);
@@ -314,4 +322,119 @@ function assignquiz_get_coursemodule_info($coursemodule) {
     // Return the course module info
     return $info;
 }
+function assignquiz_extend_settings_navigation($settings, $assignquiznode) {
+    global $CFG;
 
+    require_once($CFG->libdir . '/questionlib.php');  // Only include when needed.
+
+    // Get a list of existing child nodes.
+    $keys = $assignquiznode->get_children_key_list();
+    $beforekey = null;
+
+    // Find the "Edit settings" node or the first child to insert the new nodes before.
+    $i = array_search('modedit', $keys);
+    if ($i === false && array_key_exists(0, $keys)) {
+        $beforekey = $keys[0];  // If no "Edit settings", add before the first node.
+    } else if (array_key_exists($i + 1, $keys)) {
+        $beforekey = $keys[$i + 1];  // Insert after the "Edit settings".
+    }
+
+    // Add "Overrides" node if the user has required capabilities.
+    if (has_any_capability(['mod/quiz:manageoverrides', 'mod/quiz:viewoverrides'], $settings->get_page()->cm->context)) {
+        $url = new moodle_url('/mod/assignquiz/overrides.php', ['cmid' => $settings->get_page()->cm->id, 'mode' => 'user']);
+        $node = navigation_node::create(get_string('overrides', 'quiz'), $url, navigation_node::TYPE_SETTING, null, 'mod_quiz_useroverrides');
+        $assignquiznode->add_node($node, $beforekey);
+    }
+
+    // Add "Questions" node if the user can manage quizzes.
+    if (has_capability('mod/quiz:manage', $settings->get_page()->cm->context)) {
+        $node = navigation_node::create(get_string('questions', 'quiz'),
+            new moodle_url('/mod/assignquiz/edit.php', array('cmid' => $settings->get_page()->cm->id)),
+            navigation_node::TYPE_SETTING, null, 'mod_quiz_edit', new pix_icon('t/edit', ''));
+        $assignquiznode->add_node($node, $beforekey);
+    }
+
+    // Add "Preview" node if the user can preview quizzes.
+    if (has_capability('mod/quiz:preview', $settings->get_page()->cm->context)) {
+        $url = new moodle_url('/mod/assignquiz/startattempt.php', array('cmid' => $settings->get_page()->cm->id, 'sesskey' => sesskey()));
+        $node = navigation_node::create(get_string('preview', 'quiz'), $url,
+            navigation_node::TYPE_SETTING, null, 'mod_quiz_preview', new pix_icon('i/preview', ''));
+        $previewnode = $assignquiznode->add_node($node, $beforekey);
+        $previewnode->set_show_in_secondary_navigation(false);  // Optionally hide in secondary navigation.
+    }
+
+    // Add question settings if any exist.
+    question_extend_settings_navigation($assignquiznode, $settings->get_page()->cm->context)->trim_if_empty();
+
+    // Add "Results" node if the user can view reports.
+    if (has_any_capability(['mod/quiz:viewreports', 'mod/quiz:grade'], $settings->get_page()->cm->context)) {
+        require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
+        $reportlist = quiz_report_list($settings->get_page()->cm->context);
+
+        $url = new moodle_url('/mod/assignquiz/report.php', array('id' => $settings->get_page()->cm->id, 'mode' => reset($reportlist)));
+        $reportnode = $assignquiznode->add_node(navigation_node::create(get_string('results', 'quiz'), $url,
+            navigation_node::TYPE_SETTING, null, 'quiz_report', new pix_icon('i/report', '')));
+
+        foreach ($reportlist as $report) {
+            $url = new moodle_url('/mod/assignquiz/report.php', ['id' => $settings->get_page()->cm->id, 'mode' => $report]);
+            $reportnode->add_node(navigation_node::create(get_string($report, 'quiz_'.$report), $url,
+                navigation_node::TYPE_SETTING, null, 'quiz_report_' . $report, new pix_icon('i/item', '')));
+        }
+    }
+
+    function mod_assignquiz_output_fragment_quiz_question_bank($args) {
+        global $CFG, $DB, $PAGE;
+        require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+        require_once($CFG->dirroot . '/question/editlib.php');
+
+        $querystring = preg_replace('/^\?/', '', $args['querystring']);
+        $params = [];
+        parse_str($querystring, $params);
+
+        // Build the required resources. The $params are all cleaned as
+        // part of this process.
+        list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
+            question_build_edit_resources('editq', '/mod/assignquiz/edit.php', $params, custom_view::DEFAULT_PAGE_SIZE);
+
+        // Get the course object and related bits.
+        $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
+        require_capability('mod/assignquiz:manage', $contexts->lowest());
+
+        // Create quiz question bank view.
+        $questionbank = new assignquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
+        $questionbank->set_quiz_has_attempts(quiz_has_attempts($quiz->id));
+
+        // Output.
+        $renderer = $PAGE->get_renderer('mod_assignquiz', 'edit');
+        return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
+    }
+    function mod_assignquiz_output_fragment_add_random_question_form($args) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
+
+        $contexts = new \core_question\local\bank\question_edit_contexts($args['context']);
+        $formoptions = [
+            'contexts' => $contexts,
+            'cat' => $args['cat']
+        ];
+        $formdata = [
+            'category' => $args['cat'],
+            'addonpage' => $args['addonpage'],
+            'returnurl' => $args['returnurl'],
+            'cmid' => $args['cmid']
+        ];
+
+        $form = new quiz_add_random_form(
+            new \moodle_url('/mod/assignquiz/addrandom.php'),
+            $formoptions,
+            'post',
+            '',
+            null,
+            true,
+            $formdata
+        );
+        $form->set_data($formdata);
+
+        return $form->render();
+    }
+}

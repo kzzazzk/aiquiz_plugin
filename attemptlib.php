@@ -2,6 +2,9 @@
 
 require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/accessmanager.php');
+require_once($CFG->dirroot . '/mod/assignquiz/classes/structure.php');
+
+use mod_assignquiz\assignquiz_structure;
 class aiquiz extends quiz
 {
     public static function create($quizid, $userid = null) {
@@ -17,6 +20,10 @@ class aiquiz extends quiz
             $quiz = quiz_update_effective_access($quiz, $userid);
         }
 
-        return new quiz($quiz, $cm, $course);
+        return new aiquiz($quiz, $cm, $course);
+    }
+
+    public function get_structure() {
+        return \mod_assignquiz\assignquiz_structure::create_for_quiz($this);
     }
 }
