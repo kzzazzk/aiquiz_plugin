@@ -273,7 +273,7 @@ function assignquiz_grade_item_delete($assignquiz) {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
-    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->instance, 0,
+    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->id, 0,
         null, array('deleted' => 1));
 }
 
