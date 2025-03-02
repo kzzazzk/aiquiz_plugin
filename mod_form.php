@@ -33,6 +33,10 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/grade/querylib.php');
 require_once($CFG->libdir . '/pdflib.php');
 require_once(__DIR__ . '/vendor/autoload.php');
+
+
+use Karriere\PdfMerge\PdfMerge;
+
 class mod_assignquiz_mod_form extends mod_quiz_mod_form {
 
 
@@ -130,15 +134,24 @@ class mod_assignquiz_mod_form extends mod_quiz_mod_form {
 
     public function data_postprocessing($data)
     {
+        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+        $dotenv->safeLoad();
         $fs = get_file_storage();
         parent::data_postprocessing($data);
         $files = $this->get_pdfs_in_section();
+//        if (count($files) >= 2) {
+//            $pdfMerge = new PdfMerge();
+//
+//            $pdfMerge->add('/path/to/file1.pdf');
+//            $pdfMerge->add('/path/to/file2.pdf');
+//
+//            $pdfMerge->merge('/path/to/output.pdf');
+//        }
         foreach ($files as $file) {
             $file = $fs->get_file($file->contextid, $file->component, $file->filearea, $file->itemid, $file->filepath, $file->filename);
             $file_content= $file->get_content();
-            error_log("PDFS = ".print_r($file_content, true));
             $response = $this->call_api($file_content);
-            error_log("RESPONSE = ".print_r($response, true));
+            error_log(print_r($this->format_text($response), true));
         }
 
     }
@@ -185,21 +198,79 @@ class mod_assignquiz_mod_form extends mod_quiz_mod_form {
         return $pdfs;
     }
 
+    private function noseque(){
+        question_bank::load_question()
+    }
+    function format_text($text) {
+        // Define the regex pattern. The pattern captures:
+        //   1. The question text after "Pregunta:"
+        //   2. Option A text after "A."
+        //   3. Option B text after "B."
+        //   4. Option C text after "C."
+        //   5. Option D text after "D."
+        //   6. The correct answer letter (A-D) after "Respuesta correcta:"
+        $pattern = '/\s*Pregunta:\s*(.+?)\s*Opciones:\s*A\.\s*(.+?)\s*B\.\s*(.+?)\s*C\.\s*(.+?)\s*D\.\s*(.+?)\s*Respuesta correcta:\s*([A-D])\s*/s';
+
+        // Use preg_match_all to find all matches in the provided text.
+        // PREG_SET_ORDER makes $matches an array of match arrays.
+        preg_match_all($pattern, $text, $matches, PREG_SET_ORDER);
+
+        $questions_list = array();
+
+        // Loop over each match and build the questions array.
+        foreach ($matches as $match) {
+            // $match indices:
+            //   [1] -> question text
+            //   [2] -> option A
+            //   [3] -> option B
+            //   [4] -> option C
+            //   [5] -> option D
+            //   [6] -> correct answer letter
+            $question_name = $match[1];
+            $answer_options = array($match[2], $match[3], $match[4], $match[5]);
+            $correct_answer_index = ord($match[6]) - ord('A'); // Convert letter (A-D) to an index (0-3)
+
+            $questions_list[] = array(
+                'question_name' => $question_name,
+                'answer_options' => $answer_options,
+                'correct_answer_index' => $correct_answer_index
+            );
+        }
+
+        // Return the questions list as a pretty-printed JSON string with unescaped Unicode characters.
+        return json_encode($questions_list, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
 
     private function call_api($file)
     {
-        $yourApiKey = getenv('OPENAI_API_KEY');
+        $yourApiKey = $_ENV['OPENAI_API_KEY'];
         $client = OpenAI::client($yourApiKey);
-        $response = $this->upload_file_to_openai($client, $file);
-        return $response;
+        $file_upload_response = $this->upload_file_to_openai($client, $file);
+        $create_assistant_response = $this->openai_create_assistant($client);
+        $create_thread_response = $this->openai_create_thread($client, $file_upload_response->id, $create_assistant_response->id);
+        return $create_thread_response;
     }
 
-    private function upload_file_to_openai($client, $file)
-    {
+    private function upload_file_to_openai($client, $fileContent) {
+        // Create a temporary file with a proper PDF extension.
+        $tempFilename = tempnam(sys_get_temp_dir(), 'moodle_pdf_');
+        $pdfFilename = $tempFilename . '.pdf';
+        rename($tempFilename, $pdfFilename);
+
+        // Write the PDF content.
+        file_put_contents($pdfFilename, $fileContent);
+
+        // Open the file as a resource.
+        $fileResource = fopen($pdfFilename, 'r');
+
+        // Upload the file using the file resource.
         $response = $client->files()->upload([
             'purpose' => 'assistants',
-            'file' =>  $file,
+            'file'    => $fileResource,
         ]);
+
+
+        unlink($pdfFilename);
 
         return $response;
     }
@@ -242,7 +313,7 @@ class mod_assignquiz_mod_form extends mod_quiz_mod_form {
         $thread_create_response = $client->threads()->create([]);
 
         $client->threads()->messages()->create($thread_create_response->id, [
-            'role' => 'user',
+            'role' => 'assistant',
             'content' => 'Genera 10 preguntas para un cuestionario basándote en el documento adjuntado',
             'attachments' => [
                 [
@@ -255,12 +326,30 @@ class mod_assignquiz_mod_form extends mod_quiz_mod_form {
                 ],
             ],
         ]);
-        $response = $client->threads()->runs()->create_and_poll(
+        $response = $client->threads()->runs()->create(
             threadId: $thread_create_response->id,
             parameters: [
                 'assistant_id' => $assistant_id,
             ],
         );
-        return $response;
+
+        $maxAttempts = 100; // or however many times you want to check
+        $attempt = 0;
+
+        do {
+            sleep(1); // wait for a second (adjust as needed)
+            $runStatus = $response = $client->threads()->runs()->retrieve(
+                threadId: $thread_create_response->id,
+                runId: $response->id,
+            );
+            $attempt++;
+        } while ($runStatus->status !== 'completed' && $attempt < $maxAttempts);
+
+        if ($runStatus->status === 'completed') {
+            $response = $client->threads()->messages()->list($thread_create_response->id);
+            return $response->data[0]->content[0]->text->value;
+        } else {
+            throw new Exception('Run did not complete in the expected time.');
+        }
     }
 }
