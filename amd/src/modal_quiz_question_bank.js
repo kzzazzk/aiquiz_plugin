@@ -135,7 +135,7 @@ define([
         ModalQuizQuestionBank.prototype.reloadBodyContent = function(queryString) {
             // Load the question bank fragment to be displayed in the modal.
             var promise = Fragment.loadFragment(
-                'mod_quiz',
+                'mod_assignquiz',
                 'quiz_question_bank',
                 this.getContextId(),
                 {

@@ -26,14 +26,13 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
 require_once($CFG->dirroot . '/question/editlib.php');
-
+require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
 
 // These params are only passed from page request to request while we stay on
 // this page otherwise they would go in question_edit_setup.
 $scrollpos = optional_param('scrollpos', '', PARAM_INT);
 list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
     question_edit_setup('editq', '/mod/assignquiz/edit.php', true);
-error_log('URL assignquiz/edit.php : ' . $thispageurl);
 
 $defaultcategoryobj = question_make_default_categories($contexts->all());
 $defaultcategory = $defaultcategoryobj->id . ',' . $defaultcategoryobj->contextid;
@@ -151,7 +150,7 @@ $event = \mod_quiz\event\edit_page_viewed::create([
 $event->trigger();
 
 // Get the question bank view.
-$questionbank = new mod_quiz\question\bank\custom_view($contexts, $thispageurl, $course, $cm, $quiz);
+$questionbank = new mod_assignquiz\question\bank\assignquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
 $questionbank->set_quiz_has_attempts($quizhasattempts);
 
 // End of process commands =====================================================.
@@ -187,7 +186,7 @@ $PAGE->requires->data_for_js('quiz_edit_config', $quizeditconfig);
 $PAGE->requires->js('/question/qengine.js');
 
 // Questions wrapper start.
-echo html_writer::start_tag('div', array('class' => 'mod-quiz-edit-content'));
+echo html_writer::start_tag('div', array('class' => 'mod-assignquiz-edit-content'));
 $value =  $output->assignquizpage_edit_page($quizobj, $structure, $contexts, $thispageurl, $pagevars);
 echo $value;
 // Questions wrapper end.

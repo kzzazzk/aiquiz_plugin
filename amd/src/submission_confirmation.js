@@ -16,7 +16,7 @@
 /**
  * A javascript module to handle submission confirmation for quiz.
  *
- * @module    mod_quiz/submission_confirmation
+ * @module    mod_assignquiz/submission_confirmation
  * @copyright 2022 Huong Nguyen <huongnv13@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     4.1
@@ -28,12 +28,12 @@ import Templates from 'core/templates';
 import {get_string as getString} from 'core/str';
 
 const SELECTOR = {
-    attemptSubmitButton: '.path-mod-quiz .btn-finishattempt button',
+    attemptSubmitButton: '.path-mod-assignquiz .btn-finishattempt button',
     attemptSubmitForm: 'form#frm-finishattempt',
 };
 
 const TEMPLATES = {
-    submissionConfirmation: 'mod_quiz/submission_confirmation',
+    submissionConfirmation: 'mod_assignquiz/submission_confirmation',
 };
 
 /**
@@ -55,10 +55,11 @@ const registerEventListeners = (unAnsweredQuestions) => {
                     getString('submitallandfinish', 'quiz')
                 );
 
-                // Save pressed.
                 submitAction.closest(SELECTOR.attemptSubmitForm).submit();
+                console.log("Form will be submitted"); // eslint-disable-line no-console
+
             } catch {
-                // Cancel pressed.
+                console.log("Cancel submission"); // eslint-disable-line no-console
                 return;
             }
         });

@@ -32,7 +32,7 @@
 
 use mod_assignquiz\question\bank\assignquiz_custom_view;
 use mod_quiz\question\bank\custom_view;
-
+require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
 require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
 function assignquiz_supports($feature) {
     switch ($feature) {
@@ -287,7 +287,6 @@ function assignquiz_get_coursemodule_info($coursemodule) {
     // Fetch aiquiz ID (handle case where no record exists)
     $assignquizid = $DB->get_field('assignquiz', 'id', ['id' => $coursemodule->instance]);
     if (!$assignquizid) {
-        error_log("AIQuiz record not found for assignquiz ID: " . $coursemodule->instance);
         return null;
     }
 
@@ -322,7 +321,8 @@ function assignquiz_get_coursemodule_info($coursemodule) {
     // Return the course module info
     return $info;
 }
-function assignquiz_extend_settings_navigation($settings, $assignquiznode) {
+function assignquiz_extend_settings_navigation($settings, $assignquiznode)
+{
     global $CFG;
 
     require_once($CFG->libdir . '/questionlib.php');  // Only include when needed.
@@ -377,10 +377,11 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode) {
 
         foreach ($reportlist as $report) {
             $url = new moodle_url('/mod/assignquiz/report.php', ['id' => $settings->get_page()->cm->id, 'mode' => $report]);
-            $reportnode->add_node(navigation_node::create(get_string($report, 'quiz_'.$report), $url,
+            $reportnode->add_node(navigation_node::create(get_string($report, 'quiz_' . $report), $url,
                 navigation_node::TYPE_SETTING, null, 'quiz_report_' . $report, new pix_icon('i/item', '')));
         }
     }
+}
 
     function mod_assignquiz_output_fragment_quiz_question_bank($args) {
         global $CFG, $DB, $PAGE;
@@ -405,12 +406,12 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode) {
         $questionbank->set_quiz_has_attempts(quiz_has_attempts($quiz->id));
 
         // Output.
-        $renderer = $PAGE->get_renderer('mod_assignquiz', 'edit');
+        $renderer = $PAGE->get_renderer('mod_assignquiz', 'assignquizedit');
         return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
     }
     function mod_assignquiz_output_fragment_add_random_question_form($args) {
         global $CFG;
-        require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
+        require_once($CFG->dirroot . '/mod/assignquiz/addrandomform.php');
 
         $contexts = new \core_question\local\bank\question_edit_contexts($args['context']);
         $formoptions = [
@@ -437,4 +438,151 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode) {
 
         return $form->render();
     }
+    function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false) {
+        global $DB, $CFG;
+        // TODO MDL-33071 it is very annoying to have to included all of locallib.php
+        // just to get the quiz_attempt::FINISHED constants, but I will try to sort
+        // that out properly for Moodle 2.4. For now, I will just do a quick fix for
+        // MDL-33048.
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+
+        $params = array();
+        switch ($status) {
+            case 'all':
+                $statuscondition = '';
+                break;
+
+            case 'finished':
+                $statuscondition = ' AND state IN (:state1, :state2)';
+                $params['state1'] = quiz_attempt::FINISHED;
+                $params['state2'] = quiz_attempt::ABANDONED;
+                break;
+
+            case 'unfinished':
+                $statuscondition = ' AND state IN (:state1, :state2)';
+                $params['state1'] = quiz_attempt::IN_PROGRESS;
+                $params['state2'] = quiz_attempt::OVERDUE;
+                break;
+        }
+
+        $quizids = (array) $quizids;
+        list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+        $params += $inparams;
+        $params['userid'] = $userid;
+
+        $previewclause = '';
+        if (!$includepreviews) {
+            $previewclause = ' AND preview = 0';
+        }
+
+        return $DB->get_records_select('aiquiz_attempts',
+            "quiz $insql AND userid = :userid" . $previewclause . $statuscondition,
+            $params, 'quiz  , attempt ASC');
+    }
+    function assignquiz_get_best_grade($quiz, $userid) {
+        global $DB;
+        $grade = $DB->get_field('aiquiz_grades', 'grade',
+            array('quiz' => $quiz->id, 'userid' => $userid));
+
+        // Need to detect errors/no result, without catching 0 grades.
+        if ($grade === false) {
+            return null;
+        }
+
+        return $grade + 0; // Convert to number.
+    }
+function assignquiz_update_effective_access($quiz, $userid) {
+    global $DB;
+
+    // Check for user override.
+    $override = $DB->get_record('aiquiz_overrides', array('quiz' => $quiz->id, 'userid' => $userid));
+
+    if (!$override) {
+        $override = new stdClass();
+        $override->timeopen = null;
+        $override->timeclose = null;
+        $override->timelimit = null;
+        $override->attempts = null;
+        $override->password = null;
+    }
+
+    // Check for group overrides.
+    $groupings = groups_get_user_groups($quiz->course, $userid);
+
+    if (!empty($groupings[0])) {
+        // Select all overrides that apply to the User's groups.
+        list($extra, $params) = $DB->get_in_or_equal(array_values($groupings[0]));
+        $sql = "SELECT * FROM {aiquiz_overrides}
+                WHERE groupid $extra AND quiz = ?";
+        $params[] = $quiz->id;
+        $records = $DB->get_records_sql($sql, $params);
+
+        // Combine the overrides.
+        $opens = array();
+        $closes = array();
+        $limits = array();
+        $attempts = array();
+        $passwords = array();
+
+        foreach ($records as $gpoverride) {
+            if (isset($gpoverride->timeopen)) {
+                $opens[] = $gpoverride->timeopen;
+            }
+            if (isset($gpoverride->timeclose)) {
+                $closes[] = $gpoverride->timeclose;
+            }
+            if (isset($gpoverride->timelimit)) {
+                $limits[] = $gpoverride->timelimit;
+            }
+            if (isset($gpoverride->attempts)) {
+                $attempts[] = $gpoverride->attempts;
+            }
+            if (isset($gpoverride->password)) {
+                $passwords[] = $gpoverride->password;
+            }
+        }
+        // If there is a user override for a setting, ignore the group override.
+        if (is_null($override->timeopen) && count($opens)) {
+            $override->timeopen = min($opens);
+        }
+        if (is_null($override->timeclose) && count($closes)) {
+            if (in_array(0, $closes)) {
+                $override->timeclose = 0;
+            } else {
+                $override->timeclose = max($closes);
+            }
+        }
+        if (is_null($override->timelimit) && count($limits)) {
+            if (in_array(0, $limits)) {
+                $override->timelimit = 0;
+            } else {
+                $override->timelimit = max($limits);
+            }
+        }
+        if (is_null($override->attempts) && count($attempts)) {
+            if (in_array(0, $attempts)) {
+                $override->attempts = 0;
+            } else {
+                $override->attempts = max($attempts);
+            }
+        }
+        if (is_null($override->password) && count($passwords)) {
+            $override->password = array_shift($passwords);
+            if (count($passwords)) {
+                $override->extrapasswords = $passwords;
+            }
+        }
+
+    }
+
+    // Merge with quiz defaults.
+    $keys = array('timeopen', 'timeclose', 'timelimit', 'attempts', 'password', 'extrapasswords');
+    foreach ($keys as $key) {
+        if (isset($override->{$key})) {
+            $quiz->{$key} = $override->{$key};
+        }
+    }
+
+    return $quiz;
 }
+

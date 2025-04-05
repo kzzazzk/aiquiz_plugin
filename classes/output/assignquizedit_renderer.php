@@ -2,13 +2,19 @@
 namespace mod_assignquiz\output;
 defined('MOODLE_INTERNAL') || die();
 
+use assignquiz_attempt_nav_panel;
 use core_question\local\bank\question_version_status;
 use mod_quiz\output\edit_renderer;
 use mod_assignquiz\assignquiz_structure;
 use mod_quiz\question\bank\qbank_helper;
 use \mod_quiz\structure;
 use \html_writer;
-use mod_assignquiz\question\bank\assignquiz_custom_view;
+use quiz_nav_panel_base;
+use quiz_attempt_nav_panel;
+
+require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
 /**
  * Renderer outputting the quiz editing UI.
  *
@@ -361,7 +367,7 @@ class assignquizedit_renderer extends edit_renderer
         // selected from in the question bank.
         $qbankurl = new \moodle_url('/question/edit.php', $qbankurlparams);
         $qbanklink = ' ' . \html_writer::link($qbankurl,
-                get_string('seequestions', 'quiz'), array('class' => 'mod_quiz_random_qbank_link'));
+                get_string('seequestions', 'quiz'), array('class' => 'mod_assignquiz_random_qbank_link'));
 
         return html_writer::link($editurl, $icon . $editicon, array('title' => $configuretitle)) .
             ' ' . $instancename . ' ' . $qbanklink;
@@ -376,4 +382,103 @@ class assignquizedit_renderer extends edit_renderer
 
         return $questionname;
     }
+    protected function initialise_editing_javascript(structure $structure,
+                                                     \core_question\local\bank\question_edit_contexts $contexts, array $pagevars, \moodle_url $pageurl) {
+
+        $config = new \stdClass();
+        $config->resourceurl = '/mod/assignquiz/edit_rest.php';
+        $config->sectionurl = '/mod/assignquiz/edit_rest.php';
+        $config->pageparams = array();
+        $config->questiondecimalpoints = $structure->get_decimal_places_for_question_marks();
+        $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);
+        $config->addpageiconhtml = $this->add_page_icon_template($structure);
+
+        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
+            'M.mod_quiz.init_resource_toolbox',
+            array(array(
+                'courseid' => $structure->get_courseid(),
+                'quizid' => $structure->get_quizid(),
+                'ajaxurl' => $config->resourceurl,
+                'config' => $config,
+            ))
+        );
+        unset($config->pagehtml);
+        unset($config->addpageiconhtml);
+
+        $this->page->requires->strings_for_js(array('areyousureremoveselected'), 'quiz');
+        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
+            'M.mod_quiz.init_section_toolbox',
+            array(array(
+                'courseid' => $structure,
+                'quizid' => $structure->get_quizid(),
+                'ajaxurl' => $config->sectionurl,
+                'config' => $config,
+            ))
+        );
+
+        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_section_dragdrop',
+            array(array(
+                'courseid' => $structure,
+                'quizid' => $structure->get_quizid(),
+                'ajaxurl' => $config->sectionurl,
+                'config' => $config,
+            )), null, true);
+
+        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_resource_dragdrop',
+            array(array(
+                'courseid' => $structure,
+                'quizid' => $structure->get_quizid(),
+                'ajaxurl' => $config->resourceurl,
+                'config' => $config,
+            )), null, true);
+
+        // Require various strings for the command toolbox.
+        $this->page->requires->strings_for_js(array(
+            'clicktohideshow',
+            'deletechecktype',
+            'deletechecktypename',
+            'edittitle',
+            'edittitleinstructions',
+            'emptydragdropregion',
+            'hide',
+            'markedthistopic',
+            'markthistopic',
+            'move',
+            'movecontent',
+            'moveleft',
+            'movesection',
+            'page',
+            'question',
+            'selectall',
+            'show',
+            'tocontent',
+        ), 'moodle');
+
+        $this->page->requires->strings_for_js(array(
+            'addpagebreak',
+            'cannotremoveallsectionslots',
+            'cannotremoveslots',
+            'confirmremovesectionheading',
+            'confirmremovequestion',
+            'dragtoafter',
+            'dragtostart',
+            'numquestionsx',
+            'sectionheadingedit',
+            'sectionheadingremove',
+            'sectionnoname',
+            'removepagebreak',
+            'questiondependencyadd',
+            'questiondependencyfree',
+            'questiondependencyremove',
+            'questiondependsonprevious',
+        ), 'quiz');
+
+        foreach (\question_bank::get_all_qtypes() as $qtype => $notused) {
+            $this->page->requires->string_for_js('pluginname', 'qtype_' . $qtype);
+        }
+
+        return true;
+    }
+
+
 }

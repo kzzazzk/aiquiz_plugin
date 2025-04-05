@@ -1,23 +1,30 @@
 <?php
 namespace mod_assignquiz\question\bank;
-use mod_quiz\question\bank\custom_view;
-class assignquiz_custom_view extends custom_view{
 
-    public function render($pagevars, $tabname): string {
+use mod_quiz\question\bank\custom_view;
+
+class assignquiz_custom_view extends custom_view
+{
+
+    public function render($pagevars, $tabname): string
+    {
         ob_start();
         $this->display($pagevars, $tabname);
         $out = ob_get_contents();
         ob_end_clean();
         return $out;
     }
-    public function add_to_quiz_url($questionid) {
+
+    public function add_to_quiz_url($questionid)
+    {
         $params = $this->baseurl->params();
         $params['addquestion'] = $questionid;
         $params['sesskey'] = sesskey();
         return new \moodle_url('/mod/assignquiz/edit.php', $params);
     }
 
-    public function display($pagevars, $tabname): void {
+    public function display($pagevars, $tabname): void
+    {
 
         $page = $pagevars['qpage'];
         $perpage = $pagevars['qperpage'];
@@ -36,14 +43,15 @@ class assignquiz_custom_view extends custom_view{
 
         // Show the filters and search options.
         $this->wanted_filters($cat, $tagids, $showhidden, $recurse, $editcontexts, $showquestiontext);
-        error_log('URL assignquiz/question/bank/custom_view.php : ' . $this->baseurl);
         // Continues with list of questions.
         $this->display_question_list($this->baseurl, $cat, null, $page, $perpage,
             $this->contexts->having_cap('moodle/question:add'));
         echo \html_writer::end_div();
 
     }
-    protected function display_bottom_controls(\context $catcontext): void {
+
+    protected function display_bottom_controls(\context $catcontext): void
+    {
         $cmoptions = new \stdClass();
         $cmoptions->hasattempts = !empty($this->quizhasattempts);
 
@@ -66,5 +74,6 @@ class assignquiz_custom_view extends custom_view{
         }
         echo \html_writer::end_tag('div');
     }
+
 
 }

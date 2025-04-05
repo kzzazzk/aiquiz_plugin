@@ -47,6 +47,7 @@
         <FIELD NAME="completionattemptsexhausted" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="completionminattempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="allowofflineattempts" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to allow the quiz to be attempted offline in the mobile app"/>
+        <FIELD NAME="generativefilename" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The filename of the file that will be used to generate the questions that will be in this quiz"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

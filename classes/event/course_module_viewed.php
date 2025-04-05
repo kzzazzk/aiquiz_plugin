@@ -21,7 +21,7 @@
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace mod_aiquiz\event;
+namespace mod_assignquiz\event;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -39,6 +39,6 @@ class course_module_viewed extends \core\event\course_module_viewed {
     }
 
     public static function get_objectid_mapping() {
-        return array('db' => 'aiquiz', 'restore' => 'aiquiz');
+        return array('db' => 'assignquiz', 'restore' => 'aiquiz');
     }
 }

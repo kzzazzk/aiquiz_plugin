@@ -107,5 +107,14 @@ class aiquiz_access_manager extends quiz_access_manager
         unset($rules[$previousname]);
         return $rules + [$newname => $value];
     }
-
+    public function get_end_time($attempt) {
+        $timeclose = false;
+        foreach ($this->rules as $rule) {
+            $ruletimeclose = $rule->end_time($attempt);
+            if ($ruletimeclose !== false && ($timeclose === false || $ruletimeclose < $timeclose)) {
+                $timeclose = $ruletimeclose;
+            }
+        }
+        return $timeclose;
+    }
 }
