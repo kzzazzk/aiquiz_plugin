@@ -1102,6 +1102,7 @@ function assignquiz_feedback_record_for_grade($grade, $quiz) {
 function db_test($course_module_id)
 {
     global $DB;
+    $filepath = $DB->get_field('assignquiz', 'generativefilename', ['instanceid' => $course_module_id]);
     $context_id = $DB->get_field('context', 'id', ['instanceid' => $course_module_id]);
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context_id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
@@ -1115,6 +1116,8 @@ function db_test($course_module_id)
             $question_attempt->questionsummary = remove_answer_info($question_attempt->questionsummary);
     }
     error_log('question_attempt_info: ' . print_r($filtered_question_attempt_info, true));
+    error_log('filepath: ' . print_r($filepath, true));
+    //unlink the last file from the moodledata don't forget
 }
 
 
