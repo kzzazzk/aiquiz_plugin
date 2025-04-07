@@ -63,7 +63,7 @@ function assignquiz_delete_previews($quiz, $userid = null) {
     }
     $previewattempts = $DB->get_records('aiquiz_attempts', $conditions);
     foreach ($previewattempts as $attempt) {
-        quiz_delete_attempt($attempt, $quiz);
+        assignquiz_delete_attempt($attempt, $quiz);
     }
 }
 
@@ -254,7 +254,7 @@ function assignquiz_update_sumgrades($quiz) {
         // If the quiz has been attempted, and the sumgrades has been
         // set to 0, then we must also set the maximum possible grade to 0, or
         // we will get a divide by zero error.
-        quiz_set_grade(0, $quiz);
+        assignquiz_set_grade(0, $quiz);
     }
 
     $callbackclasses = \core_component::get_plugin_list_with_class('assignquiz', 'quiz_structure_modified');
@@ -307,7 +307,7 @@ function assignquiz_set_grade($newgrade, $quiz) {
 
     // Update grade item and send all grades to gradebook.
     assignquiz_grade_item_update($quiz);
-    quiz_update_grades($quiz);
+    assignquiz_update_grades($quiz);
 
     $transaction->allow_commit();
 
@@ -1049,7 +1049,7 @@ function assignquiz_save_best_grade($quiz, $userid = null, $attempts = array()) 
         $DB->insert_record('aiquiz_grades', $grade);
     }
 
-    quiz_update_grades($quiz, $userid);
+    assignquiz_update_grades($quiz, $userid);
 }
 function assignquiz_has_feedback($quiz) {
     global $DB;
@@ -1103,8 +1103,24 @@ function ai_feedback_generation($course_module_id)
     $dotenv->safeLoad();
 
     global $DB, $CFG;
-    $filepath = $DB->get_field('assignquiz', 'generativefilename', ['id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])]);
+    $filepathbase = $DB->get_field('assignquiz', 'generativefilename', ['id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])]);
+    $filepath = $CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase;
 
+    if(!file_exists($filepath)) {
+        $tempDir = get_temp_directory($CFG);
+        $course_module = $DB->get_record('course_modules', ['id' => $course_module_id]);
+        $course_module->section = $DB->get_field('course_sections', 'section', ['id' => $course_module->section]);
+        $pdfFiles = process_pdfs($tempDir, $course_module);
+        if (count($pdfFiles) === 1) {
+            $filepath = $pdfFiles[0];
+        } else {
+            $filepath = merge_pdfs($pdfFiles, $tempDir);
+        }
+        $filepath = str_replace('\\', '/', $filepath);
+        $filepathbase = explode('assignquiz_pdf/', $filepath)[1];
+        $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $course_module->id]);
+        $DB->set_field('assignquiz', 'generativefilename', $filepathbase, ['id' => $cm_instance]);
+    }
     $context_id = $DB->get_field('context', 'id', ['instanceid' => $course_module_id]);
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context_id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
@@ -1120,7 +1136,7 @@ function ai_feedback_generation($course_module_id)
     $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
 
-    $response = call_api_feedback(file_get_contents($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepath), $filtered_question_attempt_info);
+    $response = call_api_feedback(file_get_contents($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase), $filtered_question_attempt_info);
 
     $aiquiz_feedback = new stdClass();
     $aiquiz_feedback->quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
@@ -1130,7 +1146,7 @@ function ai_feedback_generation($course_module_id)
 
     $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
 
-    unlink($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepath);
+    unlink($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase);
 }
 function remove_answer_info($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
@@ -1178,30 +1194,29 @@ function upload_file_to_openai_feedback($client, $fileContent) {
 }
 function openai_create_assistant_feedback($client, $json_text){
     $response = $client->assistants()->create([
-        'instructions' => '  Eres un generador de retroalimentación para cuestionarios. El archivo JSON que recibirás contiene una lista de preguntas respondidas erróneamente. Cada entrada del JSON incluye:
+        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. El archivo JSON que recibirás contiene una lista de preguntas respondidas erróneamente. Cada entrada del JSON incluye:
         - **questionsummary**: Resumen de la pregunta.
         - **rightanswer**: Respuesta correcta.
-        - **responsesummary**: Respuesta seleccionada por el usuario.
+        - **responsesummary**: Respuesta seleccionada por el usuario. Si responsesummary es null, significa que el usuario no respondió esa pregunta.
 
         Si el JSON está vacío o no recibes ningún JSON, eso significa que no hay preguntas erróneas, por lo que no es necesario generar retroalimentación.
 
         Junto al JSON, también recibirás un archivo que contiene el temario sobre el cual se basan las preguntas.
 
         Tu tarea es la siguiente:
-        Evaluarás cada pregunta en relación con el temario del archivo y generarás una breve retroalimentación. Deberás identificar qué temas requieren repaso basándote en las respuestas incorrectas del usuario. La retroalimentación debe ser clara y concisa, mencionando los temas específicos que se deben repasar.
+        Evaluarás cada pregunta en relación con el temario y generarás una breve retroalimentación. Deberás identificar qué temas requieren repaso basándote en las respuestas incorrectas y en las preguntas no respondidas. La retroalimentación debe ser clara y concisa, mencionando los temas específicos que se deben repasar.
 
         Además, debes empezar la retroalimentación con un mensaje de ánimo o congratulación según el número de preguntas erróneas:
         - Si el usuario ha fallado entre 0 y 2 preguntas, usa un mensaje de congratulación como: "¡Buen trabajo!"
         - Si el usuario ha fallado entre 3 y 5 preguntas, usa un mensaje como: "¡Buen intento!"
         - Si el usuario ha fallado entre 6 y 10 preguntas, usa un mensaje de ánimo como: "¡Ánimo, en el siguiente intento lo harás mejor!"
 
-        El texto debe ser breve (<=75 palabras) y se debe presentar en un solo párrafo sin enumerar preguntas. Asegúrate de mencionar los temas más relevantes para el repaso, basados en las preguntas incorrectas.
+        El texto debe ser breve (<=65 palabras) y se debe presentar en un solo párrafo sin enumerar preguntas. Asegúrate de mencionar los temas más relevantes para el repaso, basados en las preguntas incorrectas y no respondidas.
 
         Ejemplo de retroalimentación:
-        "Deberías repasar los temas 1, 2 y 3, especialmente las partes que hablan de [lo que se ha fallado]."
-
-        Este es el JSON:
-        ' . $json_text,
+        "Deberías repasar los temas 1, 2 y 3, especialmente las partes que hablan de lo que se falló o no se respondió."
+        
+        Este es el JSON: ' . $json_text,
         'name' => 'Generador de Retroalimentación de Cuestionarios',
         'tools' => [
             [
@@ -1254,4 +1269,58 @@ function openai_create_thread_feedback($client, $file_id, $assistant_id){
     } else {
         throw new Exception('Run did not complete in the expected time.');
     }
+}
+function assignquiz_delete_attempt($attempt, $quiz) {
+    global $DB;
+    if (is_numeric($attempt)) {
+        if (!$attempt = $DB->get_record('aiquiz_attempts', array('id' => $attempt))) {
+            return;
+        }
+    }
+
+    if ($attempt->quiz != $quiz->id) {
+        debugging("Trying to delete attempt $attempt->id which belongs to quiz $attempt->quiz " .
+            "but was passed quiz $quiz->id.");
+        return;
+    }
+
+    if (!isset($quiz->cmid)) {
+        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+        $quiz->cmid = $cm->id;
+    }
+
+    question_engine::delete_questions_usage_by_activity($attempt->uniqueid);
+    $DB->delete_records('aiquiz_attempts', array('id' => $attempt->id));
+
+    // Log the deletion of the attempt if not a preview.
+    if (!$attempt->preview) {
+        $params = array(
+            'objectid' => $attempt->id,
+            'relateduserid' => $attempt->userid,
+            'context' => context_module::instance($quiz->cmid),
+            'other' => array(
+                'quizid' => $quiz->id
+            )
+        );
+        $event = \mod_quiz\event\attempt_deleted::create($params);
+        $event->add_record_snapshot('aiquiz_attempts', $attempt);
+        $event->trigger();
+
+        $callbackclasses = \core_component::get_plugin_list_with_class('quiz', 'quiz_attempt_deleted');
+        foreach ($callbackclasses as $callbackclass) {
+            component_class_callback($callbackclass, 'callback', [$quiz->id]);
+        }
+    }
+
+    // Search quiz_attempts for other instances by this user.
+    // If none, then delete record for this quiz, this user from quiz_grades
+    // else recalculate best grade.
+    $userid = $attempt->userid;
+    if (!$DB->record_exists('aiquiz_attempts', array('userid' => $userid, 'quiz' => $quiz->id))) {
+        $DB->delete_records('aiquiz_grades', array('userid' => $userid, 'quiz' => $quiz->id));
+    } else {
+        assignquiz_save_best_grade($quiz, $userid);
+    }
+
+    assignquiz_update_grades($quiz, $userid);
 }

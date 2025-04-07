@@ -628,7 +628,7 @@ function process_pdfs($tempDir, $data)
     $fs = get_file_storage();
     $pdfFiles = [];
     $files = get_pdfs_in_section($data);
-
+    error_log("Files: " . print_r($files, true));
     foreach ($files as $pdf) {
         $pdfFile = $fs->get_file($pdf->contextid, $pdf->component, $pdf->filearea, $pdf->itemid, $pdf->filepath, $pdf->filename);
         $file_content = $pdfFile->get_content();
@@ -815,11 +815,10 @@ function add_question_to_question_bank($response, $question_category_id, $data) 
 function get_pdfs_in_section($data) {
     global $DB;
 
-    $files_in_section = [];
     $resource_id = $DB->get_field('modules', 'id', ['name' => 'resource']);
 
-    // Obtener el ID de la sección
     $section_id = $DB->get_field('course_sections', 'id', ['section' => $data->section, 'course' => $data->course]);
+
 
     if (!$section_id) {
         return [];
@@ -1000,4 +999,51 @@ function openai_create_thread($client, $file_id, $assistant_id){
     } else {
         throw new Exception('Run did not complete in the expected time.');
     }
+}
+
+function assignquiz_update_grades($quiz, $userid = 0, $nullifnone = true) {
+    global $CFG, $DB;
+    require_once($CFG->libdir . '/gradelib.php');
+
+    if ($quiz->grade == 0) {
+        assignquiz_grade_item_update($quiz);
+
+    } else if ($grades = assignquiz_get_user_grades($quiz, $userid)) {
+        assignquiz_grade_item_update($quiz, $grades);
+
+    } else if ($userid && $nullifnone) {
+        $grade = new stdClass();
+        $grade->userid = $userid;
+        $grade->rawgrade = null;
+        assignquiz_grade_item_update($quiz, $grade);
+
+    } else {
+        assignquiz_grade_item_update($quiz);
+    }
+}
+
+function assignquiz_get_user_grades($quiz, $userid = 0) {
+    global $CFG, $DB;
+
+    $params = array($quiz->id);
+    $usertest = '';
+    if ($userid) {
+        $params[] = $userid;
+        $usertest = 'AND u.id = ?';
+    }
+    return $DB->get_records_sql("
+            SELECT
+                u.id,
+                u.id AS userid,
+                qg.grade AS rawgrade,
+                qg.timemodified AS dategraded,
+                MAX(qa.timefinish) AS datesubmitted
+
+            FROM {user} u
+            JOIN {aiquiz_grades} qg ON u.id = qg.userid
+            JOIN {aiquiz_attempts} qa ON qa.quiz = qg.quiz AND qa.userid = u.id
+
+            WHERE qg.quiz = ?
+            $usertest
+            GROUP BY u.id, qg.grade, qg.timemodified", $params);
 }
