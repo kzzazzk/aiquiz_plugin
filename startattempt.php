@@ -70,25 +70,7 @@ $accessmanager = $quizobj->get_access_manager($timenow);
 // Validate permissions for creating a new attempt and start a new preview attempt if required.
 list($currentattemptid, $attemptnumber, $lastattempt, $messages, $page) =
     assignquiz_validate_new_attempt($quizobj, $accessmanager, $forcenew, $page, true);
-/// HASTA AQUI
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
+
 // Check access.
 if (!$quizobj->is_preview_user() && $messages) {
     $output = $PAGE->get_renderer('mod_assignquiz');

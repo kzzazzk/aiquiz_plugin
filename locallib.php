@@ -584,8 +584,6 @@ function assignquiz_create_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt
     }
 
     $quiz = $quizobj->get_quiz();
-    // ISSUE WITH SUMGRADES NOT BEING UPDATED AFTER ADDING QUESTIONS
-//    $quiz->sumgrades = 1;
     if ($quiz->sumgrades < 0.000005 && $quiz->grade > 0.000005) {
         throw new moodle_exception('cannotstartgradesmismatch', 'quiz',
             new moodle_url('/mod/assignquiz/view.php', array('q' => $quiz->id)),
@@ -1099,10 +1097,14 @@ function assignquiz_feedback_record_for_grade($grade, $quiz) {
     return $feedback;
 }
 
-function db_test($course_module_id)
+function ai_feedback_generation($course_module_id)
 {
-    global $DB;
-    $filepath = $DB->get_field('assignquiz', 'generativefilename', ['instanceid' => $course_module_id]);
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->safeLoad();
+
+    global $DB, $CFG;
+    $filepath = $DB->get_field('assignquiz', 'generativefilename', ['id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])]);
+
     $context_id = $DB->get_field('context', 'id', ['instanceid' => $course_module_id]);
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context_id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
@@ -1115,12 +1117,21 @@ function db_test($course_module_id)
     foreach ($filtered_question_attempt_info as $question_attempt) {
             $question_attempt->questionsummary = remove_answer_info($question_attempt->questionsummary);
     }
-    error_log('question_attempt_info: ' . print_r($filtered_question_attempt_info, true));
-    error_log('filepath: ' . print_r($filepath, true));
-    //unlink the last file from the moodledata don't forget
+    $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
+
+    $response = call_api_feedback(file_get_contents($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepath), $filtered_question_attempt_info);
+
+    $aiquiz_feedback = new stdClass();
+    $aiquiz_feedback->quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
+    $aiquiz_feedback->feedbacktext = $response;
+    $aiquiz_feedback->feedbacktextformat = FORMAT_HTML;
+    $aiquiz_feedback->maxgrade = 10;
+
+    $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
+
+    unlink($CFG->dataroot . '\temp\assignquiz_pdf' . $filepath);
 }
-
-
 function remove_answer_info($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
     $pos = strpos($question_summary, ':');
@@ -1130,4 +1141,117 @@ function remove_answer_info($question_summary) {
     }
 
     return $question_summary; // no colon found, return full string
+}
+
+function call_api_feedback($file, $json_text)
+{
+    $yourApiKey = $_ENV['OPENAI_API_KEY'];
+    $client = OpenAI::client($yourApiKey);
+    $file_upload_response = upload_file_to_openai_feedback($client, $file);
+    $create_assistant_response = openai_create_assistant_feedback($client, $json_text);
+    $create_thread_response = openai_create_thread_feedback($client, $file_upload_response->id, $create_assistant_response->id);
+    return $create_thread_response;
+}
+function upload_file_to_openai_feedback($client, $fileContent) {
+    // Create a temporary file with a proper PDF extension.
+    $tempFilename = tempnam(sys_get_temp_dir(), 'moodle_pdf_');
+    $pdfFilename = $tempFilename . '.pdf';
+    rename($tempFilename, $pdfFilename);
+
+    // Write the PDF content.
+    file_put_contents($pdfFilename, $fileContent);
+
+    // Open the file as a resource.
+    $fileResource = fopen($pdfFilename, 'r');
+
+    // Upload the file using the file resource.
+    $response = $client->files()->upload([
+        'purpose' => 'assistants',
+        'file'    => $fileResource,
+    ]);
+
+
+    unlink($pdfFilename);
+
+    return $response;
+
+}
+function openai_create_assistant_feedback($client, $json_text){
+    $response = $client->assistants()->create([
+        'instructions' => '  Eres un generador de retroalimentación para cuestionarios. El archivo JSON que recibirás contiene una lista de preguntas respondidas erróneamente. Cada entrada del JSON incluye:
+        - **questionsummary**: Resumen de la pregunta.
+        - **rightanswer**: Respuesta correcta.
+        - **responsesummary**: Respuesta seleccionada por el usuario.
+
+        Si el JSON está vacío o no recibes ningún JSON, eso significa que no hay preguntas erróneas, por lo que no es necesario generar retroalimentación.
+
+        Junto al JSON, también recibirás un archivo que contiene el temario sobre el cual se basan las preguntas.
+
+        Tu tarea es la siguiente:
+        Evaluarás cada pregunta en relación con el temario del archivo y generarás una breve retroalimentación. Deberás identificar qué temas requieren repaso basándote en las respuestas incorrectas del usuario. La retroalimentación debe ser clara y concisa, mencionando los temas específicos que se deben repasar.
+
+        Además, debes empezar la retroalimentación con un mensaje de ánimo o congratulación según el número de preguntas erróneas:
+        - Si el usuario ha fallado entre 0 y 2 preguntas, usa un mensaje de congratulación como: "¡Buen trabajo!"
+        - Si el usuario ha fallado entre 3 y 5 preguntas, usa un mensaje como: "¡Buen intento!"
+        - Si el usuario ha fallado entre 6 y 10 preguntas, usa un mensaje de ánimo como: "¡Ánimo, en el siguiente intento lo harás mejor!"
+
+        El texto debe ser breve (<=75 palabras) y se debe presentar en un solo párrafo sin enumerar preguntas. Asegúrate de mencionar los temas más relevantes para el repaso, basados en las preguntas incorrectas.
+
+        Ejemplo de retroalimentación:
+        "Deberías repasar los temas 1, 2 y 3, especialmente las partes que hablan de [lo que se ha fallado]."
+
+        Este es el JSON:
+        ' . $json_text,
+        'name' => 'Generador de Retroalimentación de Cuestionarios',
+        'tools' => [
+            [
+                'type' => 'file_search',
+            ],
+        ],
+        'model' => "gpt-4o-mini",
+    ]);
+    return $response;
+}
+function openai_create_thread_feedback($client, $file_id, $assistant_id){
+    $thread_create_response = $client->threads()->create([]);
+
+    $client->threads()->messages()->create($thread_create_response->id, [
+        'role' => 'assistant',
+        'content' => 'Genera retroalimentación para un test de 10 preguntas basándote en el archivo adjuntado que contiene todo el temario y las preguntas en formato json adjuntadas.',
+        'attachments' => [
+            [
+                'file_id' => $file_id,
+                'tools' => [
+                    [
+                        'type' => 'file_search',
+                    ],
+                ],
+            ],
+        ],
+    ]);
+    $response = $client->threads()->runs()->create(
+        threadId: $thread_create_response->id,
+        parameters: [
+            'assistant_id' => $assistant_id,
+        ],
+    );
+
+    $maxAttempts = 100; // or however many times you want to check
+    $attempt = 0;
+
+    do {
+        sleep(1); // wait for a second (adjust as needed)
+        $runStatus = $response = $client->threads()->runs()->retrieve(
+            threadId: $thread_create_response->id,
+            runId: $response->id,
+        );
+        $attempt++;
+    } while ($runStatus->status !== 'completed' && $attempt < $maxAttempts);
+
+    if ($runStatus->status === 'completed') {
+        $response = $client->threads()->messages()->list($thread_create_response->id);
+        return $response->data[0]->content[0]->text->value;
+    } else {
+        throw new Exception('Run did not complete in the expected time.');
+    }
 }

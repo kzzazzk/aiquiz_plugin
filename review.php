@@ -30,6 +30,7 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
+require_once($CFG->dirroot.'/vendor/autoload.php');
 
 $attemptid = required_param('attempt', PARAM_INT);
 $page      = optional_param('page', 0, PARAM_INT);
@@ -256,7 +257,6 @@ if ($showall) {
 }
 
 $output = $PAGE->get_renderer('mod_assignquiz');
-db_test($cmid);
 // Arrange for the navigation to be displayed.
 $navbc = $attemptobj->assignquiz_get_navigation_panel($output, 'assignquiz_attempt_nav_panel', $page, $showall);
 $regions = $PAGE->blocks->get_regions();

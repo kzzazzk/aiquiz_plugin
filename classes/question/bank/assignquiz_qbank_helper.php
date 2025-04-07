@@ -105,7 +105,6 @@ class assignquiz_qbank_helper extends qbank_helper
 
               ORDER BY slot.slot
               ", $params);
-
         // Unpack the random info from question_set_reference.
         foreach ($slotdata as $slot) {
             // Ensure the right id is the id.

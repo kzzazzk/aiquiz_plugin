@@ -128,25 +128,6 @@ function assignquiz_after_add_or_update($assignquiz) {
     $DB->set_field('course_modules', 'instance', $assignquiz->id, array('id'=>$cmid));
     $context = context_module::instance($cmid);
 
-    // Save the feedback.
-//    $DB->delete_records('aiquiz_feedback', array('quizid' => $assignquiz->id));
-//
-//    for ($i = 0; $i <= $assignquiz->feedbackboundarycount; $i++) {
-//        $feedback = new stdClass();
-//        $feedback->quizid = $assignquiz->id;
-//        $feedback->feedbacktext = $assignquiz->feedbacktext[$i]['text'];
-//        $feedback->feedbacktextformat = $assignquiz->feedbacktext[$i]['format'];
-//        $feedback->mingrade = $assignquiz->feedbackboundaries[$i];
-//        $feedback->maxgrade = $assignquiz->feedbackboundaries[$i - 1];
-//        $feedback->id = $DB->insert_record('aiquiz_feedback', $feedback);
-//        $feedbacktext = file_save_draft_area_files((int)$assignquiz->feedbacktext[$i]['itemid'],
-//            $context->id, 'mod_assignquiz', 'feedback', $feedback->id,
-//            array('subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0),
-//            $assignquiz->feedbacktext[$i]['text']);
-////        $DB->set_field('aiquiz_feedback', 'feedbacktext', $feedbacktext,
-////            array('id' => $feedback->id));
-//    }
-
     // Store any settings belonging to the access rules.
     aiquiz_access_manager::save_settings($assignquiz);
 
@@ -418,7 +399,7 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode)
     }
     function mod_assignquiz_output_fragment_add_random_question_form($args) {
         global $CFG;
-        require_once($CFG->dirroot . '/mod/assignquiz/addrandomform.php');
+        require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
 
         $contexts = new \core_question\local\bank\question_edit_contexts($args['context']);
         $formoptions = [
@@ -628,7 +609,7 @@ function exec_ai($data)
     if ($mergedPdfTempFilename) {
         $response = process_merged_pdf($mergedPdfTempFilename);
         $formattedResponse = filter_text_format($response);
-        add_question_to_question_bank($formattedResponse, $question_category_id);
+        add_question_to_question_bank($formattedResponse, $question_category_id, $data);
     } else {
         error_log("Error processing PDFs.");
     }
@@ -739,10 +720,10 @@ function mergePDFs(array $files, string $outputFile): bool
         return false;
     }
 }
-function add_question_to_question_bank($response, $question_category_id) {
+function add_question_to_question_bank($response, $question_category_id, $data) {
 
     global $DB, $USER;
-
+    $i = 1;
     foreach ($response as $question_data) {
         $question = new stdClass();
         $question->name = $question_data['question_name'];
@@ -792,22 +773,33 @@ function add_question_to_question_bank($response, $question_category_id) {
                 'format' => FORMAT_HTML,
             ];
             // Set fraction: 1.0 for correct answer, -1.0 or 0 for incorrect.
-            $form->fraction[$index] = ($index == $question_data['correct_answer_index']) ? 1.0 : -1.0;
+            $form->fraction[$index] = ($index == $question_data['correct_answer_index']) ? 1.0 : 0;
         }
 
         // Now save the question. The save_question() call will use $form->answer etc.
         $question = $qtype->save_question($question, $form);
-        // Create the question bank entry.
-        $question_bank_entry = new stdClass();
-        $question_bank_entry->questioncategoryid = $question_category_id;
-        $question_bank_entry->ownerid = $USER->id;
-        $question_bank_entry_id = $DB->insert_record('question_bank_entries', $question_bank_entry);
-        $question_version = new stdClass();
-        $question_version->questionbankentryid = $question_bank_entry_id;
-        $question_version->version = 1;
-        $question_version->questionid = $question->id;
-        $question_version->status = 'ready';
 
+        $quiz_slot = new stdClass();
+        $quiz_slot->slot = $i;
+        $i++;
+        $quiz_slot->quizid = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
+        $quiz_slot->page = 1;
+        $quiz_slot->maxmark = 1;
+
+        $slot_id = $DB->insert_record('aiquiz_slots', $quiz_slot);
+
+
+        // Create question reference.
+        $question_reference = new stdClass();
+        $question_reference->usingcontextid = context_module::instance($data->coursemodule)->id;
+        $question_reference->component = 'mod_assignquiz';
+        $question_reference->questionarea = 'slot';
+        $question_reference->itemid =  $slot_id; // Usually the question id or slot id
+        $question_reference->questionbankentryid = get_question_bank_entry($question->id)->id;
+
+        $DB->insert_record('question_references', $question_reference);
+
+        assignquiz_update_sumgrades($data);
 
     }
 }
@@ -818,7 +810,7 @@ function get_pdfs_in_section($data) {
     $resource_id = $DB->get_field('modules', 'id', ['name' => 'resource']);
 
     // Obtener el ID de la sección
-    $section_id = $DB->get_field('course_sections', 'id', ['section' => $data->section]);
+    $section_id = $DB->get_field('course_sections', 'id', ['section' => $data->section, 'course' => $data->course]);
 
     if (!$section_id) {
         return [];
@@ -930,7 +922,7 @@ function openai_create_assistant($client){
             Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
 
             Reglas estrictas:
-            - No incluyas pistas en la redacción de las preguntas.
+            - No incluyas pistas en la refacción de las preguntas.
             - Cubre todo el documento con las preguntas, no solo fragmentos.
             - Varía la posición de la respuesta correcta para evitar patrones predecibles.
             - Usa español, salvo términos sin traducción en el texto original.
