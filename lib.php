@@ -735,23 +735,32 @@ function add_question_to_question_bank($response, $question_category_id, $data) 
         $question->category = $question_category_id;
         $question->createdby = $USER->id;
         $question->modifiedby = $USER->id;
-        $question->generalfeedbackformat = FORMAT_HTML;
-
+        $question->correctfeedback = [
+            'text'   => '',
+            'format' => FORMAT_HTML,  // for example, FORMAT_HTML
+        ];
+        $question->partiallycorrectfeedback = [
+            'text'   => '',
+            'format' => FORMAT_HTML,  // for example, FORMAT_HTML
+        ];
+        $question->incorrectfeedback = [
+            'text'   => '',
+            'format' => FORMAT_HTML,  // for example, FORMAT_HTML
+        ];
         // Prepare the form object with required parameters.
         $qtype = question_bank::get_qtype('multichoice');
         $form = new stdClass();
         $form->category = $question->category;
+        $form->name =  $question->name;
         $form->questiontext = $question->questiontext;
         $form->penalty = 0.3333333;
         $form->single = 1;
-        $form->correctfeedback['format'] = FORMAT_HTML;
-        $form->incorrectfeedback['format'] = FORMAT_HTML;
-        $form->partiallycorrectfeedback ['format'] = FORMAT_HTML;
         $form->answernumbering = 'abc';
         $form->shuffleanswers = 1;
-        $form->correctfeedbackformat = 1;
-        $form->partiallycorrectfeedbackformat = 1;
-        $form->incorrectfeedbackformat = 1;
+        $form->partiallycorrectfeedback = $question->partiallycorrectfeedback;
+        $form->correctfeedback = $question->correctfeedback;
+        $form->incorrectfeedback = $question->incorrectfeedback;
+
 
         // Populate answer choices, feedback and fractions.
         $form->answer = array();

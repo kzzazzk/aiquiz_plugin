@@ -49,10 +49,7 @@ $cmid          = optional_param('cmid', null, PARAM_INT);
 
 $attemptobj = assignquiz_create_attempt_handling_errors($attemptid, $cmid);
 
-// Set $nexturl now.
-error_log('$next: ' . print_r($next, true));
-error_log('$previous: ' . print_r($previous, true));
-error_log('$thispage: ' . print_r($thispage, true));
+
 if ($next) {
     $page = $nextpage;
 } else if ($previous && $thispage > 0) {
@@ -60,7 +57,6 @@ if ($next) {
 } else {
     $page = $thispage;
 }
-error_log('$page: ' . print_r($page, true));
 if ($page == -1) {
     $nexturl = $attemptobj->summary_url();
 } else {
@@ -69,7 +65,6 @@ if ($page == -1) {
         $nexturl->param('scrollpos', $scrollpos);
     }
 }
-error_log('$nexturl: ' . print_r($nexturl, true));
 
 // Check login.
 require_login($attemptobj->get_course(), false, $attemptobj->get_cm());

@@ -1130,7 +1130,7 @@ function ai_feedback_generation($course_module_id)
 
     $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
 
-    unlink($CFG->dataroot . '\temp\assignquiz_pdf' . $filepath);
+    unlink($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepath);
 }
 function remove_answer_info($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
