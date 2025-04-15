@@ -147,7 +147,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
         $slot->slot = $lastslotbefore + 1;
         $slot->page = min($page, $maxpage + 1);
 
-        quiz_update_section_firstslots($quiz->id, 1, max($lastslotbefore, 1));
+        assignquiz_update_section_firstslots($quiz->id, 1, max($lastslotbefore, 1));
 
     } else {
         $lastslot = end($slots);
@@ -283,7 +283,7 @@ function assignquiz_set_grade($newgrade, $quiz) {
     if ($oldgrade < 1) {
         // If the old grade was zero, we cannot rescale, we have to recompute.
         // We also recompute if the old grade was too small to avoid underflow problems.
-        quiz_update_all_final_grades($quiz);
+        assignquiz_update_all_final_grades($quiz);
 
     } else {
         // We can rescale the grades efficiently.
@@ -1097,32 +1097,25 @@ function assignquiz_feedback_record_for_grade($grade, $quiz) {
     return $feedback;
 }
 
-function ai_feedback_generation($course_module_id)
-{
+function ai_feedback_generation($course_module_id) {
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
     $dotenv->safeLoad();
-
     global $DB, $CFG;
-    $filepathbase = $DB->get_field('assignquiz', 'generativefilename', ['id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])]);
-    $filepath = $CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase;
+    // Retrieve the stored persistent filename from the DB.
+    $persistentfilename = $DB->get_field('assignquiz', 'generativefilename', [
+        'id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])
+    ]);
 
-    if(!file_exists($filepath)) {
-        $tempDir = get_temp_directory($CFG);
-        $course_module = $DB->get_record('course_modules', ['id' => $course_module_id]);
-        $course_module->section = $DB->get_field('course_sections', 'section', ['id' => $course_module->section]);
-        $pdfFiles = process_pdfs($tempDir, $course_module);
-        if (count($pdfFiles) === 1) {
-            $filepath = $pdfFiles[0];
-        } else {
-            $filepath = merge_pdfs($pdfFiles, $tempDir);
-        }
-        $filepath = str_replace('\\', '/', $filepath);
-        $filepathbase = explode('assignquiz_pdf/', $filepath)[1];
-        $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $course_module->id]);
-        $DB->set_field('assignquiz', 'generativefilename', $filepathbase, ['id' => $cm_instance]);
-    }
-    $context_id = $DB->get_field('context', 'id', ['instanceid' => $course_module_id]);
-    $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context_id]);
+    $fs = get_file_storage();
+    $context = context_module::instance($course_module_id);
+    // Directly retrieve the file from Moodle's File API.
+    $storedfile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $persistentfilename);
+
+    // Fetch the file content via the File API.
+    $file_content = $storedfile->get_content();
+
+    // Prepare question attempt info for feedback generation.
+    $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context->id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
     $question_attempt_info = array_values($question_attempt_info);
     foreach ($question_attempt_info as $question_attempt) {
@@ -1131,23 +1124,40 @@ function ai_feedback_generation($course_module_id)
         }
     }
     foreach ($filtered_question_attempt_info as $question_attempt) {
-            $question_attempt->questionsummary = remove_answer_info($question_attempt->questionsummary);
+        $question_attempt->questionsummary = remove_answer_info($question_attempt->questionsummary);
     }
+
+    // Add the length of the JSON object to the data.
+    $filtered_question_attempt_info_length = $filtered_question_attempt_info == null?  0 : count($filtered_question_attempt_info);
+
+    // Add the length field to the data.
+    $filtered_question_attempt_info[] = ['totalsum' => $filtered_question_attempt_info_length];
+
     $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
 
-    $response = call_api_feedback(file_get_contents($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase), $filtered_question_attempt_info);
+    error_log("Filtered question attempt info: " . $filtered_question_attempt_info);
 
+    // Call the API using the file content and question attempt info.
+    $response = generate_feedback($file_content, $filtered_question_attempt_info);
+
+    // Store the generated feedback.
     $aiquiz_feedback = new stdClass();
     $aiquiz_feedback->quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
     $aiquiz_feedback->feedbacktext = $response;
     $aiquiz_feedback->feedbacktextformat = FORMAT_HTML;
-    $aiquiz_feedback->maxgrade = 10;
+    $aiquiz_feedback->maxgrade = 11;
 
-    $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
+    error_log("Feedback generated: " . $aiquiz_feedback->feedbacktext);
 
-    unlink($CFG->dataroot . '\temp\assignquiz_pdf\\' . $filepathbase);
+    $existing_feedback = $DB->get_record('aiquiz_feedback', array('quizid' => $DB->get_field('course_modules','instance', ['id' => $course_module_id])));
+    if ($existing_feedback) {
+        $DB->set_field('aiquiz_feedback', 'feedbacktext', $aiquiz_feedback->feedbacktext, array('quizid' => $aiquiz_feedback->quizid));
+    } else {
+        $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
+    }
 }
+
 function remove_answer_info($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
     $pos = strpos($question_summary, ':');
@@ -1159,7 +1169,7 @@ function remove_answer_info($question_summary) {
     return $question_summary; // no colon found, return full string
 }
 
-function call_api_feedback($file, $json_text)
+function generate_feedback($file, $json_text)
 {
     $yourApiKey = $_ENV['OPENAI_API_KEY'];
     $client = OpenAI::client($yourApiKey);
@@ -1194,29 +1204,30 @@ function upload_file_to_openai_feedback($client, $fileContent) {
 }
 function openai_create_assistant_feedback($client, $json_text){
     $response = $client->assistants()->create([
-        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. El archivo JSON que recibirás contiene una lista de preguntas respondidas erróneamente. Cada entrada del JSON incluye:
-        - **questionsummary**: Resumen de la pregunta.
-        - **rightanswer**: Respuesta correcta.
-        - **responsesummary**: Respuesta seleccionada por el usuario. Si responsesummary es null, significa que el usuario no respondió esa pregunta.
+        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas y además el parámetro totalsum es equivalente a 0, responde únicamente con "¡Excelente! Sin errores." sin agregar más detalles.
 
-        Si el JSON está vacío o no recibes ningún JSON, eso significa que no hay preguntas erróneas, por lo que no es necesario generar retroalimentación.
+    El JSON recibido contiene la siguiente estructura:
+    - "questionsummary": Resumen de la pregunta.
+    - "rightanswer": Respuesta correcta.
+    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
+    - "totalsum": La suma total de respuestas incorrectas y preguntas no respondidas.
+    
+    Además, se te proporcionará un archivo que contiene el contenido académico relacionado. El objetivo es contar el número de respuestas incorrectas y el número de preguntas no respondidas, luego sumar ambos valores.
 
-        Junto al JSON, también recibirás un archivo que contiene el temario sobre el cual se basan las preguntas.
+    Según la suma total de respuestas incorrectas y preguntas no respondidas, debes generar una retroalimentación usando las siguientes frases:
 
-        Tu tarea es la siguiente:
-        Evaluarás cada pregunta en relación con el temario y generarás una breve retroalimentación. Deberás identificar qué temas requieren repaso basándote en las respuestas incorrectas y en las preguntas no respondidas. La retroalimentación debe ser clara y concisa, mencionando los temas específicos que se deben repasar.
+    - Si la suma total es 0: "¡Excelente! Sin errores."
+    - Si la suma total es entre 1 y 2: "¡Buen trabajo! Muy bien."
+    - Si la suma total es entre 3 y 4: "Buen intento, sigue así."
+    - Si la suma total es entre 5 y 6: "Buen intento, mejora posible."
+    - Si la suma total es entre 7 y 8: "Se puede mejorar aún."
+    - Si la suma total es entre 9 y 10: "Revisión completa sugerida."
 
-        Además, debes empezar la retroalimentación con un mensaje de ánimo o congratulación según el número de preguntas erróneas:
-        - Si el usuario ha fallado entre 0 y 2 preguntas, usa un mensaje de congratulación como: "¡Buen trabajo!"
-        - Si el usuario ha fallado entre 3 y 5 preguntas, usa un mensaje como: "¡Buen intento!"
-        - Si el usuario ha fallado entre 6 y 10 preguntas, usa un mensaje de ánimo como: "¡Ánimo, en el siguiente intento lo harás mejor!"
+    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
 
-        El texto debe ser breve (<=65 palabras) y se debe presentar en un solo párrafo sin enumerar preguntas. Asegúrate de mencionar los temas más relevantes para el repaso, basados en las preguntas incorrectas y no respondidas.
+    Después de la frase general, si existen respuestas incorrectas, proporciona retroalimentación breve sobre los temas que el usuario necesita repasar. Esta retroalimentación debe ser clara y concisa, con un límite de 65 palabras. No uses listas ni formato especial como asteriscos.
 
-        Ejemplo de retroalimentación:
-        "Deberías repasar los temas 1, 2 y 3, especialmente las partes que hablan de lo que se falló o no se respondió."
-        
-        Este es el JSON: ' . $json_text,
+    Este es el JSON: ' . $json_text,
         'name' => 'Generador de Retroalimentación de Cuestionarios',
         'tools' => [
             [
@@ -1225,8 +1236,10 @@ function openai_create_assistant_feedback($client, $json_text){
         ],
         'model' => "gpt-4o-mini",
     ]);
+
     return $response;
 }
+
 function openai_create_thread_feedback($client, $file_id, $assistant_id){
     $thread_create_response = $client->threads()->create([]);
 
@@ -1324,3 +1337,114 @@ function assignquiz_delete_attempt($attempt, $quiz) {
 
     assignquiz_update_grades($quiz, $userid);
 }
+
+function assignquiz_update_open_attempts(array $conditions) {
+    global $DB;
+
+    foreach ($conditions as &$value) {
+        if (!is_array($value)) {
+            $value = array($value);
+        }
+    }
+
+    $params = array();
+    $wheres = array("quiza.state IN ('inprogress', 'overdue')");
+    $iwheres = array("iquiza.state IN ('inprogress', 'overdue')");
+
+    if (isset($conditions['courseid'])) {
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['courseid'], SQL_PARAMS_NAMED, 'cid');
+        $params = array_merge($params, $inparams);
+        $wheres[] = "quiza.quiz IN (SELECT q.id FROM {assignquiz} q WHERE q.course $incond)";
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['courseid'], SQL_PARAMS_NAMED, 'icid');
+        $params = array_merge($params, $inparams);
+        $iwheres[] = "iquiza.quiz IN (SELECT q.id FROM {assignquiz} q WHERE q.course $incond)";
+    }
+
+    if (isset($conditions['userid'])) {
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['userid'], SQL_PARAMS_NAMED, 'uid');
+        $params = array_merge($params, $inparams);
+        $wheres[] = "quiza.userid $incond";
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['userid'], SQL_PARAMS_NAMED, 'iuid');
+        $params = array_merge($params, $inparams);
+        $iwheres[] = "iquiza.userid $incond";
+    }
+
+    if (isset($conditions['quizid'])) {
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['quizid'], SQL_PARAMS_NAMED, 'qid');
+        $params = array_merge($params, $inparams);
+        $wheres[] = "quiza.quiz $incond";
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['quizid'], SQL_PARAMS_NAMED, 'iqid');
+        $params = array_merge($params, $inparams);
+        $iwheres[] = "iquiza.quiz $incond";
+    }
+
+    if (isset($conditions['groupid'])) {
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['groupid'], SQL_PARAMS_NAMED, 'gid');
+        $params = array_merge($params, $inparams);
+        $wheres[] = "quiza.quiz IN (SELECT qo.quiz FROM {quiz_overrides} qo WHERE qo.groupid $incond)";
+        list ($incond, $inparams) = $DB->get_in_or_equal($conditions['groupid'], SQL_PARAMS_NAMED, 'igid');
+        $params = array_merge($params, $inparams);
+        $iwheres[] = "iquiza.quiz IN (SELECT qo.quiz FROM {quiz_overrides} qo WHERE qo.groupid $incond)";
+    }
+
+    // SQL to compute timeclose and timelimit for each attempt:
+    $quizausersql = quiz_get_attempt_usertime_sql(
+        implode("\n                AND ", $iwheres));
+
+    // SQL to compute the new timecheckstate
+    $timecheckstatesql = "
+          CASE WHEN quizauser.usertimelimit = 0 AND quizauser.usertimeclose = 0 THEN NULL
+               WHEN quizauser.usertimelimit = 0 THEN quizauser.usertimeclose
+               WHEN quizauser.usertimeclose = 0 THEN quiza.timestart + quizauser.usertimelimit
+               WHEN quiza.timestart + quizauser.usertimelimit < quizauser.usertimeclose THEN quiza.timestart + quizauser.usertimelimit
+               ELSE quizauser.usertimeclose END +
+          CASE WHEN quiza.state = 'overdue' THEN quiz.graceperiod ELSE 0 END";
+
+    // SQL to select which attempts to process
+    $attemptselect = implode("\n                         AND ", $wheres);
+
+    /*
+     * Each database handles updates with inner joins differently:
+     *  - mysql does not allow a FROM clause
+     *  - postgres and mssql allow FROM but handle table aliases differently
+     *  - oracle requires a subquery
+     *
+     * Different code for each database.
+     */
+
+    $dbfamily = $DB->get_dbfamily();
+    if ($dbfamily == 'mysql') {
+        $updatesql = "UPDATE {aiquiz_attempts} quiza
+                        JOIN {assignquiz} quiz ON quiz.id = quiza.quiz
+                        JOIN ( $quizausersql ) quizauser ON quizauser.id = quiza.id
+                         SET quiza.timecheckstate = $timecheckstatesql
+                       WHERE $attemptselect";
+    } else if ($dbfamily == 'postgres') {
+        $updatesql = "UPDATE {quiz_attempts} quiza
+                         SET timecheckstate = $timecheckstatesql
+                        FROM {assignquiz} quiz, ( $quizausersql ) quizauser
+                       WHERE quiz.id = quiza.quiz
+                         AND quizauser.id = quiza.id
+                         AND $attemptselect";
+    } else if ($dbfamily == 'mssql') {
+        $updatesql = "UPDATE quiza
+                         SET timecheckstate = $timecheckstatesql
+                        FROM {aiquiz_attempts} quiza
+                        JOIN {assignquiz} quiz ON quiz.id = quiza.quiz
+                        JOIN ( $quizausersql ) quizauser ON quizauser.id = quiza.id
+                       WHERE $attemptselect";
+    } else {
+        // oracle, sqlite and others
+        $updatesql = "UPDATE {aiquiz_attempts} quiza
+                         SET timecheckstate = (
+                           SELECT $timecheckstatesql
+                             FROM {assignquiz} quiz, ( $quizausersql ) quizauser
+                            WHERE quiz.id = quiza.quiz
+                              AND quizauser.id = quiza.id
+                         )
+                         WHERE $attemptselect";
+    }
+
+    $DB->execute($updatesql, $params);
+}
+

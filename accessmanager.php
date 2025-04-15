@@ -42,7 +42,15 @@ class aiquiz_access_manager extends quiz_access_manager
 
         return $quiz;
     }
+    public static function assignquiz_validate_settings_form_fields(array $errors,
+                                                         array $data, $files, mod_assignquiz_mod_form $quizform) {
 
+        foreach (self::get_rule_classes() as $rule) {
+            $errors = $rule::validate_settings_form_fields($errors, $data, $files, $quizform);
+        }
+
+        return $errors;
+    }
     public static function load_settings($quizid) {
         global $DB;
 

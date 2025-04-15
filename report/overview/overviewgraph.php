@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,20 +12,20 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * This file renders the quiz overview graph.
  *
- * @package     mod_assignquiz
- * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   quiz_overview
+ * @copyright 2008 Jamie Pratt
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @deprecated since Moodle 3.2
  */
 
-defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_assignquiz';
-$plugin->release = '0.1.0';
-$plugin->version = 2025012411;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_ALPHA;
+require_once(__DIR__ . '/../../../../config.php');
+require_once($CFG->libdir . '/filelib.php');
+
+debugging('This way of generating the chart is deprecated, refer to quiz_overview_report::display().', DEBUG_DEVELOPER);
+send_file_not_found();

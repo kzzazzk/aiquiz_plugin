@@ -270,10 +270,11 @@ class aiquiz_attempt extends quiz_attempt{
             $this->process_going_overdue($timestamp, true);
         } else {
             $DB->update_record('aiquiz_attempts', $this->attempt);
+            error_log('Updated attempt 1 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
         }
 
         if (!$this->is_preview() && $this->attempt->state == self::FINISHED) {
-            quiz_save_best_grade($this->get_quiz(), $this->get_userid());
+            assignquiz_save_best_grade($this->get_quiz(), $this->get_userid());
         }
 
         $transaction->allow_commit();
@@ -288,6 +289,7 @@ class aiquiz_attempt extends quiz_attempt{
         // Instead we'll just fix it up through cron.
         $this->attempt->timecheckstate = $timestamp;
         $DB->update_record('aiquiz_attempts', $this->attempt);
+        error_log('Updated attempt 2 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         $this->fire_state_transition_event('\mod_quiz\event\attempt_becameoverdue', $timestamp, $studentisonline);
 
@@ -472,6 +474,7 @@ class aiquiz_attempt extends quiz_attempt{
         $this->attempt->state = self::ABANDONED;
         $this->attempt->timecheckstate = null;
         $DB->update_record('aiquiz_attempts', $this->attempt);
+        error_log('Updated attempt 3 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         $this->fire_state_transition_event('\mod_quiz\event\attempt_abandoned', $timestamp, $studentisonline);
 
@@ -503,6 +506,7 @@ class aiquiz_attempt extends quiz_attempt{
         }
 
         $DB->update_record('aiquiz_attempts', $this->attempt);
+        error_log('Updated attempt 4 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         if (!$this->is_preview()) {
             assignquiz_save_best_grade($this->get_quiz(), $this->attempt->userid);
