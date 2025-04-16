@@ -281,7 +281,7 @@ function assignquiz_delete_instance($id)
     $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
     $contextid = $DB->get_field('context', 'id', array('instanceid' => $course_module->id), MUST_EXIST);
     $fs->delete_area_files($contextid, 'mod_assignquiz', 'feedbacksource', 0);
-
+    $fs->delete_area_files($contextid, 'mod_assignquiz', 'pdftext', 0);
     if (!$assignquiz) {
         return false;
     }
@@ -618,7 +618,7 @@ function generate_quiz_questions($data) {
         'section' => $data->section,
         'course' => $data->course
     ]);
-    $section_name = $section_name ?? 'Seccion sin nombre definido (nombre por defecto de Moodle)';
+    $section_name = $section_name ?? 'Seccion con nombre por defecto de Moodle';
 
     $existing_category = $DB->get_record('question_categories', [
         'name' => 'Preguntas de la sección: ' . $section_name
@@ -636,14 +636,13 @@ function generate_quiz_questions($data) {
         : merge_pdfs($pdfFiles, $tempDir);
 
     // Persist the merged PDF in Moodle's File API
-    $persistentfilename = store_merged_pdf($mergedPdfTempFilename, $data);
+    $persistentfilename = store_file($mergedPdfTempFilename, 'feedbacksource', $data);
     $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
     $DB->set_field('assignquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
 
     if ($mergedPdfTempFilename && file_exists($mergedPdfTempFilename)) {
         try {
-            //        $texto = Spatie\PdfToText\Pdf::getText($rutaCompleta, getenv('POPPLER_PATH'));
-            $response = process_merged_pdf($mergedPdfTempFilename);
+            $response = call_api($mergedPdfTempFilename, $data);
             $formattedResponse = filter_text_format($response);
             add_question_to_question_bank($formattedResponse, $question_category_id, $data);
         } finally {
@@ -658,8 +657,7 @@ function generate_quiz_questions($data) {
 /**
  * Persists the merged PDF using the Moodle File API.
  */
-function store_merged_pdf($mergedPdfTempFilename, $data) {
-    global $CFG;
+function store_file($mergedPdfTempFilename, $filearea, $data) {
     $fs = get_file_storage();
     // Get the context from the course module.
     $context = context_module::instance($data->coursemodule);
@@ -669,7 +667,7 @@ function store_merged_pdf($mergedPdfTempFilename, $data) {
     $fileinfo = [
         'contextid' => $context->id,
         'component' => 'mod_assignquiz',
-        'filearea'  => 'feedbacksource',
+        'filearea'  => $filearea,
         'itemid'    => 0,
         'filepath'  => '/',
         'filename'  => $filename,
@@ -748,12 +746,7 @@ function create_question_category($data) {
     $question_category->timemodified = time();
     return $DB->insert_record('question_categories', $question_category);
 }
-function process_merged_pdf($mergedPdfTempFilename)
-{
-    $file_content = file_get_contents($mergedPdfTempFilename);
-    $response = call_api($file_content);
-    return $response;
-}
+
 function mergePDFs(array $files, string $outputFile): bool
 {
     try {
@@ -959,89 +952,28 @@ function filter_text_format($text) {
     // Return the questions list as a pretty-printed JSON string with unescaped Unicode characters.
     return $questions_list;
 }
-function call_api($file)
+function call_api($filepath, $data)
 {
+    global $CFG;
     $yourApiKey = $_ENV['OPENAI_API_KEY'];
     $client = OpenAI::client($yourApiKey);
-    $file_upload_response = upload_file_to_openai($client, $file);
-    $create_assistant_response = openai_create_assistant($client);
-    $create_thread_response = openai_create_thread($client, $file_upload_response->id, $create_assistant_response->id);
+    $pdf_text = Spatie\PdfToText\Pdf::getText($filepath, getenv('POPPLER_PATH'));
+    $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
+    file_put_contents($tempFile, "Hello from temp file");
+    store_file($tempFile, 'pdftext', $data);
+    unlink($tempFile);
+    $assistant_id = get_config('mod_assignquiz', 'quiz_gen_assistant_id');
+    $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id);
     return $create_thread_response;
 }
-function upload_file_to_openai($client, $fileContent) {
-    // Create a temporary file with a proper PDF extension.
-    $tempFilename = tempnam(sys_get_temp_dir(), 'moodle_pdf_');
-    $pdfFilename = $tempFilename . '.pdf';
-    rename($tempFilename, $pdfFilename);
-
-    // Write the PDF content.
-    file_put_contents($pdfFilename, $fileContent);
-
-    // Open the file as a resource.
-    $fileResource = fopen($pdfFilename, 'r');
-
-    // Upload the file using the file resource.
-    $response = $client->files()->upload([
-        'purpose' => 'assistants',
-        'file'    => $fileResource,
-    ]);
 
 
-    unlink($pdfFilename);
-
-    return $response;
-}
-function openai_create_assistant($client){
-    $response = $client->assistants()->create([
-        'instructions' => 'Eres un generador de preguntas de opción múltiple en español basadas en documentos PDF.
-            Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
-
-            Reglas estrictas:
-            - No incluyas pistas en la redacción de las preguntas.
-            - Cubre todo el documento con las preguntas de forma proporcional, no solo fragmentos.
-            - Evita hacer múltiples preguntas sobre el mismo contenido específico; prioriza la diversidad temática en las preguntas.
-            - Varía la posición de la respuesta correcta para evitar patrones predecibles.
-            - Usa español, salvo términos sin traducción en el texto original.
-            - No preguntes sobre ubicaciones (página/sección) dentro del documento.
-            - Evita preguntas de definición directa; prioriza preguntas conceptuales y aplicadas.
-            - No formules preguntas cuya respuesta se mencione directamente en el enunciado.
-            - Si no es posible generar 10 preguntas, proporciona tantas como sea posible siguiendo el mismo formato.
-
-            Formato de salida:
-                [Número]. Pregunta: [Texto de la pregunta]
-                Opciones:
-                A. [Opción 1]
-                B. [Opción 2]
-                C. [Opción 3]
-                D. [Opción 4]
-                Respuesta correcta: [Letra]',
-        'name' => 'Moodle PDF to Quiz Generator',
-        'tools' => [
-            [
-                'type' => 'file_search',
-            ],
-        ],
-        'model' => "gpt-4o-mini",
-    ]);
-    return $response;
-}
-
-function openai_create_thread($client, $file_id, $assistant_id){
+function openai_create_thread($client, $text, $assistant_id){
     $thread_create_response = $client->threads()->create([]);
 
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera 10 preguntas para un cuestionario basándote en el documento adjuntado, que estará formado de una fusión de varios pdfs en uno solo.',
-        'attachments' => [
-            [
-                'file_id' => $file_id,
-                'tools' => [
-                    [
-                        'type' => 'file_search',
-                    ],
-                ],
-            ],
-        ],
+        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:'. '\n'. $text,
     ]);
     $response = $client->threads()->runs()->create(
         threadId: $thread_create_response->id,

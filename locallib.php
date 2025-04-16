@@ -1173,71 +1173,12 @@ function generate_feedback($file, $json_text)
 {
     $yourApiKey = $_ENV['OPENAI_API_KEY'];
     $client = OpenAI::client($yourApiKey);
-    $file_upload_response = upload_file_to_openai_feedback($client, $file);
-    $create_assistant_response = openai_create_assistant_feedback($client, $json_text);
-    $create_thread_response = openai_create_thread_feedback($client, $file_upload_response->id, $create_assistant_response->id);
+    $fs = get_file_storage();
+
+    $pdftext = $fs->get_file($contextid, 'mod_assignquiz', 'pdftext', 0, '/', $file);
+    $assistant_id = get_config('mod_assignquiz', 'feedback_gen_assistant_id');
+    $create_thread_response = openai_create_thread_feedback($client, $pdftext, $assistant_id->id);
     return $create_thread_response;
-}
-function upload_file_to_openai_feedback($client, $fileContent) {
-    // Create a temporary file with a proper PDF extension.
-    $tempFilename = tempnam(sys_get_temp_dir(), 'moodle_pdf_');
-    $pdfFilename = $tempFilename . '.pdf';
-    rename($tempFilename, $pdfFilename);
-
-    // Write the PDF content.
-    file_put_contents($pdfFilename, $fileContent);
-
-    // Open the file as a resource.
-    $fileResource = fopen($pdfFilename, 'r');
-
-    // Upload the file using the file resource.
-    $response = $client->files()->upload([
-        'purpose' => 'assistants',
-        'file'    => $fileResource,
-    ]);
-
-
-    unlink($pdfFilename);
-
-    return $response;
-
-}
-function openai_create_assistant_feedback($client, $json_text){
-    $response = $client->assistants()->create([
-        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas y además el parámetro totalsum es equivalente a 0, responde únicamente con "¡Excelente! Sin errores." sin agregar más detalles.
-
-    El JSON recibido contiene la siguiente estructura:
-    - "questionsummary": Resumen de la pregunta.
-    - "rightanswer": Respuesta correcta.
-    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
-    - "totalsum": La suma total de respuestas incorrectas y preguntas no respondidas.
-    
-    Además, se te proporcionará un archivo que contiene el contenido académico relacionado. El objetivo es contar el número de respuestas incorrectas y el número de preguntas no respondidas, luego sumar ambos valores.
-
-    Según la suma total de respuestas incorrectas y preguntas no respondidas, debes generar una retroalimentación usando las siguientes frases:
-
-    - Si la suma total es 0: "¡Excelente! Sin errores."
-    - Si la suma total es entre 1 y 2: "¡Buen trabajo! Muy bien."
-    - Si la suma total es entre 3 y 4: "Buen intento, sigue así."
-    - Si la suma total es entre 5 y 6: "Buen intento, mejora posible."
-    - Si la suma total es entre 7 y 8: "Se puede mejorar aún."
-    - Si la suma total es entre 9 y 10: "Revisión completa sugerida."
-
-    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
-
-    Después de la frase general, si existen respuestas incorrectas, proporciona retroalimentación breve sobre los temas que el usuario necesita repasar. Esta retroalimentación debe ser clara y concisa, con un límite de 65 palabras. No uses listas ni formato especial como asteriscos.
-
-    Este es el JSON: ' . $json_text,
-        'name' => 'Generador de Retroalimentación de Cuestionarios',
-        'tools' => [
-            [
-                'type' => 'file_search',
-            ],
-        ],
-        'model' => "gpt-4o-mini",
-    ]);
-
-    return $response;
 }
 
 function openai_create_thread_feedback($client, $file_id, $assistant_id){
