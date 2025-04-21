@@ -40,35 +40,22 @@ require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
 function assignquiz_supports($feature) {
-    switch ($feature) {
-        case FEATURE_GROUPS:
-            return true;
-        case FEATURE_GROUPINGS:
-            return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS:
-            return true;
-        case FEATURE_COMPLETION_HAS_RULES:
-            return true;
-        case FEATURE_GRADE_HAS_GRADE:
-            return true;
-        case FEATURE_GRADE_OUTCOMES:
-            return true;
-        case FEATURE_BACKUP_MOODLE2:
-            return true;
-        case FEATURE_SHOW_DESCRIPTION:
-            return true;
-        case FEATURE_CONTROLS_GRADE_VISIBILITY:
-            return true;
-        case FEATURE_USES_QUESTIONS:
-            return true;
-        case FEATURE_PLAGIARISM:
-            return true;
-        case FEATURE_MOD_INTRO:
-            return true;
-        case FEATURE_MOD_PURPOSE:
-            return MOD_PURPOSE_ASSESSMENT;
-        default:
-            return null;
+    switch($feature) {
+        case FEATURE_GROUPS:                    return true;
+        case FEATURE_GROUPINGS:                 return true;
+        case FEATURE_MOD_INTRO:                 return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:   return true;
+        case FEATURE_COMPLETION_HAS_RULES:      return true;
+        case FEATURE_GRADE_HAS_GRADE:           return true;
+        case FEATURE_GRADE_OUTCOMES:            return true;
+        case FEATURE_BACKUP_MOODLE2:            return true;
+        case FEATURE_SHOW_DESCRIPTION:          return true;
+        case FEATURE_CONTROLS_GRADE_VISIBILITY: return true;
+        case FEATURE_USES_QUESTIONS:            return true;
+        case FEATURE_PLAGIARISM:                return true;
+        case FEATURE_MOD_PURPOSE:               return MOD_PURPOSE_ASSESSMENT;
+
+        default: return null;
     }
 }
 
@@ -262,7 +249,7 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
             }
         }
     }
-    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->instance, 0, $grades, $params);
+    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->id, 0, $grades, $params);
 }
 
 
@@ -275,7 +262,8 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
 function assignquiz_delete_instance($id)
 {
     global $DB;
-
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->safeLoad();
     $assignquiz = $DB->get_record('assignquiz', array('id' => $id));
     $fs = get_file_storage();
     $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
@@ -286,7 +274,6 @@ function assignquiz_delete_instance($id)
         return false;
     }
     assignquiz_grade_item_delete($assignquiz);
-
     $DB->delete_records('assignquiz', array('id' => $id));
     return true;
 }
@@ -344,6 +331,7 @@ function assignquiz_get_coursemodule_info($coursemodule) {
     // Return the course module info
     return $info;
 }
+
 function assignquiz_extend_settings_navigation($settings, $assignquiznode)
 {
     global $CFG;
@@ -405,115 +393,114 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode)
         }
     }
 }
+function mod_assignquiz_output_fragment_quiz_question_bank($args) {
+    global $CFG, $DB, $PAGE;
+    require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+    require_once($CFG->dirroot . '/question/editlib.php');
 
-    function mod_assignquiz_output_fragment_quiz_question_bank($args) {
-        global $CFG, $DB, $PAGE;
-        require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
-        require_once($CFG->dirroot . '/question/editlib.php');
+    $querystring = preg_replace('/^\?/', '', $args['querystring']);
+    $params = [];
+    parse_str($querystring, $params);
 
-        $querystring = preg_replace('/^\?/', '', $args['querystring']);
-        $params = [];
-        parse_str($querystring, $params);
+    // Build the required resources. The $params are all cleaned as
+    // part of this process.
+    list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
+        question_build_edit_resources('editq', '/mod/assignquiz/edit.php', $params, custom_view::DEFAULT_PAGE_SIZE);
 
-        // Build the required resources. The $params are all cleaned as
-        // part of this process.
-        list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
-            question_build_edit_resources('editq', '/mod/assignquiz/edit.php', $params, custom_view::DEFAULT_PAGE_SIZE);
+    // Get the course object and related bits.
+    $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
+    require_capability('mod/quiz:manage', $contexts->lowest());
 
-        // Get the course object and related bits.
-        $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
-        require_capability('mod/assignquiz:manage', $contexts->lowest());
+    // Create quiz question bank view.
+    $questionbank = new assignquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
+    $questionbank->set_quiz_has_attempts(quiz_has_attempts($quiz->id));
 
-        // Create quiz question bank view.
-        $questionbank = new assignquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
-        $questionbank->set_quiz_has_attempts(quiz_has_attempts($quiz->id));
+    // Output.
+    $renderer = $PAGE->get_renderer('mod_assignquiz', 'assignquizedit');
+    return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
+}
+function mod_assignquiz_output_fragment_add_random_question_form($args) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
 
-        // Output.
-        $renderer = $PAGE->get_renderer('mod_assignquiz', 'assignquizedit');
-        return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
+    $contexts = new \core_question\local\bank\question_edit_contexts($args['context']);
+    $formoptions = [
+        'contexts' => $contexts,
+        'cat' => $args['cat']
+    ];
+    $formdata = [
+        'category' => $args['cat'],
+        'addonpage' => $args['addonpage'],
+        'returnurl' => $args['returnurl'],
+        'cmid' => $args['cmid']
+    ];
+
+    $form = new quiz_add_random_form(
+        new \moodle_url('/mod/assignquiz/addrandom.php'),
+        $formoptions,
+        'post',
+        '',
+        null,
+        true,
+        $formdata
+    );
+    $form->set_data($formdata);
+
+    return $form->render();
+}
+function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false) {
+    global $DB, $CFG;
+    // TODO MDL-33071 it is very annoying to have to included all of locallib.php
+    // just to get the quiz_attempt::FINISHED constants, but I will try to sort
+    // that out properly for Moodle 2.4. For now, I will just do a quick fix for
+    // MDL-33048.
+    require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+
+    $params = array();
+    switch ($status) {
+        case 'all':
+            $statuscondition = '';
+            break;
+
+        case 'finished':
+            $statuscondition = ' AND state IN (:state1, :state2)';
+            $params['state1'] = quiz_attempt::FINISHED;
+            $params['state2'] = quiz_attempt::ABANDONED;
+            break;
+
+        case 'unfinished':
+            $statuscondition = ' AND state IN (:state1, :state2)';
+            $params['state1'] = quiz_attempt::IN_PROGRESS;
+            $params['state2'] = quiz_attempt::OVERDUE;
+            break;
     }
-    function mod_assignquiz_output_fragment_add_random_question_form($args) {
-        global $CFG;
-        require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
 
-        $contexts = new \core_question\local\bank\question_edit_contexts($args['context']);
-        $formoptions = [
-            'contexts' => $contexts,
-            'cat' => $args['cat']
-        ];
-        $formdata = [
-            'category' => $args['cat'],
-            'addonpage' => $args['addonpage'],
-            'returnurl' => $args['returnurl'],
-            'cmid' => $args['cmid']
-        ];
+    $quizids = (array) $quizids;
+    list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+    $params += $inparams;
+    $params['userid'] = $userid;
 
-        $form = new quiz_add_random_form(
-            new \moodle_url('/mod/assignquiz/addrandom.php'),
-            $formoptions,
-            'post',
-            '',
-            null,
-            true,
-            $formdata
-        );
-        $form->set_data($formdata);
-
-        return $form->render();
+    $previewclause = '';
+    if (!$includepreviews) {
+        $previewclause = ' AND preview = 0';
     }
-    function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false) {
-        global $DB, $CFG;
-        // TODO MDL-33071 it is very annoying to have to included all of locallib.php
-        // just to get the quiz_attempt::FINISHED constants, but I will try to sort
-        // that out properly for Moodle 2.4. For now, I will just do a quick fix for
-        // MDL-33048.
-        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
-        $params = array();
-        switch ($status) {
-            case 'all':
-                $statuscondition = '';
-                break;
+    return $DB->get_records_select('aiquiz_attempts',
+        "quiz $insql AND userid = :userid" . $previewclause . $statuscondition,
+        $params, 'quiz  , attempt ASC');
+}
+function assignquiz_get_best_grade($quiz, $userid) {
+    global $DB;
+    $grade = $DB->get_field('aiquiz_grades', 'grade',
+        array('quiz' => $quiz->id, 'userid' => $userid));
 
-            case 'finished':
-                $statuscondition = ' AND state IN (:state1, :state2)';
-                $params['state1'] = quiz_attempt::FINISHED;
-                $params['state2'] = quiz_attempt::ABANDONED;
-                break;
-
-            case 'unfinished':
-                $statuscondition = ' AND state IN (:state1, :state2)';
-                $params['state1'] = quiz_attempt::IN_PROGRESS;
-                $params['state2'] = quiz_attempt::OVERDUE;
-                break;
-        }
-
-        $quizids = (array) $quizids;
-        list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
-        $params += $inparams;
-        $params['userid'] = $userid;
-
-        $previewclause = '';
-        if (!$includepreviews) {
-            $previewclause = ' AND preview = 0';
-        }
-
-        return $DB->get_records_select('aiquiz_attempts',
-            "quiz $insql AND userid = :userid" . $previewclause . $statuscondition,
-            $params, 'quiz  , attempt ASC');
+    // Need to detect errors/no result, without catching 0 grades.
+    if ($grade === false) {
+        return null;
     }
-    function assignquiz_get_best_grade($quiz, $userid) {
-        global $DB;
-        $grade = $DB->get_field('aiquiz_grades', 'grade',
-            array('quiz' => $quiz->id, 'userid' => $userid));
 
-        // Need to detect errors/no result, without catching 0 grades.
-        if ($grade === false) {
-            return null;
-        }
-
-        return $grade + 0; // Convert to number.
-    }
+    return $grade + 0; // Convert to number.
+}
 function assignquiz_update_effective_access($quiz, $userid) {
     global $DB;
 
@@ -631,16 +618,19 @@ function generate_quiz_questions($data) {
     $tempDir = get_temp_directory($CFG);
     $pdfFiles = process_pdfs($tempDir, $data);
 
-    $mergedPdfTempFilename = (count($pdfFiles) === 1)
-        ? $pdfFiles[0]
-        : merge_pdfs($pdfFiles, $tempDir);
+    if (count($pdfFiles) != 1){
+        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
+    }
+    else {
+        $mergedPdfTempFilename = $pdfFiles[0];
+    }
 
     // Persist the merged PDF in Moodle's File API
-    $persistentfilename = store_file($mergedPdfTempFilename, 'feedbacksource', $data);
+    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data);
     $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
     $DB->set_field('assignquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
 
-    if ($mergedPdfTempFilename && file_exists($mergedPdfTempFilename)) {
+    if ($mergedPdfTempFilename) {
         try {
             $response = call_api($mergedPdfTempFilename, $data);
             $formattedResponse = filter_text_format($response);
@@ -649,8 +639,6 @@ function generate_quiz_questions($data) {
             // Always clean up the temporary file
             unlink($mergedPdfTempFilename);
         }
-    } else {
-        error_log("Error: Merged PDF file does not exist.");
     }
 }
 
@@ -663,7 +651,12 @@ function store_file($mergedPdfTempFilename, $filearea, $data) {
     $context = context_module::instance($data->coursemodule);
 
     // Define a filename (you could incorporate the course module id or a hash)
-    $filename = 'merged_moodle_pdf_' . $data->coursemodule . '.pdf';
+    if($filearea == 'feedbacksource') {
+        $prefix = 'feedbacksource_';
+    } else {
+        $prefix = 'merged_moodle_pdf_';
+    }
+    $filename = $prefix . $data->coursemodule . '.pdf';
     $fileinfo = [
         'contextid' => $context->id,
         'component' => 'mod_assignquiz',
@@ -712,7 +705,7 @@ function process_pdfs($tempDir, $data)
 function convert_pdf($inputFile, $tempDir)
 {
     $outputFile = $tempDir . uniqid('converted_moodle_pdf_', true) . '.pdf';
-    $gsCmd = 'gswin64c.exe -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dBATCH -sOutputFile="' . $outputFile . '" "' . $inputFile . '" 2>&1';
+    $gsCmd = 'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dBATCH -sOutputFile="' . $outputFile . '" "' . $inputFile . '" 2>&1';
     exec($gsCmd, $output, $returnVar);
     return $outputFile;
 }
@@ -948,7 +941,6 @@ function filter_text_format($text) {
             'correct_answer_index' => $correct_answer_index
         );
     }
-    error_log("Questions List: " . json_encode($questions_list, JSON_UNESCAPED_UNICODE));
     // Return the questions list as a pretty-printed JSON string with unescaped Unicode characters.
     return $questions_list;
 }
@@ -959,10 +951,10 @@ function call_api($filepath, $data)
     $client = OpenAI::client($yourApiKey);
     $pdf_text = Spatie\PdfToText\Pdf::getText($filepath, getenv('POPPLER_PATH'));
     $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
-    file_put_contents($tempFile, "Hello from temp file");
-    store_file($tempFile, 'pdftext', $data);
+    file_put_contents($tempFile, $pdf_text);
+    store_file($tempFile, 'feedbacksource', $data);
     unlink($tempFile);
-    $assistant_id = get_config('mod_assignquiz', 'quiz_gen_assistant_id');
+    $assistant_id = get_config('assignquiz', 'quiz_gen_assistant_id');
     $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id);
     return $create_thread_response;
 }
@@ -973,7 +965,7 @@ function openai_create_thread($client, $text, $assistant_id){
 
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:'. '\n'. $text,
+        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:\n'. $text,
     ]);
     $response = $client->threads()->runs()->create(
         threadId: $thread_create_response->id,
@@ -1289,3 +1281,32 @@ function assignquiz_get_group_override_priorities($quizid) {
     ];
 }
 
+function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgroup = 0) {
+    global $DB, $USER;
+    $numattempts = $DB->count_records('aiquiz_attempts', array('quiz'=> $quiz->id, 'preview'=>0));
+    error_log('Num attempts: ' . $numattempts);
+    if ($numattempts || $returnzero) {
+        if (groups_get_activity_groupmode($cm)) {
+            $a = new stdClass();
+            $a->total = $numattempts;
+            if ($currentgroup) {
+                $a->group = $DB->count_records_sql('SELECT COUNT(DISTINCT qa.id) FROM ' .
+                    '{aiquiz_attempts} qa JOIN ' .
+                    '{groups_members} gm ON qa.userid = gm.userid ' .
+                    'WHERE quiz = ? AND preview = 0 AND groupid = ?',
+                    array($quiz->id, $currentgroup));
+                return get_string('attemptsnumthisgroup', 'quiz', $a);
+            } else if ($groups = groups_get_all_groups($cm->course, $USER->id, $cm->groupingid)) {
+                list($usql, $params) = $DB->get_in_or_equal(array_keys($groups));
+                $a->group = $DB->count_records_sql('SELECT COUNT(DISTINCT qa.id) FROM ' .
+                    '{aiquiz_attempts} qa JOIN ' .
+                    '{groups_members} gm ON qa.userid = gm.userid ' .
+                    'WHERE quiz = ? AND preview = 0 AND ' .
+                    "groupid $usql", array_merge(array($quiz->id), $params));
+                return get_string('attemptsnumyourgroups', 'quiz', $a);
+            }
+        }
+        return get_string('attemptsnum', 'quiz', $numattempts);
+    }
+    return '';
+}

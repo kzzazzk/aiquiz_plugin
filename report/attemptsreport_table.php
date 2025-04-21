@@ -153,7 +153,7 @@ abstract class quiz_attempts_report_table extends table_sql {
         }
 
         return $html . html_writer::empty_tag('br') . html_writer::link(
-                new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->attempt)),
+                new moodle_url('/mod/assignquiz/review.php', array('attempt' => $attempt->attempt)),
                 get_string('reviewattempt', 'quiz'), array('class' => 'reviewlink'));
     }
 
@@ -267,7 +267,7 @@ abstract class quiz_attempts_report_table extends table_sql {
         if (isset($attempt->try)) {
             $reviewparams['step'] = $this->step_no_for_try($attempt->usageid, $slot, $attempt->try);
         }
-        $url = new moodle_url('/mod/quiz/reviewquestion.php', $reviewparams);
+        $url = new moodle_url('/mod/assignquiz/reviewquestion.php', $reviewparams);
         $output = $OUTPUT->action_link($url, $output,
                 new popup_action('click', $url, 'reviewquestion',
                         array('height' => 450, 'width' => 650)),

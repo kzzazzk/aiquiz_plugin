@@ -48,7 +48,7 @@ $quizobj = new aiquiz($quiz, $cm, $course);
 $structure = $quizobj->get_structure();
 
 // You need mod/quiz:manage in addition to question capabilities to access this page.
-require_capability('mod/assignquiz:manage', $contexts->lowest());
+require_capability('mod/quiz:manage', $contexts->lowest());
 
 // Process commands ============================================================.
 

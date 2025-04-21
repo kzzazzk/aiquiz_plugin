@@ -77,7 +77,7 @@ class recalculate extends \core\task\adhoc_task {
             mtrace('Could not find course with ID ' . $quiz->course . '.');
             return;
         }
-        $attemptcount = $DB->count_records('quiz_attempts', ['quiz' => $data->quizid, 'state' => quiz_attempt::FINISHED]);
+        $attemptcount = $DB->count_records('aiquiz_attempts', ['quiz' => $data->quizid, 'state' => quiz_attempt::FINISHED]);
         if ($attemptcount === 0) {
             mtrace('Could not find any finished attempts for course with ID ' . $data->quizid . '.');
             return;

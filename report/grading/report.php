@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/quiz/report/grading/gradingsettings_form.php');
+require_once($CFG->dirroot . '/mod/quiz/report/grading/report.php');
 
 
 /**
@@ -38,7 +39,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/grading/gradingsettings_form.php'
  * @copyright 2006 Gustav Delius
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_grading_report extends quiz_default_report {
+class aiquiz_grading_report extends quiz_grading_report {
     const DEFAULT_PAGE_SIZE = 5;
     const DEFAULT_ORDER = 'random';
 
@@ -141,7 +142,7 @@ class quiz_grading_report extends quiz_default_report {
         }
 
         // Get the list of questions in this quiz.
-        $this->questions = quiz_report_get_significant_questions($quiz);
+        $this->questions = aiquiz_report_get_significant_questions($quiz);
         if ($slot && !array_key_exists($slot, $this->questions)) {
             throw new moodle_exception('unknownquestion', 'quiz_grading');
         }
@@ -169,7 +170,7 @@ class quiz_grading_report extends quiz_default_report {
                     array('mod/quiz:reviewmyattempts', 'mod/quiz:attempt'), $this->currentgroup);
         }
 
-        $hasquestions = quiz_has_questions($this->quiz->id);
+        $hasquestions = aiquiz_has_questions($this->quiz->id);
         if (!$hasquestions) {
             $this->print_header_and_tabs($cm, $course, $quiz, 'grading');
             echo $this->renderer->render_quiz_no_question_notification($quiz, $cm, $this->context);
@@ -230,7 +231,7 @@ class quiz_grading_report extends quiz_default_report {
             }
         }
 
-        return new qubaid_join("{quiz_attempts} quiza $usersjoin ", 'quiza.uniqueid', $where, $params);
+        return new qubaid_join("{aiquiz_attempts} quiza $usersjoin ", 'quiza.uniqueid', $where, $params);
     }
 
     /**
@@ -256,7 +257,7 @@ class quiz_grading_report extends quiz_default_report {
         $params = array_merge($userfieldssql->params, $params);
         $attemptsbyid = $DB->get_records_sql("
                 SELECT $fields
-                FROM {quiz_attempts} quiza
+                FROM {aiquiz_attempts} quiza
                 JOIN {user} u ON u.id = quiza.userid
                 {$userfieldssql->joins}
                 WHERE quiza.uniqueid $asql AND quiza.state = ? AND quiza.quiz = ?",
@@ -275,7 +276,7 @@ class quiz_grading_report extends quiz_default_report {
      * @return moodle_url the URL.
      */
     protected function base_url() {
-        return new moodle_url('/mod/quiz/report.php',
+        return new moodle_url('/mod/assignquiz/report.php',
                 ['id' => $this->cm->id, 'mode' => 'grading']);
     }
 
@@ -348,6 +349,7 @@ class quiz_grading_report extends quiz_default_report {
         global $PAGE, $OUTPUT;
 
         $this->print_header_and_tabs($this->cm, $this->course, $this->quiz, 'grading');
+        $this->list_questions_url();
 
         if ($groupmode = groups_get_activity_groupmode($this->cm)) {
             // Groups is being used.
@@ -441,7 +443,7 @@ class quiz_grading_report extends quiz_default_report {
         if (array_key_exists('includeauto', $this->viewoptions)) {
             $hidden['includeauto'] = $this->viewoptions['includeauto'];
         }
-        $mform = new quiz_grading_settings_form($hidden, $counts, $shownames, $showcustomfields, $this->context);
+        $mform = new aiquiz_grading_settings_form($hidden, $counts, $shownames, $showcustomfields, $this->context);
 
         // Tell the form the current settings.
         $settings = new stdClass();
@@ -503,7 +505,6 @@ class quiz_grading_report extends quiz_default_report {
         $pagingbar = new stdClass();
         $pagingbar->count = $count;
         $pagingbar->page = $page;
-        $pagingbar->pagesize = $pagesize;
         $pagingbar->pagesize = $pagesize;
         $pagingbar->order = $order;
         $pagingbar->pagingurl = $this->grade_question_url($slot, $questionid, $grade, false);
@@ -580,7 +581,7 @@ class quiz_grading_report extends quiz_default_report {
         $attemptsgraded = false;
         foreach ($qubaids as $qubaid) {
             $attempt = $attempts[$qubaid];
-            $attemptobj = new quiz_attempt($attempt, $this->quiz, $this->cm, $this->course);
+            $attemptobj = new aiquiz_attempt($attempt, $this->quiz, $this->cm, $this->course);
 
             // State of the attempt before grades are changed.
             $attemptoldtstate = $attemptobj->get_question_state($assumedslotforevents);

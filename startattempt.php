@@ -56,7 +56,7 @@ $PAGE->set_heading($quizobj->get_course()->fullname);
 
 // If no questions have been set up yet redirect to edit.php or display an error.
 if (!$quizobj->has_questions()) {
-    if ($quizobj->has_capability('mod/assignquiz:manage')) {
+    if ($quizobj->has_capability('mod/quiz:manage')) {
         redirect($quizobj->edit_url());
     } else {
         throw new \moodle_exception('cannotstartnoquestions', 'quiz', $quizobj->view_url());

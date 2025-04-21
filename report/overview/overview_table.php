@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_table.php');
+require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_table.php');
 
 
 /**
@@ -34,7 +35,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_table.php');
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_overview_table extends quiz_attempts_report_table {
+class aiquiz_overview_table extends quiz_overview_table {
 
     protected $regradedqs = array();
 
@@ -54,6 +55,7 @@ class quiz_overview_table extends quiz_attempts_report_table {
             \core\dml\sql_join $studentsjoins, $questions, $reporturl) {
         parent::__construct('mod-quiz-report-overview-report', $quiz , $context,
                 $qmsubselect, $options, $groupstudentsjoins, $studentsjoins, $questions, $reporturl);
+
     }
 
     public function build_table() {
@@ -107,7 +109,7 @@ class quiz_overview_table extends quiz_attempts_report_table {
         list($fields, $from, $where, $params) = $this->base_sql($usersjoins);
         $record = $DB->get_record_sql("
                 SELECT AVG(quizaouter.sumgrades) AS grade, COUNT(quizaouter.sumgrades) AS numaveraged
-                  FROM {quiz_attempts} quizaouter
+                  FROM {aiquiz_attempts} quizaouter
                   JOIN (
                        SELECT DISTINCT quiza.id
                          FROM $from
@@ -129,7 +131,7 @@ class quiz_overview_table extends quiz_attempts_report_table {
 
         if ($this->options->slotmarks) {
             $dm = new question_engine_data_mapper();
-            $qubaids = new qubaid_join("{quiz_attempts} quizaouter
+            $qubaids = new qubaid_join("{aiquiz_attempts} quizaouter
                   JOIN (
                        SELECT DISTINCT quiza.id
                          FROM $from

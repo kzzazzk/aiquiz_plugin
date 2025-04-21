@@ -100,7 +100,7 @@ abstract class aiquiz_default_report extends quiz_default_report {
      * @return moodle_url the URL.
      */
     protected function get_base_url() {
-        return new moodle_url('/mod/quiz/report.php',
+        return new moodle_url('/mod/assignquiz/report.php',
                 array('id' => $this->context->instanceid, 'mode' => $this->mode));
     }
 
@@ -166,12 +166,11 @@ abstract class aiquiz_default_report extends quiz_default_report {
         }
 
         // Print information on the number of existing attempts.
-        if ($strattemptnum = quiz_num_attempt_summary($quiz, $cm, true, $currentgroup)) {
+        if ($strattemptnum = aiquiz_num_attempt_summary($quiz, $cm, true, $currentgroup)) {
             echo '<div class="quizattemptcounts">' . $strattemptnum . '</div>';
         }
-
         if (!$hasquestions) {
-            echo quiz_no_questions_message($quiz, $cm, $this->context);
+            echo aiquiz_no_questions_message($quiz, $cm, $this->context);
         } else if ($currentgroup == self::NO_GROUPS_ALLOWED) {
             echo $OUTPUT->notification(get_string('notingroup'));
         } else if (!$hasstudents) {

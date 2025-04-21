@@ -39,7 +39,7 @@ defined('MOODLE_INTERNAL') || die;
  */
 function quiz_statistics_attempts_sql($quizid, \core\dml\sql_join $groupstudentsjoins,
         $whichattempts = QUIZ_GRADEAVERAGE, $includeungraded = false) {
-    $fromqa = "{quiz_attempts} quiza ";
+    $fromqa = "{aiquiz_attempts} quiza ";
     $whereqa = 'quiza.quiz = :quizid AND quiza.preview = 0 AND quiza.state = :quizstatefinished';
     $qaparams = array('quizid' => (int)$quizid, 'quizstatefinished' => quiz_attempt::FINISHED);
 

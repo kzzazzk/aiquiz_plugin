@@ -39,7 +39,7 @@ class quiz_grading_renderer extends plugin_renderer_base {
      * @return string The HTML for the no questions message.
      */
     public function render_quiz_no_question_notification($quiz, $cm, $context) {
-        return quiz_no_questions_message($quiz, $cm, $context);
+        return aiquiz_no_questions_message($quiz, $cm, $context);
     }
 
     /**

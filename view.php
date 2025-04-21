@@ -52,11 +52,11 @@ if ($id) {
 
 require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
-require_capability('mod/assignquiz:view', $context);
+require_capability('mod/quiz:view', $context);
 
-$canattempt = has_capability('mod/assignquiz:attempt', $context);
-$canreviewmine = has_capability('mod/assignquiz:reviewmyattempts', $context);
-$canpreview = has_capability('mod/assignquiz:preview', $context);
+$canattempt = has_capability('mod/quiz:attempt', $context);
+$canreviewmine = has_capability('mod/quiz:reviewmyattempts', $context);
+$canpreview = has_capability('mod/quiz:preview', $context);
 
 $event = \mod_assignquiz\event\course_module_viewed::create(array(
     'objectid' => $moduleinstance->id,
@@ -168,7 +168,7 @@ $viewobj->moreattempts = $unfinished ||
 $viewobj->mygradeoverridden = $mygradeoverridden;
 $viewobj->gradebookfeedback = $gradebookfeedback;
 $viewobj->lastfinishedattempt = $lastfinishedattempt;
-$viewobj->canedit = has_capability('mod/assignquiz:manage', $context);
+$viewobj->canedit = has_capability('mod/quiz:manage', $context);
 $viewobj->editurl = new moodle_url('/mod/assignquiz/edit.php', array('cmid' => $cm->id));
 $viewobj->backtocourseurl = new moodle_url('/course/view.php', array('id' => $course->id));
 $viewobj->startattempturl = $quizobj->start_attempt_url();

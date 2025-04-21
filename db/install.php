@@ -2,7 +2,9 @@
 global $CFG;
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
-function xmldb_mod_assignquiz_install() {
+function xmldb_assignquiz_install() {
+    $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+    $dotenv->load();
     $yourApiKey = $_ENV['OPENAI_API_KEY'];
     $client = OpenAI::client($yourApiKey);
     $assistant_id = quiz_generation_assistant_create($client);
@@ -10,6 +12,8 @@ function xmldb_mod_assignquiz_install() {
     $assistant_id = feedback_generation_assistant_create($client);
     set_config('feedback_gen_assistant_id', $assistant_id, 'assignquiz');
 }
+
+
 
 function quiz_generation_assistant_create($client){
     $response = $client->assistants()->create([
@@ -44,27 +48,28 @@ function quiz_generation_assistant_create($client){
 
 function feedback_generation_assistant_create($client){
     $response = $client->assistants()->create([
-        'instructions' => '
-        Eres un generador de retroalimentación para cuestionarios. El JSON que recibirás contiene una lista de preguntas respondidas erróneamente. Cada entrada incluye:
-        - questionsummary: resumen de la pregunta.
-        - rightanswer: respuesta correcta.
-        - responsesummary: respuesta del usuario.
+        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas y además el parámetro totalsum es equivalente a 0, responde únicamente con "¡Excelente! Sin errores." sin agregar más detalles.
 
-        También recibirás un texto extraído directamente del temario del curso.
+    El JSON recibido contiene la siguiente estructura:
+    - "questionsummary": Resumen de la pregunta.
+    - "rightanswer": Respuesta correcta.
+    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
+    - "totalsum": La suma total de respuestas incorrectas y preguntas no respondidas.
+    
+    Además, se te proporcionará un archivo que contiene el contenido académico relacionado. El objetivo es contar el número de respuestas incorrectas y el número de preguntas no respondidas, luego sumar ambos valores.
 
-        Si el JSON está vacío o no recibes ningún JSON, no generes retroalimentación.
+    Según la suma total de respuestas incorrectas y preguntas no respondidas, debes generar una retroalimentación usando las siguientes frases:
 
-        Tu tarea:
-        Evalúa cada pregunta con respecto al temario. Genera una breve retroalimentación (<75 palabras) indicando los temas que el usuario debería repasar. 
-        Menciona los temas concretos y evita listar preguntas.
+    - Si la suma total es 0: "¡Excelente! Sin errores."
+    - Si la suma total es entre 1 y 2: "¡Buen trabajo! Muy bien."
+    - Si la suma total es entre 3 y 4: "Buen intento, sigue así."
+    - Si la suma total es entre 5 y 6: "Buen intento, mejora posible."
+    - Si la suma total es entre 7 y 8: "Se puede mejorar aún."
+    - Si la suma total es entre 9 y 10: "Revisión completa sugerida."
 
-        Nivel de motivación:
-        - 0-2 fallos: "¡Buen trabajo!"
-        - 3-5 fallos: "¡Buen intento!"
-        - 6-10 fallos: "¡Ánimo, en el siguiente intento lo harás mejor!"
+    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
 
-        Ejemplo: 
-        "¡Buen trabajo! Solo necesitas reforzar el tema de codificación binaria ponderada y repasar la representación hexadecimal para consolidar tus conocimientos."',
+    Después de la frase general, si existen respuestas incorrectas, proporciona retroalimentación breve sobre los temas que el usuario necesita repasar. Esta retroalimentación debe ser clara y concisa, con un límite de 65 palabras. No uses listas ni formato especial como asteriscos.',
         'name' => 'Generador de Retroalimentación de Cuestionarios',
         'model' => "gpt-4o-mini",
     ]);

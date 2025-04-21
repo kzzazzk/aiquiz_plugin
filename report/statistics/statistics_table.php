@@ -37,7 +37,7 @@ use \core_question\statistics\questions\calculated_question_summary;
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_statistics_table extends flexible_table {
+class aiquiz_statistics_table extends flexible_table {
     /** @var object the quiz settings. */
     protected $quiz;
 
@@ -204,7 +204,7 @@ class quiz_statistics_table extends flexible_table {
         } else if ($questionstat->question->qtype === 'missingtype') {
             return '';
         } else {
-            return quiz_question_action_icons($this->quiz, $this->cmid,
+            return aiquiz_question_action_icons($this->quiz, $this->cmid,
                     $questionstat->question, $this->baseurl, $questionstat->variant);
         }
     }

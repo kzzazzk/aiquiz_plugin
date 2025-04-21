@@ -31,9 +31,11 @@ use core_question\statistics\questions\all_calculated_for_qubaid_condition;
 require_once($CFG->dirroot . '/mod/quiz/report/default.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statistics_form.php');
-require_once($CFG->dirroot . '/mod/quiz/report/statistics/statistics_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statistics_question_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statisticslib.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/statistics/statistics_form.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/statistics/statistics_table.php');
 
 /**
  * The quiz statistics report provides summary information about each question in
@@ -43,7 +45,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/statistics/statisticslib.php');
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_statistics_report extends quiz_default_report {
+class aiquiz_statistics_report extends aiquiz_default_report {
 
     /** @var context_module context of this quiz.*/
     protected $context;
@@ -64,9 +66,9 @@ class quiz_statistics_report extends quiz_default_report {
 
         $this->context = context_module::instance($cm->id);
 
-        if (!quiz_has_questions($quiz->id)) {
+        if (!aiquiz_has_questions($quiz->id)) {
             $this->print_header_and_tabs($cm, $course, $quiz, 'statistics');
-            echo quiz_no_questions_message($quiz, $cm, $this->context);
+            echo aiquiz_no_questions_message($quiz, $cm, $this->context);
             return true;
         }
 
@@ -85,7 +87,7 @@ class quiz_statistics_report extends quiz_default_report {
         $pageoptions['id'] = $cm->id;
         $pageoptions['mode'] = 'statistics';
 
-        $reporturl = new moodle_url('/mod/quiz/report.php', $pageoptions);
+        $reporturl = new moodle_url('/mod/assignquiz/report.php', $pageoptions);
 
         $mform = new aiquiz_statistics_settings_form($reporturl, compact('quiz'));
 
@@ -134,7 +136,7 @@ class quiz_statistics_report extends quiz_default_report {
         }
 
         // Set up the main table.
-        $this->table = new quiz_statistics_table();
+        $this->table = new aiquiz_statistics_table();
         if ($everything) {
             $report = get_string('completestatsfilename', 'quiz_statistics');
         } else {
@@ -551,7 +553,7 @@ class quiz_statistics_report extends quiz_default_report {
 
         $quiz = $quizorid;
         if (!is_object($quiz)) {
-            $quiz = $DB->get_record('quiz', array('id' => $quizorid), '*', MUST_EXIST);
+            $quiz = $DB->get_record('assignquiz', array('id' => $quizorid), '*', MUST_EXIST);
         }
 
         // Load the rest of the required data.
@@ -892,7 +894,7 @@ class quiz_statistics_report extends quiz_default_report {
      */
     public function load_and_initialise_questions_for_calculations($quiz) {
         // Load the questions.
-        $questions = quiz_report_get_significant_questions($quiz);
+        $questions = aiquiz_report_get_significant_questions($quiz);
         $questiondata = [];
         foreach ($questions as $qs => $question) {
             if ($question->qtype === 'random') {
@@ -901,7 +903,7 @@ class quiz_statistics_report extends quiz_default_report {
                 $question->questiontext = get_string('random', 'quiz');
                 $question->parenttype = 'random';
                 $questiondata[$question->slot] = $question;
-            } else if ($question->qtype === 'missingtype') {
+            } else if ($question->qftype === 'missingtype') {
                 $question->id = is_numeric($question->id) ? (int) $question->id : 0;
                 $questiondata[$question->slot] = $question;
                 $question->name = get_string('deletedquestion', 'qtype_missingtype');
@@ -997,7 +999,7 @@ class quiz_statistics_report extends quiz_default_report {
             bool $performanalysis = true
         ): ?all_calculated_for_qubaid_condition {
         global $DB;
-        $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
+        $quiz = $DB->get_record('assignquiz', ['id' => $quizid], '*', MUST_EXIST);
         $questions = $this->load_and_initialise_questions_for_calculations($quiz);
 
         [, $questionstats] = $this->get_all_stats_and_analysis($quiz,

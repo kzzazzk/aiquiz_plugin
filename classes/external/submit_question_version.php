@@ -62,7 +62,7 @@ class submit_question_version extends external_api {
         list($course, $cm) = get_course_and_cm_from_instance($slotdata->quizid, 'assignquiz');
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
-        require_capability('mod/assignquiz:manage', $context);
+        require_capability('mod/quiz:manage', $context);
 
         $reference = new stdClass();
         $reference->id = $referencedata->id;

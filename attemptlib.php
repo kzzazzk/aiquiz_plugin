@@ -5,6 +5,7 @@ use mod_assignquiz\question\bank\assignquiz_qbank_helper;
 
 require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/lib.php');
+require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/accessmanager.php');
 require_once($CFG->dirroot . '/mod/assignquiz/classes/structure.php');
 require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/assignquiz_qbank_helper.php');
@@ -60,7 +61,7 @@ class aiquiz extends quiz
 
     public function is_preview_user() {
         if (is_null($this->ispreviewuser)) {
-            $this->ispreviewuser = has_capability('mod/assignquiz:preview', $this->context);
+            $this->ispreviewuser = has_capability('mod/quiz:preview', $this->context);
         }
         return $this->ispreviewuser;
     }
@@ -270,7 +271,6 @@ class aiquiz_attempt extends quiz_attempt{
             $this->process_going_overdue($timestamp, true);
         } else {
             $DB->update_record('aiquiz_attempts', $this->attempt);
-            error_log('Updated attempt 1 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
         }
 
         if (!$this->is_preview() && $this->attempt->state == self::FINISHED) {
@@ -289,7 +289,6 @@ class aiquiz_attempt extends quiz_attempt{
         // Instead we'll just fix it up through cron.
         $this->attempt->timecheckstate = $timestamp;
         $DB->update_record('aiquiz_attempts', $this->attempt);
-        error_log('Updated attempt 2 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         $this->fire_state_transition_event('\mod_quiz\event\attempt_becameoverdue', $timestamp, $studentisonline);
 
@@ -474,7 +473,6 @@ class aiquiz_attempt extends quiz_attempt{
         $this->attempt->state = self::ABANDONED;
         $this->attempt->timecheckstate = null;
         $DB->update_record('aiquiz_attempts', $this->attempt);
-        error_log('Updated attempt 3 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         $this->fire_state_transition_event('\mod_quiz\event\attempt_abandoned', $timestamp, $studentisonline);
 
@@ -506,7 +504,6 @@ class aiquiz_attempt extends quiz_attempt{
         }
 
         $DB->update_record('aiquiz_attempts', $this->attempt);
-        error_log('Updated attempt 4 ' . $this->attempt->id . ' to state ' . $this->attempt->state);
 
         if (!$this->is_preview()) {
             assignquiz_save_best_grade($this->get_quiz(), $this->attempt->userid);

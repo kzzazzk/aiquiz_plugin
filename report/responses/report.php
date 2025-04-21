@@ -25,11 +25,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport.php');
-require_once($CFG->dirroot . '/mod/quiz/report/responses/responses_options.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/responses_form.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/last_responses_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/first_or_all_responses_table.php');
+require_once($CFG->dirroot . '/mod/quiz/report/responses/report.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/responses/responses_options.php');
+
+
 
 
 /**
@@ -46,7 +49,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/responses/first_or_all_responses_
  * @copyright 1999 onwards Martin Dougiamas and others {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_responses_report extends quiz_responses_report {
+class aiquiz_responses_report extends aiquiz_default_report {
 
     public function display($quiz, $cm, $course) {
         global $OUTPUT, $DB;
@@ -54,7 +57,7 @@ class aiquiz_responses_report extends quiz_responses_report {
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->init(
                 'responses', 'quiz_responses_settings_form', $quiz, $cm, $course);
 
-        $options = new quiz_responses_options('responses', $quiz, $cm, $course);
+        $options = new aiquiz_responses_options('responses', $quiz, $cm, $course);
 
         if ($fromform = $this->form->get_data()) {
             $options->process_settings_from_form($fromform);
@@ -66,7 +69,7 @@ class aiquiz_responses_report extends quiz_responses_report {
         $this->form->set_data($options->get_initial_form_data());
 
         // Load the required questions.
-        $questions = quiz_report_get_significant_questions($quiz);
+        $questions = aiquiz_report_get_significant_questions($quiz);
 
         // Prepare for downloading, if applicable.
         $courseshortname = format_string($course->shortname, true,

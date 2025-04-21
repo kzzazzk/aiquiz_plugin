@@ -28,12 +28,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_options.php');
-require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_form.php');
-require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_table.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/overview/overview_form.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/overview/overview_table.php');
 require_once($CFG->dirroot . '/mod/assignquiz/report/overview/report.php');
-require_once($CFG->dirroot . '/mod/quiz/report/overview/report.php');
 require_once($CFG->dirroot . '/mod/assignquiz/report/overview/report.php');
 require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport_options.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/overview/aiquiz_overview_options.php');
 
 
 
@@ -48,9 +48,9 @@ class aiquiz_overview_report extends aiquiz_default_report {
         global $DB, $OUTPUT, $PAGE;
 
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->init(
-                'overview', 'quiz_overview_settings_form', $quiz, $cm, $course);
+            'overview', 'aiquiz_overview_settings_form', $quiz, $cm, $course);
 
-        $options = new aiquiz_overview_options('overview', $quiz, $cm, $course);
+        $options = new quiz_overview_options('overview', $quiz, $cm, $course);
 
         if ($fromform = $this->form->get_data()) {
             $options->process_settings_from_form($fromform);
@@ -65,13 +65,13 @@ class aiquiz_overview_report extends aiquiz_default_report {
         $questions = aiquiz_report_get_significant_questions($quiz);
         // Prepare for downloading, if applicable.
         $courseshortname = format_string($course->shortname, true,
-                array('context' => context_course::instance($course->id)));
+            array('context' => context_course::instance($course->id)));
         $table = new quiz_overview_table($quiz, $this->context, $this->qmsubselect,
-                $options, $groupstudentsjoins, $studentsjoins, $questions, $options->get_url());
+            $options, $groupstudentsjoins, $studentsjoins, $questions, $options->get_url());
         $filename = quiz_report_download_filename(get_string('overviewfilename', 'quiz_overview'),
-                $courseshortname, $quiz->name);
+            $courseshortname, $quiz->name);
         $table->is_downloading($options->download, $filename,
-                $courseshortname . ' ' . format_string($quiz->name, true));
+            $courseshortname . ' ' . format_string($quiz->name, true));
         if ($table->is_downloading()) {
             raise_memory_limit(MEMORY_EXTRA);
         }
@@ -108,7 +108,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
         if (!$table->is_downloading()) {
             // Only print headers if not asked to download data.
             $this->print_standard_header_and_messages($cm, $course, $quiz,
-                    $options, $currentgroup, $hasquestions, $hasstudents);
+                $options, $currentgroup, $hasquestions, $hasstudents);
 
             // Print the display options.
             $this->form->display();
@@ -123,7 +123,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
                 // Output the regrade buttons.
                 if (has_capability('mod/quiz:regrade', $this->context)) {
                     $regradesneeded = $this->count_question_attempts_needing_regrade(
-                            $quiz, $groupstudentsjoins);
+                        $quiz, $groupstudentsjoins);
                     if ($currentgroup) {
                         $a= new stdClass();
                         $a->groupname = format_string(groups_get_group_name($currentgroup), true, [
@@ -132,18 +132,18 @@ class aiquiz_overview_report extends aiquiz_default_report {
                         $a->coursestudents = get_string('participants');
                         $a->countregradeneeded = $regradesneeded;
                         $regradealldrydolabel =
-                                get_string('regradealldrydogroup', 'quiz_overview', $a);
+                            get_string('regradealldrydogroup', 'quiz_overview', $a);
                         $regradealldrylabel =
-                                get_string('regradealldrygroup', 'quiz_overview', $a);
+                            get_string('regradealldrygroup', 'quiz_overview', $a);
                         $regradealllabel =
-                                get_string('regradeallgroup', 'quiz_overview', $a);
+                            get_string('regradeallgroup', 'quiz_overview', $a);
                     } else {
                         $regradealldrydolabel =
-                                get_string('regradealldrydo', 'quiz_overview', $regradesneeded);
+                            get_string('regradealldrydo', 'quiz_overview', $regradesneeded);
                         $regradealldrylabel =
-                                get_string('regradealldry', 'quiz_overview');
+                            get_string('regradealldry', 'quiz_overview');
                         $regradealllabel =
-                                get_string('regradeall', 'quiz_overview');
+                            get_string('regradeall', 'quiz_overview');
                     }
                     $displayurl = new moodle_url($options->get_url(), array('sesskey' => sesskey()));
                     echo '<div class="mdl-align">';
@@ -152,10 +152,10 @@ class aiquiz_overview_report extends aiquiz_default_report {
                     echo html_writer::input_hidden_params($displayurl);
                     echo '<input type="submit" class="btn btn-secondary" name="regradeall" value="'.$regradealllabel.'"/>';
                     echo '<input type="submit" class="btn btn-secondary ml-1" name="regradealldry" value="' .
-                            $regradealldrylabel . '"/>';
+                        $regradealldrylabel . '"/>';
                     if ($regradesneeded) {
                         echo '<input type="submit" class="btn btn-secondary ml-1" name="regradealldrydo" value="' .
-                                $regradealldrydolabel . '"/>';
+                            $regradealldrydolabel . '"/>';
                     }
                     echo '</div>';
                     echo '</form>';
@@ -163,7 +163,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
                 }
                 // Print information on the grading method.
                 if ($strattempthighlight = quiz_report_highlighting_grading_method(
-                        $quiz, $this->qmsubselect, $options->onlygraded)) {
+                    $quiz, $this->qmsubselect, $options->onlygraded)) {
                     echo '<div class="quizattemptcounts">' . $strattempthighlight . '</div>';
                 }
             }
@@ -185,7 +185,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
             $this->add_grade_columns($quiz, $options->usercanseegrades, $columns, $headers, false);
 
             if (!$table->is_downloading() && has_capability('mod/quiz:regrade', $this->context) &&
-                    $this->has_regraded_questions($table->sql->from, $table->sql->where, $table->sql->params)) {
+                $this->has_regraded_questions($table->sql->from, $table->sql->where, $table->sql->params)) {
                 $columns[] = 'regraded';
                 $headers[] = get_string('regrade', 'quiz_overview');
             }
@@ -222,7 +222,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
                         {$groupstudentsjoins->joins}
                           WHERE qg.quiz = $quiz->id AND {$groupstudentsjoins->wheres}";
                 if ($DB->record_exists_sql($sql, $groupstudentsjoins->params)) {
-                    $data = quiz_report_grade_bands($bandwidth, $bands, $quiz->id, $groupstudentsjoins);
+                    $data = aiquiz_report_grade_bands($bandwidth, $bands, $quiz->id, $groupstudentsjoins);
                     $chart = self::get_chart($labels, $data);
                     $groupname = format_string(groups_get_group_name($currentgroup), true, [
                         'context' => $this->context,
@@ -234,7 +234,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
             }
 
             if ($DB->record_exists('aiquiz_grades', array('quiz'=> $quiz->id))) {
-                $data = quiz_report_grade_bands($bandwidth, $bands, $quiz->id, new \core\dml\sql_join());
+                $data = aiquiz_report_grade_bands($bandwidth, $bands, $quiz->id, new \core\dml\sql_join());
                 $chart = self::get_chart($labels, $data);
                 $graphname = get_string('overviewreportgraph', 'quiz_overview');
                 // Numerical range data should display in LTR even for RTL languages.
@@ -459,7 +459,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
 
         $userfieldsapi = \core_user\fields::for_name();
         $sql = "SELECT quiza.*, " . $userfieldsapi->get_sql('u', false, '', '', false)->selects . "
-                  FROM {quiz_attempts} quiza
+                  FROM {aiquiz_attempts} quiza
                   JOIN {user} u ON u.id = quiza.userid";
         $where = "quiz = :qid AND preview = 0";
         $params = array('qid' => $quiz->id);
@@ -510,7 +510,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
 
         $toregrade = $DB->get_recordset_sql("
                 SELECT quiza.uniqueid, qqr.slot
-                  FROM {quiz_attempts} quiza
+                  FROM {aiquiz_attempts} quiza
                   JOIN $join
                  WHERE $where", $params);
 
@@ -528,7 +528,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
         $userfieldsapi = \core_user\fields::for_name();
         $attempts = $DB->get_records_sql("
                 SELECT quiza.*, " . $userfieldsapi->get_sql('u', false, '', '', false)->selects . "
-                  FROM {quiz_attempts} quiza
+                  FROM {aiquiz_attempts} quiza
                   JOIN {user} u ON u.id = quiza.userid
                  WHERE quiza.uniqueid $uniqueidcondition
                 ", $params);
@@ -618,7 +618,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
 
         $params['cquiz'] = $quiz->id;
         $sql = "SELECT COUNT(DISTINCT quiza.id)
-                  FROM {quiz_attempts} quiza
+                  FROM {aiquiz_attempts} quiza
                   JOIN {quiz_overview_regrades} qqr ON quiza.uniqueid = qqr.questionusageid
                 $userjoin
                  WHERE
@@ -657,7 +657,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
         // Fetch all attempts that need regrading.
         $select = "questionusageid IN (
                     SELECT uniqueid
-                      FROM {quiz_attempts} quiza";
+                      FROM {aiquiz_attempts} quiza";
         $where = "WHERE quiza.quiz = :qid";
         $params = array('qid' => $quiz->id);
         if ($this->hasgroupstudents && !empty($groupstudentsjoins->joins)) {

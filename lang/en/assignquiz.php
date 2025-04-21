@@ -75,6 +75,7 @@ $string['aiquizconfigtitle'] = 'AI Quiz Configuration';
 $string['coursemoduleconfigtitle'] = 'Other course module settings';
 $string['basicsettings'] = 'Basic settings';
 $string['pluginadministration'] = 'AI Quiz administration';
+$string['openaisettingstext'] = 'Default ahh text';
 $string['confirmclose'] = 'Once you submit your answers, you won’t be able to change them.
 ';
 $string['submission_confirmation_unanswered'] = 'Questions without a response: {$a}';

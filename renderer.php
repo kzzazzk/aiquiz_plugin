@@ -231,4 +231,18 @@ class mod_assignquiz_renderer extends mod_quiz_renderer
         }
         return $output;
     }
+    public function quiz_attempt_summary_link_to_reports($quiz, $cm, $context,
+                                                         $returnzero = false, $currentgroup = 0) {
+        global $CFG;
+        $summary = quiz_num_attempt_summary($quiz, $cm, $returnzero, $currentgroup);
+        if (!$summary) {
+            return '';
+        }
+
+        require_once($CFG->dirroot . '/mod/assignquiz/report/reportlib.php');
+        $url = new moodle_url('/mod/assignquiz/report.php', array(
+            'id' => $cm->id, 'mode' => quiz_report_default_report($context)));
+        return html_writer::link($url, $summary);
+    }
 }
+

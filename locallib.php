@@ -7,6 +7,8 @@ require_once($CFG->dirroot.'/mod/assignquiz/classes/local/structure/slot_random.
 require_once($CFG->dirroot.'/mod/assignquiz/attemptlib.php');
 
 use mod_assignquiz\local\structure\assignquiz_slot_random;
+use qbank_previewquestion\question_preview_options;
+
 function assignquiz_has_attempts($quizid) {
     global $DB;
     return $DB->record_exists('aiquiz_attempts', array('quiz' => $quizid, 'preview' => 0));
@@ -543,7 +545,7 @@ function assignquiz_update_all_final_grades($quiz) {
             $userid = $USER->id;
             $ispreviewuser = $quizobj->is_preview_user();
         } else {
-            $ispreviewuser = has_capability('mod/assignquiz:preview', $quizobj->get_context(), $userid);
+            $ispreviewuser = has_capability('mod/quiz:preview', $quizobj->get_context(), $userid);
         }
         // Delete any previous preview attempts belonging to this user.
         assignquiz_delete_previews($quizobj->get_quiz(), $userid);
@@ -662,7 +664,7 @@ function assignquiz_validate_new_attempt(aiquiz $quizobj, aiquiz_access_manager 
 
     // Check capabilities.
     if (!$quizobj->is_preview_user()) {
-        $quizobj->require_capability('mod/assignquiz:attempt');
+        $quizobj->require_capability('mod/quiz:attempt');
     }
 
     // Check to see if a new preview was requested.
@@ -1111,15 +1113,12 @@ function ai_feedback_generation($course_module_id) {
     // Directly retrieve the file from Moodle's File API.
     $storedfile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $persistentfilename);
 
-    // Fetch the file content via the File API.
-    $file_content = $storedfile->get_content();
-
     // Prepare question attempt info for feedback generation.
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context->id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
     $question_attempt_info = array_values($question_attempt_info);
     foreach ($question_attempt_info as $question_attempt) {
-        if (strcmp($question_attempt->responsesummary, $question_attempt->rightanswer) != 0) {
+        if ($question_attempt->responsesummary != $question_attempt->rightanswer) {
             $filtered_question_attempt_info[] = $question_attempt;
         }
     }
@@ -1136,10 +1135,8 @@ function ai_feedback_generation($course_module_id) {
     $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
 
-    error_log("Filtered question attempt info: " . $filtered_question_attempt_info);
-
     // Call the API using the file content and question attempt info.
-    $response = generate_feedback($file_content, $filtered_question_attempt_info);
+    $response = generate_feedback($filtered_question_attempt_info, $course_module_id);
 
     // Store the generated feedback.
     $aiquiz_feedback = new stdClass();
@@ -1148,7 +1145,6 @@ function ai_feedback_generation($course_module_id) {
     $aiquiz_feedback->feedbacktextformat = FORMAT_HTML;
     $aiquiz_feedback->maxgrade = 11;
 
-    error_log("Feedback generated: " . $aiquiz_feedback->feedbacktext);
 
     $existing_feedback = $DB->get_record('aiquiz_feedback', array('quizid' => $DB->get_field('course_modules','instance', ['id' => $course_module_id])));
     if ($existing_feedback) {
@@ -1169,34 +1165,30 @@ function remove_answer_info($question_summary) {
     return $question_summary; // no colon found, return full string
 }
 
-function generate_feedback($file, $json_text)
+function generate_feedback($json_text, $coursemodule_id)
 {
     $yourApiKey = $_ENV['OPENAI_API_KEY'];
     $client = OpenAI::client($yourApiKey);
-    $fs = get_file_storage();
-
-    $pdftext = $fs->get_file($contextid, 'mod_assignquiz', 'pdftext', 0, '/', $file);
-    $assistant_id = get_config('mod_assignquiz', 'feedback_gen_assistant_id');
-    $create_thread_response = openai_create_thread_feedback($client, $pdftext, $assistant_id->id);
+    $filename = 'feedbacksource_'.$coursemodule_id.'.pdf';
+    $fs = new file_storage();
+    $context = context_module::instance($coursemodule_id);
+    $pdfFile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $filename);
+    $pdftext = $pdfFile->get_content();
+    $assistant_id = get_config('assignquiz', 'feedback_gen_assistant_id');
+    $create_thread_response = openai_create_thread_feedback($client, $pdftext,$json_text, $assistant_id);
     return $create_thread_response;
 }
 
-function openai_create_thread_feedback($client, $file_id, $assistant_id){
+function openai_create_thread_feedback($client, $pdftext, $json_text, $assistant_id){
     $thread_create_response = $client->threads()->create([]);
-
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera retroalimentación para un test de 10 preguntas basándote en el archivo adjuntado que contiene todo el temario y las preguntas en formato json adjuntadas.',
-        'attachments' => [
-            [
-                'file_id' => $file_id,
-                'tools' => [
-                    [
-                        'type' => 'file_search',
-                    ],
-                ],
-            ],
-        ],
+        'content' => 'Genera retroalimentación para un test de 10 preguntas con base en el contenido del temario y el JSON proporcionado: 
+        Este es el JSON:
+        '.$json_text.'\n'.
+
+        'Este es el contenido del temario:'
+        .$pdftext,
     ]);
     $response = $client->threads()->runs()->create(
         threadId: $thread_create_response->id,
@@ -1389,3 +1381,26 @@ function assignquiz_update_open_attempts(array $conditions) {
     $DB->execute($updatesql, $params);
 }
 
+function aiquiz_question_action_icons($quiz, $cmid, $question, $returnurl, $variant = null) {
+    $html = '';
+    if ($question->qtype !== 'random') {
+        $html = aiquiz_question_preview_button($quiz, $question, false, $variant);
+    }
+    $html .= quiz_question_edit_button($cmid, $question, $returnurl);
+    return $html;
+}
+function aiquiz_question_preview_button($quiz, $question, $label = false, $variant = null, $random = null) {
+    global $PAGE;
+    if (!question_has_capability_on($question, 'use')) {
+        return '';
+    }
+    $structure = aiquiz::create($quiz->id)->get_structure();
+    if (!empty($question->slot)) {
+        $requestedversion = $structure->get_slot_by_number($question->slot)->requestedversion
+            ?? question_preview_options::ALWAYS_LATEST;
+    } else {
+        $requestedversion = question_preview_options::ALWAYS_LATEST;
+    }
+    return $PAGE->get_renderer('mod_quiz', 'edit')->question_preview_icon(
+        $quiz, $question, $label, $variant, $requestedversion);
+}

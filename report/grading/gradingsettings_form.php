@@ -34,7 +34,7 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright 2010 Tim Hunt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_grading_settings_form extends moodleform {
+class aiquiz_grading_settings_form extends moodleform {
     protected $includeauto;
     protected $hidden = array();
     protected $counts;
@@ -63,7 +63,7 @@ class quiz_grading_settings_form extends moodleform {
         $this->shownames = $shownames;
         $this->showcustomfields = $showcustomfields;
         $this->context = $context;
-        parent::__construct($CFG->wwwroot . '/mod/quiz/report.php');
+        parent::__construct($CFG->wwwroot . '/mod/assignquiz/report.php');
     }
 
     protected function definition() {

@@ -1,6 +1,0 @@
-{
-    "plugintypes": {
-        "quiz": "mod\/assignquiz\/report",
-        "quizaccess": "mod\/quiz\/accessrule"
-    }
-}

@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_form.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport_form.php');
 
 
 /**
@@ -34,7 +34,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_form.php');
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_overview_settings_form extends mod_quiz_attempts_report_form {
+class aiquiz_overview_settings_form extends mod_quiz_attempts_report_form {
 
     protected function other_attempt_fields(MoodleQuickForm $mform) {
         if (has_capability('mod/quiz:regrade', $this->_customdata['context'])) {

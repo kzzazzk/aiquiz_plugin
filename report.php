@@ -29,6 +29,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/default.php');
+require_once($CFG->dirroot . '/mod/assignquiz/report/grading/gradingsettings_form.php');
 
 $id = optional_param('id', 0, PARAM_INT);
 $q = optional_param('q', 0, PARAM_INT);
@@ -90,7 +91,6 @@ if (is_readable($file)) {
     include_once($file);
 }
 $reportclassname = 'aiquiz_' . $mode . '_report';
-error_log('Report class name: ' . $reportclassname);
 if (!class_exists($reportclassname)) {
     throw new \moodle_exception('preprocesserror', 'quiz');
 }
