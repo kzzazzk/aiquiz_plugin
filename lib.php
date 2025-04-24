@@ -72,7 +72,8 @@ function assignquiz_supports($feature) {
  */
 function assignquiz_add_instance($moduleinstance, $mform)
 {
-    global $DB, $USER;
+    global $DB, $USER, $CFG;
+    $env = parse_ini_file($CFG->dirroot.'/mod/assignquiz/.env');
     $moduleinstance->timemodified = time();
     $result = quiz_process_options($moduleinstance);
     if ($result && is_string($result)) {
@@ -84,7 +85,7 @@ function assignquiz_add_instance($moduleinstance, $mform)
 
     $moduleinstance->id = $assignquizid;
     assignquiz_after_add_or_update($moduleinstance);
-    generate_quiz_questions($moduleinstance);
+    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
     return $assignquizid;
 }
 
@@ -262,8 +263,6 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
 function assignquiz_delete_instance($id)
 {
     global $DB;
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->safeLoad();
     $assignquiz = $DB->get_record('assignquiz', array('id' => $id));
     $fs = get_file_storage();
     $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
@@ -595,11 +594,22 @@ function assignquiz_update_effective_access($quiz, $userid) {
 
     return $quiz;
 }
-function generate_quiz_questions($data) {
+function generate_quiz_questions($data, $apikey) {
     global $CFG, $DB;
 
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->safeLoad();
+    $tempDir = get_temp_directory($CFG);
+    $pdfFiles = process_pdfs($tempDir, $data);
+
+    if (count($pdfFiles) != 1){
+        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
+    }
+    else {
+        $mergedPdfTempFilename = $pdfFiles[0];
+    }
+
+    // Persist the merged PDF in Moodle's File API
+    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data);
+
 
     $section_name = $DB->get_field('course_sections', 'name', [
         'section' => $data->section,
@@ -614,25 +624,12 @@ function generate_quiz_questions($data) {
     $question_category_id = $existing_category
         ? $existing_category->id
         : create_question_category($data);
-
-    $tempDir = get_temp_directory($CFG);
-    $pdfFiles = process_pdfs($tempDir, $data);
-
-    if (count($pdfFiles) != 1){
-        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
-    }
-    else {
-        $mergedPdfTempFilename = $pdfFiles[0];
-    }
-
-    // Persist the merged PDF in Moodle's File API
-    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data);
-    $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
+$cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
     $DB->set_field('assignquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
 
     if ($mergedPdfTempFilename) {
         try {
-            $response = call_api($mergedPdfTempFilename, $data);
+            $response = call_api($mergedPdfTempFilename, $data, $apikey);
             $formattedResponse = filter_text_format($response);
             add_question_to_question_bank($formattedResponse, $question_category_id, $data);
         } finally {
@@ -724,11 +721,12 @@ function create_question_category($data) {
     global $DB, $USER;
     $context_id = $DB->get_field('context', 'id', ['contextlevel' => 50, 'instanceid' => $data->course]);
     $question_category = new stdClass();
-    $section_name = $DB->get_field('course_sections', 'name', ['section' => $data->section, 'course' => $data->course]);
-    $section_name = $section_name  == null ? 'Undefined': $section_name;
-    $question_category->name = 'Preguntas de la sección: '.$section_name;
+    $course = get_course($data->course);
+    $sectioninfo = get_fast_modinfo($course)->get_section_info($data->section);
+    $sectionname = get_section_name($course, $sectioninfo);
+    $question_category->name = 'Preguntas de la sección: '.$sectionname;
     $question_category->contextid = $context_id;
-    $question_category->info = 'Categoría de preguntas generadas por IA de la sección '.$section_name;
+    $question_category->info = 'Categoría de preguntas generadas por IA de la sección '.$sectionname;
     $top_question_category = $DB->get_field('question_categories', 'id', ['contextid' => $context_id, 'parent' => 0]);
     $question_category->parent = $DB->get_field("question_categories", 'id', ['contextid' => $context_id, 'parent' => $top_question_category]);
     $question_category->sortorder = 999;
@@ -935,28 +933,69 @@ function filter_text_format($text) {
         $answer_options = array($match[2], $match[3], $match[4], $match[5]);
         $correct_answer_index = ord($match[6]) - ord('A'); // Convert letter (A-D) to an index (0-3)
 
+        // Randomly swap the correct answer with another option for entropy.
+        $random_slot = random_int(0, count($answer_options) - 1);
+
+        $temp = $answer_options[$correct_answer_index];
+        $answer_options[$correct_answer_index] = $answer_options[$random_slot];
+        $answer_options[$random_slot] = $temp;
+
+
         $questions_list[] = array(
             'question_name' => $question_name,
             'answer_options' => $answer_options,
-            'correct_answer_index' => $correct_answer_index
+            'correct_answer_index' => $random_slot
         );
+
+
+
     }
     // Return the questions list as a pretty-printed JSON string with unescaped Unicode characters.
     return $questions_list;
+
 }
-function call_api($filepath, $data)
+function call_api($filepath, $data, $apikey)
 {
     global $CFG;
-    $yourApiKey = $_ENV['OPENAI_API_KEY'];
-    $client = OpenAI::client($yourApiKey);
+    $client = OpenAI::client($apikey);
     $pdf_text = Spatie\PdfToText\Pdf::getText($filepath, getenv('POPPLER_PATH'));
     $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
     file_put_contents($tempFile, $pdf_text);
     store_file($tempFile, 'feedbacksource', $data);
     unlink($tempFile);
-    $assistant_id = get_config('assignquiz', 'quiz_gen_assistant_id');
+    $assistant_id = get_config('mod_assignquiz', 'quiz_gen_assistant_id');
     $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id);
     return $create_thread_response;
+}
+
+function quiz_generation_assistant_create($client){
+    $response = $client->assistants()->create([
+        'instructions' => '
+        Eres un generador de preguntas de opción múltiple en español basadas en documentos PDF.
+        Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
+
+        Reglas estrictas:
+        - No incluyas pistas en la redacción de las preguntas.
+        - Cubre todo el documento con las preguntas, no solo fragmentos.
+        - Usa español, salvo términos sin traducción en el texto original.
+        - No preguntes sobre ubicaciones (página/sección) dentro del documento, ni tampoco las uses como fundamento de pregunta.
+        - Evita preguntas de definición directa; prioriza preguntas conceptuales y aplicadas.
+        - No formules preguntas cuya respuesta se mencione directamente en el enunciado.
+        - No devuelvas saltos de línea en el texto.
+        - No utilices frases como "según el texto", "de acuerdo con el documento" o similares.
+
+        Formato de salida:
+            [Número]. Pregunta: [Texto de la pregunta]
+            Opciones:
+            A. [Opción 1]
+            B. [Opción 2]
+            C. [Opción 3]
+            D. [Opción 4]
+            Respuesta correcta: [Letra]',
+        'name' => 'Quiz Question Generator',
+        'model' => get_config('mod_assignquiz','questiongenmodel'),
+    ]);
+    return $response['id'];
 }
 
 
@@ -1284,7 +1323,6 @@ function assignquiz_get_group_override_priorities($quizid) {
 function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgroup = 0) {
     global $DB, $USER;
     $numattempts = $DB->count_records('aiquiz_attempts', array('quiz'=> $quiz->id, 'preview'=>0));
-    error_log('Num attempts: ' . $numattempts);
     if ($numattempts || $returnzero) {
         if (groups_get_activity_groupmode($cm)) {
             $a = new stdClass();

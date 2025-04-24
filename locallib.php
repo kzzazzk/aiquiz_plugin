@@ -1100,8 +1100,6 @@ function assignquiz_feedback_record_for_grade($grade, $quiz) {
 }
 
 function ai_feedback_generation($course_module_id) {
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->safeLoad();
     global $DB, $CFG;
     // Retrieve the stored persistent filename from the DB.
     $persistentfilename = $DB->get_field('assignquiz', 'generativefilename', [
@@ -1167,23 +1165,53 @@ function remove_answer_info($question_summary) {
 
 function generate_feedback($json_text, $coursemodule_id)
 {
-    $yourApiKey = $_ENV['OPENAI_API_KEY'];
-    $client = OpenAI::client($yourApiKey);
+    global $CFG;
+    $env = parse_ini_file($CFG->dirroot . '/local/aiquiz/.env');
+    $client = OpenAI::client($env['OPENAI_API_KEY']);
     $filename = 'feedbacksource_'.$coursemodule_id.'.pdf';
     $fs = new file_storage();
     $context = context_module::instance($coursemodule_id);
     $pdfFile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $filename);
     $pdftext = $pdfFile->get_content();
-    $assistant_id = get_config('assignquiz', 'feedback_gen_assistant_id');
+    $assistant_id = get_config('mod_assignquiz', 'feedback_gen_assistant_id');
     $create_thread_response = openai_create_thread_feedback($client, $pdftext,$json_text, $assistant_id);
     return $create_thread_response;
+}
+function feedback_generation_assistant_create($client){
+    $response = $client->assistants()->create([
+        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas y además el parámetro totalsum es equivalente a 0, responde únicamente con "¡Excelente! Sin errores." sin agregar más detalles.
+
+    El JSON recibido contiene la siguiente estructura:
+    - "questionsummary": Resumen de la pregunta.
+    - "rightanswer": Respuesta correcta.
+    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
+    - "totalsum": La suma total de respuestas incorrectas y preguntas no respondidas.
+    
+    Además, se te proporcionará un archivo que contiene el contenido académico relacionado.
+    
+    Según la suma total de respuestas incorrectas y preguntas no respondidas, debes generar una retroalimentación usando las siguientes frases:
+
+    - Si la suma total es 0: "¡Excelente! Sin errores."
+    - Si la suma total es entre 1 y 2: "¡Buen trabajo! Muy bien."
+    - Si la suma total es entre 3 y 4: "Buen intento, sigue así."
+    - Si la suma total es entre 5 y 6: "Buen intento, mejora posible."
+    - Si la suma total es entre 7 y 8: "Se puede mejorar aún."
+    - Si la suma total es entre 9 y 10: "Revisión completa sugerida."
+
+    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
+
+    Después de la frase general, si existen respuestas incorrectas, proporciona retroalimentación mencionando qué temas necesita el usuario repasar de forma redactada pero muy conciso. Esta retroalimentación debe ser clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formato especial como asteriscos.',
+        'name' => 'Quiz Feedback Generator',
+        'model' => get_config('mod_assignquiz','feedbackgenmodel'),
+    ]);
+    return $response['id'];
 }
 
 function openai_create_thread_feedback($client, $pdftext, $json_text, $assistant_id){
     $thread_create_response = $client->threads()->create([]);
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera retroalimentación para un test de 10 preguntas con base en el contenido del temario y el JSON proporcionado: 
+        'content' => 'Genera una breve retroalimentación para un test de 10 preguntas basándote en el contenido del temario y el JSON proporcionado:
         Este es el JSON:
         '.$json_text.'\n'.
 
@@ -1403,4 +1431,77 @@ function aiquiz_question_preview_button($quiz, $question, $label = false, $varia
     }
     return $PAGE->get_renderer('mod_quiz', 'edit')->question_preview_icon(
         $quiz, $question, $label, $variant, $requestedversion);
+}
+
+function get_openai_client() {
+    global $CFG;
+    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
+    $apiKey = $env['OPENAI_API_KEY'] ?? null;
+
+    if (!$apiKey) {
+        throw new Exception('OpenAI API key not found.');
+    }
+
+    return OpenAI::client($apiKey);
+}
+
+function get_assistant_by_name($assistant_name) {
+    $client = get_openai_client();
+    $list = $client->assistants()->list();
+
+    foreach ($list->data as $assistant) {
+        if ($assistant->name === $assistant_name) {
+            return $assistant;
+        }
+    }
+
+    return null; // If not found
+}
+
+function assistant_exist($assistant_name) {
+    return get_assistant_by_name($assistant_name) !== null;
+}
+
+function assistant_model_equivalent_to_openai_model($requested_assistant, $current_assistant) {
+    $assistant = get_assistant_by_name($requested_assistant);
+
+    if (!$assistant) {
+        return false;
+    }
+
+    $assistant_model = $assistant->model;
+
+    return $assistant_model === $current_assistant;
+}
+
+function is_openai_apikey_empty() {
+    global $CFG;
+    $envFile = $CFG->dirroot . '/mod/assignquiz/.env';
+    $env = parse_ini_file($envFile);
+    return strlen($env['OPENAI_API_KEY']) === 0;
+}
+
+function delete_api_key_from_env() {
+    global $CFG;
+    $envFile = $CFG->dirroot . '/mod/assignquiz/.env';
+
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES);
+        foreach ($lines as &$line) {
+            if (strpos($line, 'OPENAI_API_KEY=') === 0) {
+                $line = 'OPENAI_API_KEY=';
+            }
+        }
+        file_put_contents($envFile, implode("\n", $lines));
+    }
+}
+function is_openai_api_key_valid($apikey) {
+    try {
+        $client = OpenAI::client($apikey);
+        $client->models()->list();
+        return true;
+    }
+    catch (OpenAI\Exceptions\ErrorException $e){
+        return false;
+    }
 }
