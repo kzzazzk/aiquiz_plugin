@@ -1208,7 +1208,6 @@ table#categoryquestions {
     border-top: 6px solid #000000;
     border-right: 6px solid #000000;
     border-left: 6px solid #000000;
-    border-bottom: 6px solid #f3f3f3; /* Keep one side light for contrast */
     border-radius: 50%;
     width: 40px;
     height: 40px;

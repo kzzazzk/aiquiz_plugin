@@ -108,7 +108,7 @@ function assignquiz_add_instance($moduleinstance, $mform)
         observer::add_vault_category($context->id, $coursename);
     }
 
-//    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
+    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
     return $assignquizid;
 }
 

@@ -26,6 +26,7 @@ import {saveCancelPromise} from 'core/notification';
 import Prefetch from 'core/prefetch';
 import Templates from 'core/templates';
 import {get_string as getString} from 'core/str';
+import Notification from 'core/notification';
 
 const SELECTOR = {
     attemptSubmitButton: '.path-mod-assignquiz .btn-finishattempt button',
@@ -57,6 +58,10 @@ const registerEventListeners = (unAnsweredQuestions) => {
 
                 submitAction.closest(SELECTOR.attemptSubmitForm).submit();
                 console.log("Form will be submitted"); // eslint-disable-line no-console
+                Notification.addNotification({
+                    message: await getString('submission_successful', 'mod_assignquiz'),
+                    type: 'info',
+                });
 
             } catch {
                 console.log("Cancel submission"); // eslint-disable-line no-console

@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-global $DB;
+global $DB, $OUTPUT;
 
 /**
  * This page deals with processing responses during an attempt at a quiz.
