@@ -34,28 +34,45 @@ use mod_assignquiz\question\bank\assignquiz_custom_view;
 use mod_quiz\question\bank\custom_view;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\PdfParserException;
+use mod_assignquiz\observer;
 
 require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
 require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
-require_once($CFG->dirroot.'/vendor/autoload.php');
+require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/vendor/autoload.php');
 
-function assignquiz_supports($feature) {
-    switch($feature) {
-        case FEATURE_GROUPS:                    return true;
-        case FEATURE_GROUPINGS:                 return true;
-        case FEATURE_MOD_INTRO:                 return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS:   return true;
-        case FEATURE_COMPLETION_HAS_RULES:      return true;
-        case FEATURE_GRADE_HAS_GRADE:           return true;
-        case FEATURE_GRADE_OUTCOMES:            return true;
-        case FEATURE_BACKUP_MOODLE2:            return true;
-        case FEATURE_SHOW_DESCRIPTION:          return true;
-        case FEATURE_CONTROLS_GRADE_VISIBILITY: return true;
-        case FEATURE_USES_QUESTIONS:            return true;
-        case FEATURE_PLAGIARISM:                return true;
-        case FEATURE_MOD_PURPOSE:               return MOD_PURPOSE_ASSESSMENT;
+function assignquiz_supports($feature)
+{
+    switch ($feature) {
+        case FEATURE_GROUPS:
+            return true;
+        case FEATURE_GROUPINGS:
+            return true;
+        case FEATURE_MOD_INTRO:
+            return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
+            return true;
+        case FEATURE_COMPLETION_HAS_RULES:
+            return true;
+        case FEATURE_GRADE_HAS_GRADE:
+            return true;
+        case FEATURE_GRADE_OUTCOMES:
+            return true;
+        case FEATURE_BACKUP_MOODLE2:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION:
+            return true;
+        case FEATURE_CONTROLS_GRADE_VISIBILITY:
+            return true;
+        case FEATURE_USES_QUESTIONS:
+            return true;
+        case FEATURE_PLAGIARISM:
+            return true;
+        case FEATURE_MOD_PURPOSE:
+            return MOD_PURPOSE_ASSESSMENT;
 
-        default: return null;
+        default:
+            return null;
     }
 }
 
@@ -73,7 +90,7 @@ function assignquiz_supports($feature) {
 function assignquiz_add_instance($moduleinstance, $mform)
 {
     global $DB, $USER, $CFG;
-    $env = parse_ini_file($CFG->dirroot.'/mod/assignquiz/.env');
+    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
     $moduleinstance->timemodified = time();
     $result = quiz_process_options($moduleinstance);
     if ($result && is_string($result)) {
@@ -82,10 +99,16 @@ function assignquiz_add_instance($moduleinstance, $mform)
     $assignquizid = $DB->insert_record('assignquiz', $moduleinstance);
     $DB->insert_record('aiquiz_sections', array('quizid' => $assignquizid,
         'firstslot' => 1, 'heading' => '', 'shufflequestions' => 0));
-
     $moduleinstance->id = $assignquizid;
     assignquiz_after_add_or_update($moduleinstance);
-    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
+
+    $context = context_course::instance($moduleinstance->course);
+    $coursename = get_course($moduleinstance->course)->fullname;
+    if (!observer::vault_category_exists($context->id, $coursename)) {
+        observer::add_vault_category($context->id, $coursename);
+    }
+
+//    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
     return $assignquizid;
 }
 
@@ -108,7 +131,7 @@ function assignquiz_update_instance($moduleinstance, $mform = null)
     // We need two values from the existing DB record that are not in the form,
     // in some of the function calls below.
     $moduleinstance->sumgrades = $oldquiz->sumgrades;
-    $moduleinstance->grade     = $oldquiz->grade;
+    $moduleinstance->grade = $oldquiz->grade;
 
     // Update the database.
     $moduleinstance->id = $moduleinstance->instance;
@@ -122,8 +145,8 @@ function assignquiz_update_instance($moduleinstance, $mform = null)
         assignquiz_update_grades($moduleinstance);
     }
 
-    $quizdateschanged = $oldquiz->timelimit   != $moduleinstance->timelimit
-        || $oldquiz->timeclose   != $moduleinstance->timeclose
+    $quizdateschanged = $oldquiz->timelimit != $moduleinstance->timelimit
+        || $oldquiz->timeclose != $moduleinstance->timeclose
         || $oldquiz->graceperiod != $moduleinstance->graceperiod;
     if ($quizdateschanged) {
         assignquiz_update_open_attempts(array('quizid' => $moduleinstance->id));
@@ -139,13 +162,57 @@ function assignquiz_update_instance($moduleinstance, $mform = null)
 
     return true;
 }
-function assignquiz_after_add_or_update($assignquiz) {
+
+/**
+ * Removes an instance of the mod_assignquiz from the database.
+ *
+ * @param int $id Id of the module instance.
+ * @return bool True if successful, false on failure.
+ */
+function assignquiz_delete_instance($id)
+{
+    global $DB, $PAGE, $CFG;
+
+    $assignquiz = $DB->get_record('assignquiz', ['id' => $id]);
+    if (!$assignquiz) {
+        return false;
+    }
+
+    $fs = get_file_storage();
+    $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
+
+    $contextid = $DB->get_field('context', 'id', [
+        'instanceid' => $course_module->id,
+        'contextlevel' => CONTEXT_MODULE
+    ], MUST_EXIST);
+
+    // Delete files
+    $fs->delete_area_files($contextid, 'mod_assignquiz', 'feedbacksource', 0);
+    $fs->delete_area_files($contextid, 'mod_assignquiz', 'pdftext', 0);
+
+    // Delete grade item
+    assignquiz_grade_item_delete($assignquiz);
+
+    // Delete the assignquiz instance
+    $DB->delete_records('assignquiz', ['id' => $id]);
+
+    $DB->delete_records('question_categories', ['contextid' => $contextid]);
+
+
+    $DB->delete_records('assignquiz', ['id' => $id]);
+
+    return true;
+}
+
+
+
+function assignquiz_after_add_or_update($assignquiz)
+{
     global $DB;
     $cmid = $assignquiz->coursemodule;
 
     // We need to use context now, so we need to make sure all needed info is already in db.
-    $DB->set_field('course_modules', 'instance', $assignquiz->id, array('id'=>$cmid));
-    $context = context_module::instance($cmid);
+    $DB->set_field('course_modules', 'instance', $assignquiz->id, array('id' => $cmid));
 
     // Store any settings belonging to the access rules.
     aiquiz_access_manager::save_settings($assignquiz);
@@ -158,7 +225,8 @@ function assignquiz_after_add_or_update($assignquiz) {
 
 }
 
-function assignquiz_grade_item_update($assignquiz, $grades = null) {
+function assignquiz_grade_item_update($assignquiz, $grades = null)
+{
     global $CFG, $OUTPUT;
     require_once($CFG->dirroot . '/mod/quiz/locallib.php');
     require_once($CFG->libdir . '/gradelib.php');
@@ -171,8 +239,8 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
 
     if ($assignquiz->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $assignquiz->grade;
-        $params['grademin']  = 0;
+        $params['grademax'] = $assignquiz->grade;
+        $params['grademin'] = 0;
 
     } else {
         $params['gradetype'] = GRADE_TYPE_NONE;
@@ -221,7 +289,7 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
         }
     }
 
-    if ($grades  === 'reset') {
+    if ($grades === 'reset') {
         $params['reset'] = true;
         $grades = null;
     }
@@ -239,10 +307,10 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
                         '&amp;mode=overview';
                     $regrade_link = qualified_me() . '&amp;confirm_regrade=1';
                     echo $OUTPUT->box_start('generalbox', 'notice');
-                    echo '<p>'. $message .'</p>';
+                    echo '<p>' . $message . '</p>';
                     echo $OUTPUT->container_start('buttons');
                     echo $OUTPUT->single_button($regrade_link, get_string('regradeanyway', 'grades'));
-                    echo $OUTPUT->single_button($back_link,  get_string('cancel'));
+                    echo $OUTPUT->single_button($back_link, get_string('cancel'));
                     echo $OUTPUT->container_end();
                     echo $OUTPUT->box_end();
                 }
@@ -254,31 +322,8 @@ function assignquiz_grade_item_update($assignquiz, $grades = null) {
 }
 
 
-/**
- * Removes an instance of the mod_assignquiz from the database.
- *
- * @param int $id Id of the module instance.
- * @return bool True if successful, false on failure.
- */
-function assignquiz_delete_instance($id)
+function assignquiz_grade_item_delete($assignquiz)
 {
-    global $DB;
-    $assignquiz = $DB->get_record('assignquiz', array('id' => $id));
-    $fs = get_file_storage();
-    $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
-    $contextid = $DB->get_field('context', 'id', array('instanceid' => $course_module->id), MUST_EXIST);
-    $fs->delete_area_files($contextid, 'mod_assignquiz', 'feedbacksource', 0);
-    $fs->delete_area_files($contextid, 'mod_assignquiz', 'pdftext', 0);
-    if (!$assignquiz) {
-        return false;
-    }
-    assignquiz_grade_item_delete($assignquiz);
-    $DB->delete_records('assignquiz', array('id' => $id));
-    return true;
-}
-
-
-function assignquiz_grade_item_delete($assignquiz) {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
@@ -287,7 +332,8 @@ function assignquiz_grade_item_delete($assignquiz) {
 }
 
 //displays info on course view
-function assignquiz_get_coursemodule_info($coursemodule) {
+function assignquiz_get_coursemodule_info($coursemodule)
+{
     global $DB;
 
     // Fetch assignquiz record
@@ -392,7 +438,9 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode)
         }
     }
 }
-function mod_assignquiz_output_fragment_quiz_question_bank($args) {
+
+function mod_assignquiz_output_fragment_quiz_question_bank($args)
+{
     global $CFG, $DB, $PAGE;
     require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
     require_once($CFG->dirroot . '/question/editlib.php');
@@ -418,7 +466,9 @@ function mod_assignquiz_output_fragment_quiz_question_bank($args) {
     $renderer = $PAGE->get_renderer('mod_assignquiz', 'assignquizedit');
     return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
 }
-function mod_assignquiz_output_fragment_add_random_question_form($args) {
+
+function mod_assignquiz_output_fragment_add_random_question_form($args)
+{
     global $CFG;
     require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
 
@@ -447,7 +497,9 @@ function mod_assignquiz_output_fragment_add_random_question_form($args) {
 
     return $form->render();
 }
-function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false) {
+
+function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false)
+{
     global $DB, $CFG;
     // TODO MDL-33071 it is very annoying to have to included all of locallib.php
     // just to get the quiz_attempt::FINISHED constants, but I will try to sort
@@ -474,7 +526,7 @@ function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $
             break;
     }
 
-    $quizids = (array) $quizids;
+    $quizids = (array)$quizids;
     list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
     $params += $inparams;
     $params['userid'] = $userid;
@@ -488,7 +540,9 @@ function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $
         "quiz $insql AND userid = :userid" . $previewclause . $statuscondition,
         $params, 'quiz  , attempt ASC');
 }
-function assignquiz_get_best_grade($quiz, $userid) {
+
+function assignquiz_get_best_grade($quiz, $userid)
+{
     global $DB;
     $grade = $DB->get_field('aiquiz_grades', 'grade',
         array('quiz' => $quiz->id, 'userid' => $userid));
@@ -500,7 +554,25 @@ function assignquiz_get_best_grade($quiz, $userid) {
 
     return $grade + 0; // Convert to number.
 }
-function assignquiz_update_effective_access($quiz, $userid) {
+
+function assignquiz_get_grade_format($quiz)
+{
+    global $DB;
+
+    // Get the grade format.
+    $gradeformat = $DB->get_field('assignquiz', 'gradeformat', array('id' => $quiz->id));
+
+    // If the quiz is not graded, return null.
+    if ($gradeformat == GRADE_TYPE_NONE) {
+        return null;
+    }
+
+    // Return the grade format.
+    return $gradeformat;
+}
+
+function assignquiz_update_effective_access($quiz, $userid)
+{
     global $DB;
 
     // Check for user override.
@@ -594,37 +666,52 @@ function assignquiz_update_effective_access($quiz, $userid) {
 
     return $quiz;
 }
-function generate_quiz_questions($data, $apikey) {
+
+function generate_quiz_questions($data, $apikey)
+{
     global $CFG, $DB;
-
+    //OpenAI\Exceptions\ErrorException
     $tempDir = get_temp_directory($CFG);
-    $pdfFiles = process_pdfs($tempDir, $data);
+    $fs = get_file_storage();
+    $pdfFiles = [];
+    $files = get_pdfs_in_section($data);
+    $pdffilenames = get_pdf_names($files);
+    foreach ($files as $pdf) {
+        $pdfFile = $fs->get_file($pdf->contextid, $pdf->component, $pdf->filearea, $pdf->itemid, $pdf->filepath, $pdf->filename);
+        $file_content = $pdfFile->get_content();
 
-    if (count($pdfFiles) != 1){
-        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
+        $tempFilename = $tempDir . uniqid('moodle_pdf_', true) . '.pdf';
+        file_put_contents($tempFilename, $file_content);
+
+        $convertedFile = convert_pdf($tempFilename, $tempDir);
+        if ($convertedFile) {
+            $pdfFiles[] = $convertedFile;
+        }
+        unlink($tempFilename);
     }
-    else {
+
+    if (count($pdfFiles) != 1) {
+        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
+        $pdffilename = implode(' + ', $pdffilenames);
+    } else {
         $mergedPdfTempFilename = $pdfFiles[0];
+        $pdffilename = $pdffilenames[0];
     }
 
     // Persist the merged PDF in Moodle's File API
     $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data);
-
-
-    $section_name = $DB->get_field('course_sections', 'name', [
-        'section' => $data->section,
-        'course' => $data->course
-    ]);
-    $section_name = $section_name ?? 'Seccion con nombre por defecto de Moodle';
+    get_course($data->course);
+    $sectioninfo = get_fast_modinfo($data->course)->get_section_info($data->section);
+    $sectionname = get_section_name($data->course, $sectioninfo);
 
     $existing_category = $DB->get_record('question_categories', [
-        'name' => 'Preguntas de la sección: ' . $section_name
+        'name' => "$sectionname: Cuestionario $data->name basado en $mergedPdfTempFilename",
     ]);
 
     $question_category_id = $existing_category
         ? $existing_category->id
-        : create_question_category($data);
-$cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
+        : create_question_category($data, $sectionname, $pdffilename);
+    $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
     $DB->set_field('assignquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
 
     if ($mergedPdfTempFilename) {
@@ -642,13 +729,14 @@ $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->cour
 /**
  * Persists the merged PDF using the Moodle File API.
  */
-function store_file($mergedPdfTempFilename, $filearea, $data) {
+function store_file($mergedPdfTempFilename, $filearea, $data)
+{
     $fs = get_file_storage();
     // Get the context from the course module.
     $context = context_module::instance($data->coursemodule);
 
     // Define a filename (you could incorporate the course module id or a hash)
-    if($filearea == 'feedbacksource') {
+    if ($filearea == 'feedbacksource') {
         $prefix = 'feedbacksource_';
     } else {
         $prefix = 'merged_moodle_pdf_';
@@ -657,10 +745,10 @@ function store_file($mergedPdfTempFilename, $filearea, $data) {
     $fileinfo = [
         'contextid' => $context->id,
         'component' => 'mod_assignquiz',
-        'filearea'  => $filearea,
-        'itemid'    => 0,
-        'filepath'  => '/',
-        'filename'  => $filename,
+        'filearea' => $filearea,
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => $filename,
     ];
 
     // Create the file in Moodle's file storage.
@@ -678,27 +766,17 @@ function get_temp_directory($CFG)
     }
     return $tempDir;
 }
-function process_pdfs($tempDir, $data)
+
+//get_pdf_in_section($data)
+function get_pdf_names($files)
 {
-    $fs = get_file_storage();
-    $pdfFiles = [];
-    $files = get_pdfs_in_section($data);
-
+    $pdf_names = [];
     foreach ($files as $pdf) {
-        $pdfFile = $fs->get_file($pdf->contextid, $pdf->component, $pdf->filearea, $pdf->itemid, $pdf->filepath, $pdf->filename);
-        $file_content = $pdfFile->get_content();
-
-        $tempFilename = $tempDir . uniqid('moodle_pdf_', true) . '.pdf';
-        file_put_contents($tempFilename, $file_content);
-
-        $convertedFile = convert_pdf($tempFilename, $tempDir);
-        if ($convertedFile) {
-            $pdfFiles[] = $convertedFile;
-        }
-        unlink($tempFilename);
+        $pdf_names[] = $pdf->filename;
     }
-    return $pdfFiles;
+    return $pdf_names;
 }
+
 function convert_pdf($inputFile, $tempDir)
 {
     $outputFile = $tempDir . uniqid('converted_moodle_pdf_', true) . '.pdf';
@@ -706,6 +784,7 @@ function convert_pdf($inputFile, $tempDir)
     exec($gsCmd, $output, $returnVar);
     return $outputFile;
 }
+
 function merge_pdfs($pdfFiles, $tempDir)
 {
     $mergedPdfTempFilename = $tempDir . uniqid('merged_moodle_pdf_', true) . '.pdf';
@@ -717,16 +796,36 @@ function merge_pdfs($pdfFiles, $tempDir)
 
     return $mergeResult ? $mergedPdfTempFilename : null;
 }
-function create_question_category($data) {
+
+function create_question_category($data, $sectionname, $mergedPdfTempFilename)
+{
     global $DB, $USER;
-    $context_id = $DB->get_field('context', 'id', ['contextlevel' => 50, 'instanceid' => $data->course]);
+    $context_id = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $data->coursemodule]);
+    // Create the "Top for [instance_name]" category (parent = 0).
+    $top_category = new stdClass();
+    $top_category->name = "Top for $data->name";
+    $top_category->info = '';
+    $top_category->stamp = make_unique_id_code();
+    $top_category->contextid = $context_id;
+    $top_category->parent = 0;  // Parent is 0 (top-level category).
+    $top_category->id = $DB->insert_record('question_categories', $top_category);
+
+
+// Create the "Default for [instance_name]" category (parent = top_category id).
+    $default_category = new stdClass();
+    $default_category->name = "Default for $data->name";
+    $default_category->info = "The default category for questions shared in context \'$data->name\'.";
+    $default_category->stamp = make_unique_id_code();
+    $default_category->contextid = $context_id;
+    $default_category->parent = $top_category->id;  // Parent is the "Top for [instance_name]" category.
+    $default_category->id = $DB->insert_record('question_categories', $default_category);
+
+
     $question_category = new stdClass();
-    $course = get_course($data->course);
-    $sectioninfo = get_fast_modinfo($course)->get_section_info($data->section);
-    $sectionname = get_section_name($course, $sectioninfo);
-    $question_category->name = 'Preguntas de la sección: '.$sectionname;
+
+    $question_category->name = "$sectionname: $data->name basado en $mergedPdfTempFilename";
     $question_category->contextid = $context_id;
-    $question_category->info = 'Categoría de preguntas generadas por IA de la sección '.$sectionname;
+    $question_category->info = 'Categoría de preguntas generadas por IA de la sección ' . $sectionname;
     $top_question_category = $DB->get_field('question_categories', 'id', ['contextid' => $context_id, 'parent' => 0]);
     $question_category->parent = $DB->get_field("question_categories", 'id', ['contextid' => $context_id, 'parent' => $top_question_category]);
     $question_category->sortorder = 999;
@@ -771,7 +870,9 @@ function mergePDFs(array $files, string $outputFile): bool
         return false;
     }
 }
-function add_question_to_question_bank($response, $question_category_id, $data) {
+
+function add_question_to_question_bank($response, $question_category_id, $data)
+{
 
     global $DB, $USER;
     $i = 1;
@@ -787,22 +888,22 @@ function add_question_to_question_bank($response, $question_category_id, $data) 
         $question->createdby = $USER->id;
         $question->modifiedby = $USER->id;
         $question->correctfeedback = [
-            'text'   => '',
+            'text' => '',
             'format' => FORMAT_HTML,  // for example, FORMAT_HTML
         ];
         $question->partiallycorrectfeedback = [
-            'text'   => '',
+            'text' => '',
             'format' => FORMAT_HTML,  // for example, FORMAT_HTML
         ];
         $question->incorrectfeedback = [
-            'text'   => '',
+            'text' => '',
             'format' => FORMAT_HTML,  // for example, FORMAT_HTML
         ];
         // Prepare the form object with required parameters.
         $qtype = question_bank::get_qtype('multichoice');
         $form = new stdClass();
         $form->category = $question->category;
-        $form->name =  $question->name;
+        $form->name = $question->name;
         $form->questiontext = $question->questiontext;
         $form->penalty = 0.3333333;
         $form->single = 1;
@@ -854,7 +955,7 @@ function add_question_to_question_bank($response, $question_category_id, $data) 
         $question_reference->usingcontextid = context_module::instance($data->coursemodule)->id;
         $question_reference->component = 'mod_assignquiz';
         $question_reference->questionarea = 'slot';
-        $question_reference->itemid =  $slot_id; // Usually the question id or slot id
+        $question_reference->itemid = $slot_id; // Usually the question id or slot id
         $question_reference->questionbankentryid = get_question_bank_entry($question->id)->id;
 
         $DB->insert_record('question_references', $question_reference);
@@ -863,7 +964,9 @@ function add_question_to_question_bank($response, $question_category_id, $data) 
 
     }
 }
-function get_pdfs_in_section($data) {
+
+function get_pdfs_in_section($data)
+{
     global $DB;
 
     $resource_id = $DB->get_field('modules', 'id', ['name' => 'resource']);
@@ -904,7 +1007,9 @@ function get_pdfs_in_section($data) {
 
     return $pdfs;
 }
-function filter_text_format($text) {
+
+function filter_text_format($text)
+{
     // Define the regex pattern. The pattern captures:
     //   1. The question text after "Pregunta:"
     //   2. Option A text after "A."
@@ -948,12 +1053,12 @@ function filter_text_format($text) {
         );
 
 
-
     }
     // Return the questions list as a pretty-printed JSON string with unescaped Unicode characters.
     return $questions_list;
 
 }
+
 function call_api($filepath, $data, $apikey)
 {
     global $CFG;
@@ -968,7 +1073,8 @@ function call_api($filepath, $data, $apikey)
     return $create_thread_response;
 }
 
-function quiz_generation_assistant_create($client){
+function quiz_generation_assistant_create($client)
+{
     $response = $client->assistants()->create([
         'instructions' => '
         Eres un generador de preguntas de opción múltiple en español basadas en documentos PDF.
@@ -993,18 +1099,19 @@ function quiz_generation_assistant_create($client){
             D. [Opción 4]
             Respuesta correcta: [Letra]',
         'name' => 'Quiz Question Generator',
-        'model' => get_config('mod_assignquiz','questiongenmodel'),
+        'model' => get_config('mod_assignquiz', 'questiongenmodel'),
     ]);
     return $response['id'];
 }
 
-
-function openai_create_thread($client, $text, $assistant_id){
+//OpenAI\Exceptions\ErrorException
+function openai_create_thread($client, $text, $assistant_id)
+{
     $thread_create_response = $client->threads()->create([]);
 
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:\n'. $text,
+        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:\n' . $text,
     ]);
     $response = $client->threads()->runs()->create(
         threadId: $thread_create_response->id,
@@ -1033,7 +1140,8 @@ function openai_create_thread($client, $text, $assistant_id){
     }
 }
 
-function assignquiz_update_grades($quiz, $userid = 0, $nullifnone = true) {
+function assignquiz_update_grades($quiz, $userid = 0, $nullifnone = true)
+{
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
@@ -1054,7 +1162,8 @@ function assignquiz_update_grades($quiz, $userid = 0, $nullifnone = true) {
     }
 }
 
-function assignquiz_get_user_grades($quiz, $userid = 0) {
+function assignquiz_get_user_grades($quiz, $userid = 0)
+{
     global $CFG, $DB;
 
     $params = array($quiz->id);
@@ -1080,12 +1189,13 @@ function assignquiz_get_user_grades($quiz, $userid = 0) {
             GROUP BY u.id, qg.grade, qg.timemodified", $params);
 }
 
-function assignquiz_update_events($quiz, $override = null) {
+function assignquiz_update_events($quiz, $override = null)
+{
     global $DB;
 
     // Load the old events relating to this quiz.
-    $conds = array('modulename'=>'assignquiz',
-        'instance'=>$quiz->id);
+    $conds = array('modulename' => 'assignquiz',
+        'instance' => $quiz->id);
     if (!empty($override)) {
         // Only load events for this override.
         if (isset($override->userid)) {
@@ -1114,13 +1224,13 @@ function assignquiz_update_events($quiz, $override = null) {
     $grouppriorities = assignquiz_get_group_override_priorities($quiz->id);
 
     foreach ($overrides as $current) {
-        $groupid   = isset($current->groupid)?  $current->groupid : 0;
-        $userid    = isset($current->userid)? $current->userid : 0;
-        $timeopen  = isset($current->timeopen)?  $current->timeopen : $quiz->timeopen;
-        $timeclose = isset($current->timeclose)? $current->timeclose : $quiz->timeclose;
+        $groupid = isset($current->groupid) ? $current->groupid : 0;
+        $userid = isset($current->userid) ? $current->userid : 0;
+        $timeopen = isset($current->timeopen) ? $current->timeopen : $quiz->timeopen;
+        $timeclose = isset($current->timeclose) ? $current->timeclose : $quiz->timeclose;
 
         // Only add open/close events for an override if they differ from the quiz default.
-        $addopen  = empty($current->id) || !empty($current->timeopen);
+        $addopen = empty($current->id) || !empty($current->timeopen);
         $addclose = empty($current->id) || !empty($current->timeclose);
 
         if (!empty($quiz->coursemodule)) {
@@ -1134,17 +1244,17 @@ function assignquiz_update_events($quiz, $override = null) {
         $event->description = format_module_intro('assignquiz', $quiz, $cmid, false);
         $event->format = FORMAT_HTML;
         // Events module won't show user events when the courseid is nonzero.
-        $event->courseid    = ($userid) ? 0 : $quiz->course;
-        $event->groupid     = $groupid;
-        $event->userid      = $userid;
-        $event->modulename  = 'assignquiz';
-        $event->instance    = $quiz->id;
-        $event->timestart   = $timeopen;
+        $event->courseid = ($userid) ? 0 : $quiz->course;
+        $event->groupid = $groupid;
+        $event->userid = $userid;
+        $event->modulename = 'assignquiz';
+        $event->instance = $quiz->id;
+        $event->timestart = $timeopen;
         $event->timeduration = max($timeclose - $timeopen, 0);
-        $event->timesort    = $timeopen;
-        $event->visible     = instance_is_visible('assignquiz', $quiz);
-        $event->eventtype   = QUIZ_EVENT_TYPE_OPEN;
-        $event->priority    = null;
+        $event->timesort = $timeopen;
+        $event->visible = instance_is_visible('assignquiz', $quiz);
+        $event->eventtype = QUIZ_EVENT_TYPE_OPEN;
+        $event->priority = null;
 
         // Determine the event name and priority.
         if ($groupid) {
@@ -1178,7 +1288,7 @@ function assignquiz_update_events($quiz, $override = null) {
 
         if ($addopen or $addclose) {
             // Separate start and end events.
-            $event->timeduration  = 0;
+            $event->timeduration = 0;
             if ($timeopen && $addopen) {
                 if ($oldevent = array_shift($oldevents)) {
                     $event->id = $oldevent->id;
@@ -1195,10 +1305,10 @@ function assignquiz_update_events($quiz, $override = null) {
                 } else {
                     unset($event->id);
                 }
-                $event->type      = CALENDAR_EVENT_TYPE_ACTION;
-                $event->name      = get_string('quizeventcloses', 'quiz', $eventname);
+                $event->type = CALENDAR_EVENT_TYPE_ACTION;
+                $event->name = get_string('quizeventcloses', 'quiz', $eventname);
                 $event->timestart = $timeclose;
-                $event->timesort  = $timeclose;
+                $event->timesort = $timeclose;
                 $event->eventtype = QUIZ_EVENT_TYPE_CLOSE;
                 if ($groupid && $grouppriorities !== null) {
                     $closepriorities = $grouppriorities['close'];
@@ -1218,7 +1328,8 @@ function assignquiz_update_events($quiz, $override = null) {
     }
 }
 
-function assignquiz_delete_override($quiz, $overrideid, $log = true) {
+function assignquiz_delete_override($quiz, $overrideid, $log = true)
+{
     global $DB;
 
     if (!isset($quiz->cmid)) {
@@ -1274,7 +1385,9 @@ function assignquiz_delete_override($quiz, $overrideid, $log = true) {
 
     return true;
 }
-function assignquiz_get_group_override_priorities($quizid) {
+
+function assignquiz_get_group_override_priorities($quizid)
+{
     global $DB;
 
     // Fetch group overrides.
@@ -1320,9 +1433,10 @@ function assignquiz_get_group_override_priorities($quizid) {
     ];
 }
 
-function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgroup = 0) {
+function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgroup = 0)
+{
     global $DB, $USER;
-    $numattempts = $DB->count_records('aiquiz_attempts', array('quiz'=> $quiz->id, 'preview'=>0));
+    $numattempts = $DB->count_records('aiquiz_attempts', array('quiz' => $quiz->id, 'preview' => 0));
     if ($numattempts || $returnzero) {
         if (groups_get_activity_groupmode($cm)) {
             $a = new stdClass();
@@ -1348,3 +1462,27 @@ function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgro
     }
     return '';
 }
+
+
+//function assignquiz_cm_info_view(cm_info $cm)
+//{
+//    global $PAGE, $DB;
+//    if ($cm->modname === 'assignquiz') {
+//        $assignquizid = $DB->get_field('course_modules', 'instance', ['id' => $cm->id]);
+//        $courseid = $DB->get_field('assignquiz', 'course', ['id' => $assignquizid]);
+//        $fullcoursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+//        error_log("Assignquiz ID: $assignquizid, CM ID: $cm->id, Full Course Name: $fullcoursename");
+//        $PAGE->requires->js_call_amd('mod_assignquiz/doubleconfirm', 'init', [$assignquizid, $cm->id, $fullcoursename]);
+//    }
+//}
+function assignquiz_delete_and_relocate_questions($id)
+{
+    global $DB, $PAGE, $CFG;
+    $assignquiz = $DB->get_record('assignquiz', ['id' => $id]);
+    $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
+    course_delete_module($course_module->id);
+    rebuild_course_cache($assignquiz->course, true);
+    return true;
+}
+
+

@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/mod/assignquiz/classes/settings/assignquiz_admin_
 require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/assignquiz/lib.php');
 
-
+//OpenAI\Exceptions\UnserializableResponse
 // Define the settings for the API key
 if ($ADMIN->fulltree) {
     $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
@@ -123,7 +123,7 @@ if ($ADMIN->fulltree) {
             'mod_assignquiz/feedbackgenmodel',
             get_string('feedbackgenmodel', 'assignquiz'),
             get_string('feedbackgenmodeldescription', 'assignquiz'),
-            'gpt-4.1-mini',
+            'gpt-4.1-nano',
             $modelOptions,
             'feedback_gen_assistant_id'
         ));

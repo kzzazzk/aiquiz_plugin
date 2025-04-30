@@ -23,10 +23,13 @@ class admin_setting_model extends \admin_setting_configselect {
         global $CFG;
         $result = parent::write_setting($data);
         $env = parse_ini_file($CFG->dirroot.'/mod/assignquiz/.env');
-        if (assistant_exist(get_string($this->config_variable, 'assignquiz')) && !assistant_model_equivalent_to_openai_model($data, get_config('mod_assignquiz', $this->config_variable))) {
-            $client = OpenAI::client($env['OPENAI_API_KEY']);
-            $client->assistants()->modify(get_config('mod_assignquiz', $this->config_variable), ['model' => $data]);
+        if(is_openai_api_key_valid($env['OPENAI_API_KEY']) || is_openai_apikey_empty()){
+            if (assistant_exist(get_string($this->config_variable, 'assignquiz')) && !assistant_model_equivalent_to_openai_model($data, get_config('mod_assignquiz', $this->config_variable))) {
+                $client = OpenAI::client($env['OPENAI_API_KEY']);
+                $client->assistants()->modify(get_config('mod_assignquiz', $this->config_variable), ['model' => $data]);
+            }
         }
+
        return $result;
     }
 }

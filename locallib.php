@@ -1105,12 +1105,12 @@ function ai_feedback_generation($course_module_id) {
     $persistentfilename = $DB->get_field('assignquiz', 'generativefilename', [
         'id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])
     ]);
-
+    $attemptid = optional_param('attempt', 0, PARAM_INT);
     $fs = get_file_storage();
     $context = context_module::instance($course_module_id);
     // Directly retrieve the file from Moodle's File API.
     $storedfile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $persistentfilename);
-
+    $grade = $DB->get_field('aiquiz_attempts', 'sumgrades', ['id' => $attemptid]);
     // Prepare question attempt info for feedback generation.
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context->id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
@@ -1125,7 +1125,8 @@ function ai_feedback_generation($course_module_id) {
     }
 
     // Add the length of the JSON object to the data.
-    $filtered_question_attempt_info_length = $filtered_question_attempt_info == null?  0 : count($filtered_question_attempt_info);
+    $filtered_question_attempt_info_length = $filtered_question_attempt_info == null?  0 : $grade;
+
 
     // Add the length field to the data.
     $filtered_question_attempt_info[] = ['totalsum' => $filtered_question_attempt_info_length];
@@ -1134,8 +1135,16 @@ function ai_feedback_generation($course_module_id) {
     $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
 
     // Call the API using the file content and question attempt info.
-    $response = generate_feedback($filtered_question_attempt_info, $course_module_id);
-
+    if($grade < 2){
+        $response = 'Revisión completa sugerida.';
+    }
+    elseif($grade === 10){
+        $response = '¡Excelente! Sin errores.';
+    }
+    else{
+        $response = generate_feedback($filtered_question_attempt_info, $course_module_id);
+        $response = cheer_text_generator($response, $grade);
+    }
     // Store the generated feedback.
     $aiquiz_feedback = new stdClass();
     $aiquiz_feedback->quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
@@ -1152,6 +1161,19 @@ function ai_feedback_generation($course_module_id) {
     }
 }
 
+function cheer_text_generator($response_text, $grade){
+    if ($grade >= 8 && $grade < 10) {
+        $cheertext =  "¡Buen trabajo! Muy bien.";
+    } elseif ($grade >= 6 && $grade < 8) {
+        $cheertext =  "Buen intento, sigue así.";
+    } elseif ($grade >= 5 && $grade < 6) {
+        $cheertext =  "Buen intento, mejora posible.";
+    } elseif ($grade >= 2 && $grade < 5) {
+        $cheertext =  "Revisión parcial sugerida.";
+    }
+    return $cheertext . ' ' . $response_text;
+}
+
 function remove_answer_info($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
     $pos = strpos($question_summary, ':');
@@ -1166,7 +1188,7 @@ function remove_answer_info($question_summary) {
 function generate_feedback($json_text, $coursemodule_id)
 {
     global $CFG;
-    $env = parse_ini_file($CFG->dirroot . '/local/aiquiz/.env');
+    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
     $client = OpenAI::client($env['OPENAI_API_KEY']);
     $filename = 'feedbacksource_'.$coursemodule_id.'.pdf';
     $fs = new file_storage();
@@ -1179,28 +1201,16 @@ function generate_feedback($json_text, $coursemodule_id)
 }
 function feedback_generation_assistant_create($client){
     $response = $client->assistants()->create([
-        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas y además el parámetro totalsum es equivalente a 0, responde únicamente con "¡Excelente! Sin errores." sin agregar más detalles.
+        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
 
     El JSON recibido contiene la siguiente estructura:
     - "questionsummary": Resumen de la pregunta.
     - "rightanswer": Respuesta correcta.
     - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
-    - "totalsum": La suma total de respuestas incorrectas y preguntas no respondidas.
     
-    Además, se te proporcionará un archivo que contiene el contenido académico relacionado.
-    
-    Según la suma total de respuestas incorrectas y preguntas no respondidas, debes generar una retroalimentación usando las siguientes frases:
-
-    - Si la suma total es 0: "¡Excelente! Sin errores."
-    - Si la suma total es entre 1 y 2: "¡Buen trabajo! Muy bien."
-    - Si la suma total es entre 3 y 4: "Buen intento, sigue así."
-    - Si la suma total es entre 5 y 6: "Buen intento, mejora posible."
-    - Si la suma total es entre 7 y 8: "Se puede mejorar aún."
-    - Si la suma total es entre 9 y 10: "Revisión completa sugerida."
-
     **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
 
-    Después de la frase general, si existen respuestas incorrectas, proporciona retroalimentación mencionando qué temas necesita el usuario repasar de forma redactada pero muy conciso. Esta retroalimentación debe ser clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formato especial como asteriscos.',
+    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.',
         'name' => 'Quiz Feedback Generator',
         'model' => get_config('mod_assignquiz','feedbackgenmodel'),
     ]);

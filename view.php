@@ -37,6 +37,7 @@ $id = optional_param('id', 0, PARAM_INT);
 
 // Activity instance id.
 $a = optional_param('a', 0, PARAM_INT);
+$PAGE->requires->js_call_amd('assignquiz/doubleconfirm');
 
 
 
