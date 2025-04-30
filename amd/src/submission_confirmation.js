@@ -38,6 +38,30 @@ const TEMPLATES = {
 };
 
 /**
+ * Shows a loading overlay while the submission is in progress.
+ */
+const showLoadingScreen = () => {
+    if (document.getElementById('loadingScreen')) {
+        return;
+    }
+
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loadingScreen';
+    loadingDiv.style.display = 'flex';
+    loadingDiv.innerHTML = `
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h4>Loading...</h4>
+            <p>Please wait while the feedback is being generated</p>
+        </div>
+    `;
+
+    const style = document.createElement('style');
+    document.head.appendChild(style);
+    document.body.appendChild(loadingDiv);
+};
+
+/**
  * Register events for attempt submit button.
  * @param {int} unAnsweredQuestions Total number of un-answered questions
  */
@@ -56,8 +80,11 @@ const registerEventListeners = (unAnsweredQuestions) => {
                     getString('submitallandfinish', 'quiz')
                 );
 
+                showLoadingScreen();
+
                 submitAction.closest(SELECTOR.attemptSubmitForm).submit();
                 console.log("Form will be submitted"); // eslint-disable-line no-console
+
                 Notification.addNotification({
                     message: await getString('submission_successful', 'mod_assignquiz'),
                     type: 'info',
@@ -79,6 +106,7 @@ export const init = (unAnsweredQuestions) => {
     Prefetch.prefetchStrings('core', ['submit']);
     Prefetch.prefetchStrings('core_admin', ['confirmation']);
     Prefetch.prefetchStrings('quiz', ['submitallandfinish', 'submission_confirmation']);
+    Prefetch.prefetchStrings('mod_assignquiz', ['submission_successful']);
     Prefetch.prefetchTemplate(TEMPLATES.submissionConfirmation);
     registerEventListeners(unAnsweredQuestions);
 };
