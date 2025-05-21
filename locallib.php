@@ -1109,7 +1109,6 @@ function ai_feedback_generation($course_module_id) {
     $fs = get_file_storage();
     $context = context_module::instance($course_module_id);
     // Directly retrieve the file from Moodle's File API.
-    $storedfile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $persistentfilename);
     $grade = $DB->get_field('aiquiz_attempts', 'sumgrades', ['id' => $attemptid]);
     // Prepare question attempt info for feedback generation.
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context->id]);

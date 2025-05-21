@@ -873,7 +873,6 @@ function mergePDFs(array $files, string $outputFile): bool
 
 function add_question_to_question_bank($response, $question_category_id, $data)
 {
-
     global $DB, $USER;
     $i = 1;
     foreach ($response as $question_data) {
@@ -934,7 +933,7 @@ function add_question_to_question_bank($response, $question_category_id, $data)
                 'format' => FORMAT_HTML,
             ];
             // Set fraction: 1.0 for correct answer, -1.0 or 0 for incorrect.
-            $form->fraction[$index] = ($index == $question_data['correct_answer_index']) ? 1.0 : 0;
+            $form->fraction[$index] = ($index == $question_data['correct_answer_index']) ? $data->questioncorrectvalue : $data->questionincorrectvalue;
         }
 
         // Now save the question. The save_question() call will use $form->answer etc.
@@ -1069,7 +1068,7 @@ function call_api($filepath, $data, $apikey)
     store_file($tempFile, 'feedbacksource', $data);
     unlink($tempFile);
     $assistant_id = get_config('mod_assignquiz', 'quiz_gen_assistant_id');
-    $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id);
+    $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id, $data);
     return $create_thread_response;
 }
 
@@ -1105,13 +1104,12 @@ function quiz_generation_assistant_create($client)
 }
 
 //OpenAI\Exceptions\ErrorException
-function openai_create_thread($client, $text, $assistant_id)
+function openai_create_thread($client, $text, $assistant_id, $data)
 {
     $thread_create_response = $client->threads()->create([]);
-
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera 10 preguntas para un cuestionario basándote en el siguiente contenido:\n' . $text,
+        'content' => "Genera $data->numberofquestions preguntas para un cuestionario basándote en el siguiente contenido:\n" . $text,
     ]);
     $response = $client->threads()->runs()->create(
         threadId: $thread_create_response->id,
