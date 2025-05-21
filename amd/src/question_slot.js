@@ -16,7 +16,7 @@
 /**
  * Render the question slot template for each question in the quiz edit view.
  *
- * @module     mod_assignquiz/question_slot
+ * @module     mod_aiquiz/question_slot
  * @copyright  2021 Catalyst IT Australia Pty Ltd
  * @author     Guillermo Gomez Arias <guillermogomez@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -33,7 +33,7 @@ import Notification from 'core/notification';
  * @return {Array} The modified question version
  */
 const setQuestionVersion = (slotId, newVersion) => fetchMany([{
-    methodname: 'mod_assignquiz_set_question_version',
+    methodname: 'mod_aiquiz_set_question_version',
     args: {
         slotid: slotId,
         newversion: newVersion,
@@ -45,7 +45,7 @@ const setQuestionVersion = (slotId, newVersion) => fetchMany([{
  */
 const registerEventListeners = () => {
     document.addEventListener('change', e => {
-        if (!e.target.matches('[data-action="mod_assignquiz-select_slot"][data-slot-id]')) {
+        if (!e.target.matches('[data-action="mod_aiquiz-select_slot"][data-slot-id]')) {
             return;
         }
 

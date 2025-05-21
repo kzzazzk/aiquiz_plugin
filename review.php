@@ -28,7 +28,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
@@ -36,7 +36,7 @@ $attemptid = required_param('attempt', PARAM_INT);
 $page      = optional_param('page', 0, PARAM_INT);
 $showall   = optional_param('showall', null, PARAM_BOOL);
 $cmid      = optional_param('cmid', null, PARAM_INT);
-$url = new moodle_url('/mod/assignquiz/review.php', array('attempt'=>$attemptid));
+$url = new moodle_url('/mod/aiquiz/review.php', array('attempt'=>$attemptid));
 if ($page !== 0) {
     $url->param('page', $page);
 } else if ($showall) {
@@ -45,7 +45,7 @@ if ($page !== 0) {
 $PAGE->set_url($url);
 $PAGE->set_secondary_active_tab("modulepage");
 
-$attemptobj = assignquiz_create_attempt_handling_errors($attemptid, $cmid);
+$attemptobj = aiquiz_create_attempt_handling_errors($attemptid, $cmid);
 $attemptobj->preload_all_attempt_step_users();
 $page = $attemptobj->force_page_number_into_range($page);
 
@@ -73,7 +73,7 @@ if ($attemptobj->is_own_attempt()) {
         redirect($attemptobj->attempt_url(null, $page));
 
     } else if (!$options->attempt) {
-        $accessmanager->back_to_view_page($PAGE->get_renderer('mod_assignquiz'),
+        $accessmanager->back_to_view_page($PAGE->get_renderer('mod_aiquiz'),
             $attemptobj->cannot_review_message());
     }
 
@@ -256,9 +256,9 @@ if ($showall) {
     $lastpage = $attemptobj->is_last_page($page);
 }
 
-$output = $PAGE->get_renderer('mod_assignquiz');
+$output = $PAGE->get_renderer('mod_aiquiz');
 // Arrange for the navigation to be displayed.
-$navbc = $attemptobj->assignquiz_get_navigation_panel($output, 'assignquiz_attempt_nav_panel', $page, $showall);
+$navbc = $attemptobj->aiquiz_get_navigation_panel($output, 'aiquiz_attempt_nav_panel', $page, $showall);
 $regions = $PAGE->blocks->get_regions();
 $PAGE->blocks->add_fake_block($navbc, reset($regions));
 

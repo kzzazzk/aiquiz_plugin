@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Prints an instance of mod_assignquiz.
+ * Prints an instance of mod_aiquiz.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,26 +29,26 @@ require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->dirroot.'/mod/quiz/locallib.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/course/format/lib.php');
-require_once($CFG->dirroot.'/mod/assignquiz/lib.php');
-require_once($CFG->dirroot.'/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot.'/mod/aiquiz/lib.php');
+require_once($CFG->dirroot.'/mod/aiquiz/locallib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
 
 // Activity instance id.
 $a = optional_param('a', 0, PARAM_INT);
-$PAGE->requires->js_call_amd('assignquiz/doubleconfirm');
+$PAGE->requires->js_call_amd('aiquiz/doubleconfirm');
 
 
 
 if ($id) {
-    $cm = get_coursemodule_from_id('assignquiz', $id, 0, false, MUST_EXIST);
+    $cm = get_coursemodule_from_id('aiquiz', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('assignquiz', array('id' => $cm->instance), '*', MUST_EXIST);
+    $moduleinstance = $DB->get_record('aiquiz', array('id' => $cm->instance), '*', MUST_EXIST);
 } else {
-    $moduleinstance = $DB->get_record('assignquiz', array('id' => $a), '*', MUST_EXIST);
+    $moduleinstance = $DB->get_record('aiquiz', array('id' => $a), '*', MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $moduleinstance->course), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('assignquiz', $moduleinstance->id, $course->id, false, MUST_EXIST);
+    $cm = get_coursemodule_from_instance('aiquiz', $moduleinstance->id, $course->id, false, MUST_EXIST);
 }
 
 require_login($course, true, $cm);
@@ -59,33 +59,33 @@ $canattempt = has_capability('mod/quiz:attempt', $context);
 $canreviewmine = has_capability('mod/quiz:reviewmyattempts', $context);
 $canpreview = has_capability('mod/quiz:preview', $context);
 
-$event = \mod_assignquiz\event\course_module_viewed::create(array(
+$event = \mod_aiquiz\event\course_module_viewed::create(array(
     'objectid' => $moduleinstance->id,
     'context' => $context
 ));
 $event->add_record_snapshot('course', $course);
-$event->add_record_snapshot('assignquiz', $moduleinstance);
+$event->add_record_snapshot('aiquiz', $moduleinstance);
 $event->trigger();
 
 $timenow = time();
-$quizid = $DB->get_field('assignquiz', 'id', array('id' => $cm->instance), MUST_EXIST);
+$quizid = $DB->get_field('aiquiz', 'id', array('id' => $cm->instance), MUST_EXIST);
 $quizobj = aiquiz::create($quizid, $USER->id);
 $accessmanager = new aiquiz_access_manager($quizobj, $timenow,
     has_capability('mod/quiz:ignoretimelimits', $context, null, false));
 $quiz = $quizobj->get_quiz();
 
 
-$PAGE->set_url('/mod/assignquiz/view.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/aiquiz/view.php', array('id' => $cm->id));
 
 $viewobj = new mod_quiz_view_object();
 $viewobj->accessmanager = $accessmanager;
 $viewobj->canreviewmine = $canreviewmine || $canpreview;
 
-$attempts = assignquiz_get_user_attempts($quiz->id, $USER->id, 'finished', true);
+$attempts = aiquiz_get_user_attempts($quiz->id, $USER->id, 'finished', true);
 $lastfinishedattempt = end($attempts);
 $unfinished = false;
 $unfinishedattemptid = null;
-if ($unfinishedattempt = assignquiz_get_user_attempt_unfinished($quiz->id, $USER->id)) {
+if ($unfinishedattempt = aiquiz_get_user_attempt_unfinished($quiz->id, $USER->id)) {
     $attempts[] = $unfinishedattempt;
 
     // If the attempt is now overdue, deal with that - and pass isonline = false.
@@ -108,7 +108,7 @@ foreach ($attempts as $attempt) {
 }
 
 if (!$canpreview) {
-    $mygrade = assignquiz_get_best_grade($quiz, $USER->id);
+    $mygrade = aiquiz_get_best_grade($quiz, $USER->id);
 } else if ($lastfinishedattempt) {
     // Users who can preview the quiz don't get a proper grade, so work out a
     // plausible value to display instead, so the page looks right.
@@ -122,7 +122,7 @@ $gradebookfeedback = '';
 
 $item = null;
 
-$grading_info = grade_get_grades($course->id, 'mod', 'assignquiz', $quiz->id, $USER->id);
+$grading_info = grade_get_grades($course->id, 'mod', 'aiquiz', $quiz->id, $USER->id);
 if (!empty($grading_info->items)) {
     $item = $grading_info->items[0];
     if (isset($item->grades[$USER->id])) {
@@ -145,7 +145,7 @@ if (html_is_blank($quiz->intro)) {
     $PAGE->activityheader->set_description('');
 }
 $PAGE->add_body_class('limitedwidth');
-$output = $PAGE->get_renderer('mod_assignquiz');
+$output = $PAGE->get_renderer('mod_aiquiz');
 
 if ($attempts) {
     // Work out which columns we need, taking account what data is available in each attempt.
@@ -158,7 +158,7 @@ if ($attempts) {
     $viewobj->markcolumn     = $viewobj->gradecolumn && ($quiz->grade != $quiz->sumgrades);
     $viewobj->overallstats   = $lastfinishedattempt && $alloptions->marks >= question_display_options::MARK_AND_MAX;
 
-    $viewobj->feedbackcolumn = assignquiz_has_feedback($quiz) && $alloptions->overallfeedback;
+    $viewobj->feedbackcolumn = aiquiz_has_feedback($quiz) && $alloptions->overallfeedback;
 }
 
 $viewobj->timenow = $timenow;
@@ -170,7 +170,7 @@ $viewobj->mygradeoverridden = $mygradeoverridden;
 $viewobj->gradebookfeedback = $gradebookfeedback;
 $viewobj->lastfinishedattempt = $lastfinishedattempt;
 $viewobj->canedit = has_capability('mod/quiz:manage', $context);
-$viewobj->editurl = new moodle_url('/mod/assignquiz/edit.php', array('cmid' => $cm->id));
+$viewobj->editurl = new moodle_url('/mod/aiquiz/edit.php', array('cmid' => $cm->id));
 $viewobj->backtocourseurl = new moodle_url('/course/view.php', array('id' => $course->id));
 $viewobj->startattempturl = $quizobj->start_attempt_url();
 

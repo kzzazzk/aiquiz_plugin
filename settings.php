@@ -23,35 +23,35 @@ global $CFG;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use assignquiz\settings\admin_setting_apikey;
-use assignquiz\settings\admin_setting_model;
+use aiquiz\settings\admin_setting_apikey;
+use aiquiz\settings\admin_setting_model;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/vendor/autoload.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/settings/assignquiz_admin_setting_configselect.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/settings/assignquiz_admin_setting_configpasswordunmask.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/lib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configselect.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configpasswordunmask.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/lib.php');
 
 //OpenAI\Exceptions\UnserializableResponse
 // Define the settings for the API key
 if ($ADMIN->fulltree) {
-    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
-    $settings->add(new admin_setting_heading('defaultsettings', get_string('openaisettings','assignquiz'), get_string('openaisettingsdescription', 'assignquiz')));
+    $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
+    $settings->add(new admin_setting_heading('defaultsettings', get_string('openaisettings','aiquiz'), get_string('openaisettingsdescription', 'aiquiz')));
     if (is_openai_apikey_empty()) {
         //si la apikey es vacía o no válida
         $settings->add(new admin_setting_apikey(
-            'mod_assignquiz/apikey',
-            get_string('apikey', 'assignquiz'),
-            get_string('apikey_desc', 'assignquiz'),
+            'mod_aiquiz/apikey',
+            get_string('apikey', 'aiquiz'),
+            get_string('apikey_desc', 'aiquiz'),
             '', 'OPENAI_API_KEY',
         ));
         $settings->add(new admin_setting_heading(
-            'mod_assignquiz/apikeyerror',
+            'mod_aiquiz/apikeyerror',
             '',
             html_writer::div(
                 html_writer::div(
-                    get_string('apikeyempty', 'assignquiz'),
+                    get_string('apikeyempty', 'aiquiz'),
                     'alert alert-danger col-sm-9 ml-auto '
                 ),
                 'form-item row'
@@ -61,28 +61,28 @@ if ($ADMIN->fulltree) {
     }
     else if (!is_openai_api_key_valid($env['OPENAI_API_KEY'])) {
         $settings->add(new admin_setting_apikey(
-            'mod_assignquiz/apikey',
-            get_string('apikey', 'assignquiz'),
-            get_string('apikey_desc', 'assignquiz'),
+            'mod_aiquiz/apikey',
+            get_string('apikey', 'aiquiz'),
+            get_string('apikey_desc', 'aiquiz'),
             '', 'OPENAI_API_KEY'));
 
         $settings->add(new admin_setting_heading(
-            'mod_assignquiz/apikeyerror',
+            'mod_aiquiz/apikeyerror',
             '',
             html_writer::div(
-                get_string('apikeyinvalid', 'assignquiz'),
+                get_string('apikeyinvalid', 'aiquiz'),
                 'alert alert-danger col-sm-9 ml-auto'
             )
         ));
     }
     else {
         $settings->add(new admin_setting_apikey(
-            'mod_assignquiz/apikey',
-            get_string('apikey', 'assignquiz'),
-            get_string('apikey_desc', 'assignquiz'),
+            'mod_aiquiz/apikey',
+            get_string('apikey', 'aiquiz'),
+            get_string('apikey_desc', 'aiquiz'),
             '', 'OPENAI_API_KEY',));
 
-        $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
+        $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
         $yourApiKey = $env['OPENAI_API_KEY'];
 
         $client = OpenAI::client($yourApiKey);
@@ -111,31 +111,31 @@ if ($ADMIN->fulltree) {
 
         // Add model selection settings
         $settings->add(new admin_setting_model(
-            'mod_assignquiz/questiongenmodel',
-            get_string('questiongenmodel', 'assignquiz'),
-            get_string('questiongenmodeldescription', 'assignquiz'),
+            'mod_aiquiz/questiongenmodel',
+            get_string('questiongenmodel', 'aiquiz'),
+            get_string('questiongenmodeldescription', 'aiquiz'),
             'gpt-4.1-mini',
             $modelOptions,
             'quiz_gen_assistant_id',
         ));
 
         $settings->add(new admin_setting_model(
-            'mod_assignquiz/feedbackgenmodel',
-            get_string('feedbackgenmodel', 'assignquiz'),
-            get_string('feedbackgenmodeldescription', 'assignquiz'),
-            'gpt-4.1-nano',
+            'mod_aiquiz/feedbackgenmodel',
+            get_string('feedbackgenmodel', 'aiquiz'),
+            get_string('feedbackgenmodeldescription', 'aiquiz'),
+            'gpt-4.1-nano   ',
             $modelOptions,
             'feedback_gen_assistant_id'
         ));
 
         global $CFG;
-        if(!get_config('mod_assignquiz', 'quiz_gen_assistant_id') || !get_config('mod_assignquiz', 'feedback_gen_assistant_id')){
-            $env = parse_ini_file($CFG->dirroot.'/mod/assignquiz/.env');
+        if(!get_config('mod_aiquiz', 'quiz_gen_assistant_id') || !get_config('mod_aiquiz', 'feedback_gen_assistant_id')){
+            $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
             $yourApiKey = $env['OPENAI_API_KEY'];
             $assistant_id = quiz_generation_assistant_create($client);
-            set_config('quiz_gen_assistant_id', $assistant_id, 'mod_assignquiz');
+            set_config('quiz_gen_assistant_id', $assistant_id, 'mod_aiquiz');
             $assistant_id = feedback_generation_assistant_create($client);
-            set_config('feedback_gen_assistant_id', $assistant_id, 'mod_assignquiz');
+            set_config('feedback_gen_assistant_id', $assistant_id, 'mod_aiquiz');
         }
     }
 }

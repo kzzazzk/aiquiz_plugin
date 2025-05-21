@@ -135,7 +135,7 @@ define([
         ModalQuizQuestionBank.prototype.reloadBodyContent = function(queryString) {
             // Load the question bank fragment to be displayed in the modal.
             var promise = Fragment.loadFragment(
-                'mod_assignquiz',
+                'mod_aiquiz',
                 'quiz_question_bank',
                 this.getContextId(),
                 {
@@ -262,7 +262,7 @@ define([
                 var formElement = $(e.currentTarget);
 
                 // Change the form action URL
-                var newUrl = M.cfg.wwwroot + "/mod/assignquiz/edit.php"; // Change this to your desired URL
+                var newUrl = M.cfg.wwwroot + "/mod/aiquiz/edit.php"; // Change this to your desired URL
                 formElement.attr('action', newUrl);
 
                 // Ensure the addonpage input is included

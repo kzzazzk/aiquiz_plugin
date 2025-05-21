@@ -25,17 +25,17 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 
 $attemptid = required_param('attempt', PARAM_INT); // The attempt to summarise.
 $cmid = optional_param('cmid', null, PARAM_INT);
 
-$PAGE->set_url('/mod/assignquiz/summary.php', array('attempt' => $attemptid));
+$PAGE->set_url('/mod/aiquiz/summary.php', array('attempt' => $attemptid));
 // During quiz attempts, the browser back/forwards buttons should force a reload.
 $PAGE->set_cacheable(false);
 $PAGE->set_secondary_active_tab("modulepage");
 
-$attemptobj = assignquiz_create_attempt_handling_errors($attemptid, $cmid);
+$attemptobj = aiquiz_create_attempt_handling_errors($attemptid, $cmid);
 
 // Check login.
 require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
@@ -61,7 +61,7 @@ if ($attemptobj->is_preview_user()) {
 // Check access.
 $accessmanager = $attemptobj->get_access_manager(time());
 $accessmanager->setup_attempt_page($PAGE);
-$output = $PAGE->get_renderer('mod_assignquiz');
+$output = $PAGE->get_renderer('mod_aiquiz');
 $messages = $accessmanager->prevent_access();
 if (!$attemptobj->is_preview_user() && $messages) {
     throw new \moodle_exception('attempterror', 'quiz', $attemptobj->view_url(),
@@ -88,7 +88,7 @@ if (empty($attemptobj->get_quiz()->showblocks)) {
     $PAGE->blocks->show_only_fake_blocks();
 }
 
-$navbc = $attemptobj->assignquiz_get_navigation_panel($output, 'assignquiz_attempt_nav_panel', -1);
+$navbc = $attemptobj->aiquiz_get_navigation_panel($output, 'aiquiz_attempt_nav_panel', -1);
 //$navbc = $attemptobj->get_navigation_panel($output, 'quiz_attempt_nav_panel', -1);
 $regions = $PAGE->blocks->get_regions();
 $PAGE->blocks->add_fake_block($navbc, reset($regions));

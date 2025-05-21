@@ -1,5 +1,5 @@
 <?php
-namespace mod_assignquiz\question\bank;
+namespace mod_aiquiz\question\bank;
 
 use core_question\local\bank\question_version_status;
 use core_question\local\bank\random_question_loader;
@@ -20,7 +20,7 @@ require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
  * @author     Safat Shahin <safatshahin@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class assignquiz_qbank_helper extends qbank_helper
+class aiquiz_qbank_helper extends qbank_helper
 {
     public static function get_question_structure(int $quizid, \context_module $quizcontext,
                                                   int $slotid = null): array {
@@ -64,7 +64,7 @@ class assignquiz_qbank_helper extends qbank_helper
                   FROM {aiquiz_slots} slot
 
              -- case where a particular question has been added to the quiz.
-             LEFT JOIN {question_references} qr ON qr.usingcontextid = :quizcontextid AND qr.component = 'mod_assignquiz'
+             LEFT JOIN {question_references} qr ON qr.usingcontextid = :quizcontextid AND qr.component = 'mod_aiquiz'
                                         AND qr.questionarea = 'slot' AND qr.itemid = slot.id
              LEFT JOIN {question_bank_entries} qbe ON qbe.id = qr.questionbankentryid
 
@@ -79,7 +79,7 @@ class assignquiz_qbank_helper extends qbank_helper
                           MAX(CASE WHEN lv.status <> :draft THEN lv.version END) AS usableversion,
                           MAX(lv.version) AS anyversion
                      FROM {aiquiz_slots} lslot
-                     JOIN {question_references} lqr ON lqr.usingcontextid = :quizcontextid2 AND lqr.component = 'mod_assignquiz'
+                     JOIN {question_references} lqr ON lqr.usingcontextid = :quizcontextid2 AND lqr.component = 'mod_aiquiz'
                                         AND lqr.questionarea = 'slot' AND lqr.itemid = lslot.id
                      JOIN {question_versions} lv ON lv.questionbankentryid = lqr.questionbankentryid
                     WHERE lslot.quizid = :quizid2
@@ -97,7 +97,7 @@ class assignquiz_qbank_helper extends qbank_helper
              LEFT JOIN {question} q ON q.id = qv.questionid
 
              -- Case where a random question has been added.
-             LEFT JOIN {question_set_references} qsr ON qsr.usingcontextid = :quizcontextid3 AND qsr.component = 'mod_assignquiz'
+             LEFT JOIN {question_set_references} qsr ON qsr.usingcontextid = :quizcontextid3 AND qsr.component = 'mod_aiquiz'
                                         AND qsr.questionarea = 'slot' AND qsr.itemid = slot.id
 
                  WHERE slot.quizid = :quizid

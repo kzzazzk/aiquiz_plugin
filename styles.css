@@ -1,24 +1,24 @@
 /** Bits that can appear on any page. */
-.path-mod-assignquiz .statedetails {
+.path-mod-aiquiz .statedetails {
     display: block;
     font-size: 0.7em;
 }
 
 /** Attempt and review pages **/
-#page-mod-assignquiz-attempt #page .controls,
-#page-mod-assignquiz-summary #page .controls,
-#page-mod-assignquiz-review #page .controls {
+#page-mod-aiquiz-attempt #page .controls,
+#page-mod-aiquiz-summary #page .controls,
+#page-mod-aiquiz-review #page .controls {
     text-align: center;
     margin: 8px auto;
 }
 
-#page-mod-assignquiz-attempt .submitbtns,
-#page-mod-assignquiz-review .submitbtns {
+#page-mod-aiquiz-attempt .submitbtns,
+#page-mod-aiquiz-review .submitbtns {
     display: flex;
 }
 
-#page-mod-assignquiz-attempt .submitbtns .mod_quiz-next-nav,
-#page-mod-assignquiz-review .submitbtns .mod_quiz-next-nav {
+#page-mod-aiquiz-attempt .submitbtns .mod_quiz-next-nav,
+#page-mod-aiquiz-review .submitbtns .mod_quiz-next-nav {
     margin-left: auto;
 }
 
@@ -31,14 +31,14 @@
     font-size: 1em;
 }
 
-#page-mod-assignquiz-attempt .mod_quiz-blocked_question_warning .que .formulation,
-#page-mod-assignquiz-review .mod_quiz-blocked_question_warning .que .formulation {
+#page-mod-aiquiz-attempt .mod_quiz-blocked_question_warning .que .formulation,
+#page-mod-aiquiz-review .mod_quiz-blocked_question_warning .que .formulation {
     background: #eee;
     border: 1px solid #dcdcdc;
 }
 
-#page-mod-assignquiz-attempt #connection-ok,
-#page-mod-assignquiz-attempt #connection-error {
+#page-mod-aiquiz-attempt #connection-ok,
+#page-mod-aiquiz-attempt #connection-error {
     position: fixed;
     top: 0;
     width: 80%;
@@ -50,11 +50,11 @@
     z-index: 10000;
 }
 
-#page-mod-assignquiz-attempt #connection-error {
+#page-mod-aiquiz-attempt #connection-error {
     background-color: #fcc;
 }
 
-#page-mod-assignquiz-attempt #connection-ok {
+#page-mod-aiquiz-attempt #connection-ok {
     background-color: #cfb;
     width: 60%;
     left: 20%;
@@ -333,31 +333,31 @@ body.path-mod-quiz table tbody tr.gradedattempt > td {
     margin-left: 20%;
 }
 
-#page-mod-assignquiz-view .quizattemptcounts {
+#page-mod-aiquiz-view .quizattemptcounts {
     display: block;
     margin-left: 0;
     margin-right: 0;
 }
 
 /** Mod quiz summary **/
-#page-mod-assignquiz-summary #content {
+#page-mod-aiquiz-summary #content {
     text-align: center;
 }
 
-#page-mod-assignquiz-summary .questionflag {
+#page-mod-aiquiz-summary .questionflag {
     vertical-align: text-bottom;
 }
 
-#page-mod-assignquiz-summary #quiz-timer {
+#page-mod-aiquiz-summary #quiz-timer {
     text-align: center;
     margin-top: 1em;
 }
 
-#page-mod-assignquiz-summary .submitbtns {
+#page-mod-aiquiz-summary .submitbtns {
     margin-top: 1.5em;
 }
 
-#page-mod-assignquiz-edit .section .activity .actions .version-selection {
+#page-mod-aiquiz-edit .section .activity .actions .version-selection {
     width: 8em;
     padding: 0;
 }
@@ -388,93 +388,93 @@ table.quizreviewsummary td.cell {
 }
 
 /** Mod quiz make comment or override grade popup. **/
-#page-mod-assignquiz-comment .mform {
+#page-mod-aiquiz-comment .mform {
     width: 100%;
 }
 
-#page-mod-assignquiz-comment .mform fieldset {
+#page-mod-aiquiz-comment .mform fieldset {
     margin: 0;
     border-bottom: none;
 }
 
-#page-mod-assignquiz-comment .que {
+#page-mod-aiquiz-comment .que {
     margin: 0;
 }
 
 /** Mod quiz report **/
-#page-mod-assignquiz-report h2.main {
+#page-mod-aiquiz-report h2.main {
     clear: both;
 }
 
-#page-mod-assignquiz-report div#commands,
-#page-mod-assignquiz-report .controls {
+#page-mod-aiquiz-report div#commands,
+#page-mod-aiquiz-report .controls {
     text-align: center;
 }
 
-#page-mod-assignquiz-report .dubious {
+#page-mod-aiquiz-report .dubious {
     background-color: #fcc;
 }
 
-#page-mod-assignquiz-report .highlight {
+#page-mod-aiquiz-report .highlight {
     border: 1px solid #bce8f1;
     background-color: #d9edf7;
 }
 
-#page-mod-assignquiz-report .negcovar {
+#page-mod-aiquiz-report .negcovar {
     border: medium solid pink;
 }
 
-#page-mod-assignquiz-report .toggleincludeauto {
+#page-mod-aiquiz-report .toggleincludeauto {
     text-align: center;
 }
 
-#page-mod-assignquiz-report .gradetheselink {
+#page-mod-aiquiz-report .gradetheselink {
     font-size: 0.8em;
 }
 
-#page-mod-assignquiz-report .mform fieldset.fgroup span label {
+#page-mod-aiquiz-report .mform fieldset.fgroup span label {
     margin-right: 14px;
 }
 
-#page-mod-assignquiz-report table th {
+#page-mod-aiquiz-report table th {
     white-space: normal;
 }
 
-#page-mod-assignquiz-report table#attempts td,
-#page-mod-assignquiz-report table.quizresponseanalysis td {
+#page-mod-aiquiz-report table#attempts td,
+#page-mod-aiquiz-report table.quizresponseanalysis td {
     word-wrap: break-word;
     max-width: 20em;
 }
 
-#page-mod-assignquiz-report table.titlesleft td.c0 {
+#page-mod-aiquiz-report table.titlesleft td.c0 {
     font-weight: bold;
 }
 
-#page-mod-assignquiz-report table .numcol {
+#page-mod-aiquiz-report table .numcol {
     text-align: center;
     vertical-align: middle;
 }
 
-#page-mod-assignquiz-report table#attempts {
+#page-mod-aiquiz-report table#attempts {
     clear: both;
     width: 80%;
     margin: 0.2em auto;
 }
 
-#page-mod-assignquiz-report table#attempts .header,
-#page-mod-assignquiz-report table#attempts .cell {
+#page-mod-aiquiz-report table#attempts .header,
+#page-mod-aiquiz-report table#attempts .cell {
     padding: 4px;
 }
 
-#page-mod-assignquiz-report table#attempts .header .commands {
+#page-mod-aiquiz-report table#attempts .header .commands {
     display: inline;
 }
 
-#page-mod-assignquiz-report table#attempts .picture {
+#page-mod-aiquiz-report table#attempts .picture {
     width: 40px;
 }
 
-#page-mod-assignquiz-report table#attempts td {
+#page-mod-aiquiz-report table#attempts td {
     border-left-width: 1px;
     border-right-width: 1px;
     border-left-style: solid;
@@ -482,114 +482,114 @@ table.quizreviewsummary td.cell {
     vertical-align: middle;
 }
 
-#page-mod-assignquiz-report table#attempts .header {
+#page-mod-aiquiz-report table#attempts .header {
     text-align: left;
 }
 
-#page-mod-assignquiz-report table#attempts .picture {
+#page-mod-aiquiz-report table#attempts .picture {
     text-align: center;
 }
 
-#page-mod-assignquiz-report table#attempts.grades span.que,
-#page-mod-assignquiz-report table#attempts span.avgcell {
+#page-mod-aiquiz-report table#attempts.grades span.que,
+#page-mod-aiquiz-report table#attempts span.avgcell {
     white-space: nowrap;
 }
 
-#page-mod-assignquiz-report table#attempts span.que .requiresgrading {
+#page-mod-aiquiz-report table#attempts span.que .requiresgrading {
     white-space: normal;
 }
 
-#page-mod-assignquiz-report table#attempts .questionflag {
+#page-mod-aiquiz-report table#attempts .questionflag {
     vertical-align: text-bottom;
     padding-left: 6px;
 }
 
-#page-mod-assignquiz-report .graph.flexible-wrap {
+#page-mod-aiquiz-report .graph.flexible-wrap {
     text-align: center;
     overflow: auto;
 }
 
-#page-mod-assignquiz-report #cachingnotice {
+#page-mod-aiquiz-report #cachingnotice {
     margin-bottom: 1em;
     padding: 0.2em;
 }
 
-#page-mod-assignquiz-report #cachingnotice .singlebutton {
+#page-mod-aiquiz-report #cachingnotice .singlebutton {
     margin: 0.5em 0 0;
 }
 
-#page-mod-assignquiz-report .bold .reviewlink {
+#page-mod-aiquiz-report .bold .reviewlink {
     font-weight: normal;
 }
 
-#page-mod-assignquiz-report tr.lastrowforattempt {
+#page-mod-aiquiz-report tr.lastrowforattempt {
     border-bottom: lightgrey solid 0.2em;
 }
 
-#page-mod-assignquiz-report tr.quiz_statistics-summaryrow td.cell {
+#page-mod-aiquiz-report tr.quiz_statistics-summaryrow td.cell {
     padding-top: 1px;
     padding-bottom: 1px;
     border-top: none;
 }
 
 /** Mod quiz edit **/
-#page-mod-assignquiz-edit .statusdisplay {
+#page-mod-aiquiz-edit .statusdisplay {
     background-color: #ffc;
     clear: both;
     margin: 0.3em 0;
     padding: 1px 10px;
 }
 
-#page-mod-assignquiz-edit .statusdisplay p {
+#page-mod-aiquiz-edit .statusdisplay p {
     margin: 4px 0;
 }
 
-#page-mod-assignquiz-edit .mod_quiz-edit-top-controls {
+#page-mod-aiquiz-edit .mod_quiz-edit-top-controls {
     position: relative;
 }
-#page-mod-assignquiz-edit .mod_quiz-edit-action-buttons {
+#page-mod-aiquiz-edit .mod_quiz-edit-action-buttons {
     display: block;
     min-height: 2.85em;
 }
 
 @media (max-width: 576px) {
-    #page-mod-assignquiz-edit .maxgrade {
+    #page-mod-aiquiz-edit .maxgrade {
         margin-bottom: 0.6em;
     }
-    #page-mod-assignquiz-edit .maxgrade .form-control {
+    #page-mod-aiquiz-edit .maxgrade .form-control {
         display: inline-block;
         vertical-align: middle;
     }
 }
-#page-mod-assignquiz-edit .maxgrade label {
+#page-mod-aiquiz-edit .maxgrade label {
     display: inline;
 }
-#page-mod-assignquiz-edit .maxgrade input[type="submit"] {
+#page-mod-aiquiz-edit .maxgrade input[type="submit"] {
     margin: 0;
 }
 
-#page-mod-assignquiz-edit li.activity > div,
-#page-mod-assignquiz-edit li.pagenumber {
+#page-mod-aiquiz-edit li.activity > div,
+#page-mod-aiquiz-edit li.pagenumber {
     position: relative;
 }
 
-#page-mod-assignquiz-edit ul.section li.pagenumber:first-child .add-menu-outer .menu > :last-child,
-#page-mod-assignquiz-edit .last-add-menu .add-menu-outer .menu > :last-child {
+#page-mod-aiquiz-edit ul.section li.pagenumber:first-child .add-menu-outer .menu > :last-child,
+#page-mod-aiquiz-edit .last-add-menu .add-menu-outer .menu > :last-child {
     display: none;
 }
 
-#page-mod-assignquiz-edit .last-add-menu {
+#page-mod-aiquiz-edit .last-add-menu {
     position: relative;
     height: 1.5em;
     margin: 0 20px;
 }
 
-#page-mod-assignquiz-edit .add-menu-outer {
+#page-mod-aiquiz-edit .add-menu-outer {
     position: absolute;
     right: 0;
 }
 
-#page-mod-assignquiz-edit .slotnumber {
+#page-mod-aiquiz-edit .slotnumber {
     background-color: #d3d3d3;
     text-align: center;
     margin: 0.1em 0.5em;
@@ -597,32 +597,32 @@ table.quizreviewsummary td.cell {
     display: inline-block;
 }
 
-#page-mod-assignquiz-edit .section-heading {
+#page-mod-aiquiz-edit .section-heading {
     margin-left: 20px;
     margin-bottom: 0;
     height: 40px;
 }
 
-#page-mod-assignquiz-edit .section-heading .instancesectioncontainer {
+#page-mod-aiquiz-edit .section-heading .instancesectioncontainer {
     font-size: 24px;
     display: inline;
 }
 
-#page-mod-assignquiz-edit .section-heading .instancesectioncontainer h3 {
+#page-mod-aiquiz-edit .section-heading .instancesectioncontainer h3 {
     display: inline;
     color: #555;
 }
 
-#page-mod-assignquiz-edit .section-heading .editing_section,
-#page-mod-assignquiz-edit .section-heading .editing_delete {
+#page-mod-aiquiz-edit .section-heading .editing_section,
+#page-mod-aiquiz-edit .section-heading .editing_delete {
     margin-left: 10px;
 }
 
-#page-mod-assignquiz-edit .section-heading .sectioninstance {
+#page-mod-aiquiz-edit .section-heading .sectioninstance {
     position: relative;
 }
 
-#page-mod-assignquiz-edit .section-heading .instancesection {
+#page-mod-aiquiz-edit .section-heading .instancesection {
     white-space: nowrap;
     max-width: 72%;
     display: inline-block;
@@ -631,20 +631,20 @@ table.quizreviewsummary td.cell {
     vertical-align: bottom;
 }
 
-#page-mod-assignquiz-edit .section-heading form {
+#page-mod-aiquiz-edit .section-heading form {
     display: inline;
     position: relative;
     top: 3px;
     left: -7px;
 }
 
-#page-mod-assignquiz-edit .section-heading form input {
+#page-mod-aiquiz-edit .section-heading form input {
     font-size: 24px;
     font-weight: bold;
     width: 50%;
 }
 
-#page-mod-assignquiz-edit .section-heading .instanceshufflequestions {
+#page-mod-aiquiz-edit .section-heading .instanceshufflequestions {
     float: right;
     margin: 0.3em 20px 0 0;
 }
@@ -654,163 +654,163 @@ table.quizreviewsummary td.cell {
     margin-right: .5rem;
 }
 
-#page-mod-assignquiz-edit ul.section {
+#page-mod-aiquiz-edit ul.section {
     margin: 0;
     padding: 0 20px;
 }
 
-#page-mod-assignquiz-edit ul.slots {
+#page-mod-aiquiz-edit ul.slots {
     margin: 0;
     padding: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section {
+#page-mod-aiquiz-edit ul.slots li.section {
     border: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section .content {
+#page-mod-aiquiz-edit ul.slots li.section .content {
     background-color: #fafafa;
     padding: 1px 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section {
+#page-mod-aiquiz-edit ul.slots li.section {
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity {
+#page-mod-aiquiz-edit ul.slots li.section li.activity {
     background: #e6e6e6;
     margin: 3px 0;
     padding: 0.2em;
     position: relative;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity.page {
+#page-mod-aiquiz-edit ul.slots li.section li.activity.page {
     background: transparent;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity.page h4 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity.page h4 {
     display: inline;
     font-weight: normal;
     font-size: 1em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer {
     background: white;
     padding: 0.2em;
     margin: 0.4em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer .editicon {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer .editicon {
     width: 13px;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer.infoitem {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer.infoitem {
     background: transparent;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer form {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer form {
     display: inline;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark {
     display: inline-block;
     text-align: right;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .page_split_join_wrapper {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .page_split_join_wrapper {
     position: absolute;
     left: -20px;
     bottom: -11px;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_0 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_0 {
     min-width: 1.3em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_1 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_1 {
     min-width: 2em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_2 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_2 {
     min-width: 2.6em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_3 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_3 {
     min-width: 3.2em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_4 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_4 {
     min-width: 3.7em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_5 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_5 {
     min-width: 4.3em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_6 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_6 {
     min-width: 4.8em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_7 {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .instancemaxmark.decimalplaces_7 {
     min-width: 5.45em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .edit_icon,
-#page-mod-assignquiz-edit ul.slots li.section li.activity a.preview,
-#page-mod-assignquiz-edit ul.slots li.section li.activity .editing_delete,
-#page-mod-assignquiz-edit ul.slots li.section li.activity .editing_maxmark {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .edit_icon,
+#page-mod-aiquiz-edit ul.slots li.section li.activity a.preview,
+#page-mod-aiquiz-edit ul.slots li.section li.activity .editing_delete,
+#page-mod-aiquiz-edit ul.slots li.section li.activity .editing_maxmark {
     margin: 0 2px;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section.only-has-one-slot li.activity .editing_move,
-#page-mod-assignquiz-edit ul.slots li.section.only-has-one-slot li.activity .editing_delete {
+#page-mod-aiquiz-edit ul.slots li.section.only-has-one-slot li.activity .editing_move,
+#page-mod-aiquiz-edit ul.slots li.section.only-has-one-slot li.activity .editing_delete {
     visibility: hidden;
 }
 
-#page-mod-assignquiz-edit ul.slots.only-one-section li.section.only-has-one-slot li.activity .editing_delete {
+#page-mod-aiquiz-edit ul.slots.only-one-section li.section.only-has-one-slot li.activity .editing_delete {
     visibility: visible;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .question_dependency_wrapper {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .question_dependency_wrapper {
     position: absolute;
     top: 0;
     right: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .question_dependency_wrapper.question_dependency_cannot_depend {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .question_dependency_wrapper.question_dependency_cannot_depend {
     display: none;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .question_dependency_wrapper .currentlink,
-#page-mod-assignquiz-edit ul.slots li.section li.activity .question_dependency_wrapper .cm-edit-action {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .question_dependency_wrapper .currentlink,
+#page-mod-aiquiz-edit ul.slots li.section li.activity .question_dependency_wrapper .cm-edit-action {
     position: relative;
     left: 20px;
     top: -1em;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .activityinstance {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .activityinstance {
     display: flex;
     flex: 1 1 auto;
     min-height: 1.7em;
     padding-right: 2px;
 }
 
-#page-mod-assignquiz-edit ul.slots li.section li.activity .mod-indent-outer {
+#page-mod-aiquiz-edit ul.slots li.section li.activity .mod-indent-outer {
     display: flex;
     padding-left: 22px;
 }
 
-#page-mod-assignquiz-edit ul.slots .activityinstance form {
+#page-mod-aiquiz-edit ul.slots .activityinstance form {
     display: inline;
 }
 
-#page-mod-assignquiz-edit span.editinstructions {
+#page-mod-aiquiz-edit span.editinstructions {
     right: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots .activityinstance span.instancename {
+#page-mod-aiquiz-edit ul.slots .activityinstance span.instancename {
     overflow-x: hidden;
     overflow-y: hidden;
     white-space: nowrap;
@@ -819,12 +819,12 @@ table.quizreviewsummary td.cell {
     height: 20px;
 }
 
-#page-mod-assignquiz-edit ul.slots .activityinstance span.instancename img {
+#page-mod-aiquiz-edit ul.slots .activityinstance span.instancename img {
     margin: 0 0.2em;
 }
 
-#page-mod-assignquiz-edit #categoryquestions .questionname,
-#page-mod-assignquiz-edit ul.slots li.activity div.activityinstance .questionname {
+#page-mod-aiquiz-edit #categoryquestions .questionname,
+#page-mod-aiquiz-edit ul.slots li.activity div.activityinstance .questionname {
     font-weight: bold;
     color: #555;
     overflow: hidden;
@@ -832,17 +832,17 @@ table.quizreviewsummary td.cell {
     white-space: nowrap;
 }
 
-#page-mod-assignquiz-edit ul.slots li.activity div.activityinstance .questiontext {
+#page-mod-aiquiz-edit ul.slots li.activity div.activityinstance .questiontext {
     color: #555;
 }
 
-#page-mod-assignquiz-edit .section .activity .editing_move {
+#page-mod-aiquiz-edit .section .activity .editing_move {
     position: absolute;
     left: 0;
     top: 0;
 }
 
-#page-mod-assignquiz-edit ul.slots li.activity div.activityinstance .mod_quiz_random_qbank_link {
+#page-mod-aiquiz-edit ul.slots li.activity div.activityinstance .mod_quiz_random_qbank_link {
     font-size: 0.8em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -850,20 +850,20 @@ table.quizreviewsummary td.cell {
     margin-left: 0.25rem;
 }
 
-#page-mod-assignquiz-edit ul.slots .activityinstance img.activityicon {
+#page-mod-aiquiz-edit ul.slots .activityinstance img.activityicon {
     float: inherit;
     margin: .2em 0 0;
     padding: 0;
 }
 
-#page-mod-assignquiz-edit .section .activity .actions {
+#page-mod-aiquiz-edit .section .activity .actions {
     position: inherit;
     white-space: nowrap;
     background: #e6e6e6;
     padding: 0.1em 0;
 }
 
-#page-mod-assignquiz-edit .mod_quiz_edit_forms {
+#page-mod-aiquiz-edit .mod_quiz_edit_forms {
     display: none;
 }
 
@@ -950,8 +950,8 @@ table#categoryquestions {
     margin: 0;
 }
 
-#page-mod-assignquiz-edit table#categoryquestions td,
-#page-mod-assignquiz-edit table#categoryquestions th {
+#page-mod-aiquiz-edit table#categoryquestions td,
+#page-mod-aiquiz-edit table#categoryquestions th {
     overflow: hidden;
     white-space: nowrap;
 }
@@ -993,12 +993,12 @@ table#categoryquestions {
     font-size: small;
 }
 
-#page-mod-assignquiz-edit div#repaginatedialog .mform {
+#page-mod-aiquiz-edit div#repaginatedialog .mform {
     margin-left: auto;
     margin-right: auto;
 }
 
-#page-mod-assignquiz-edit div.container div.generalbox {
+#page-mod-aiquiz-edit div.container div.generalbox {
     position: relative;
     display: block;
     border: 0 none;
@@ -1006,7 +1006,7 @@ table#categoryquestions {
     padding: 0;
 }
 
-#page-mod-assignquiz-edit .paging {
+#page-mod-aiquiz-edit .paging {
     margin-top: 0;
     margin-bottom: 0;
     padding: 0.1em 0.3em;
@@ -1014,29 +1014,29 @@ table#categoryquestions {
     background-color: #ddd;
 }
 
-#page-mod-assignquiz-edit #page-footer {
+#page-mod-aiquiz-edit #page-footer {
     clear: both;
     padding-top: 1em;
 }
 
-#page-mod-assignquiz-edit .categoryinfofield {
+#page-mod-aiquiz-edit .categoryinfofield {
     font-style: italic;
 }
 
-#page-mod-assignquiz-edit .categorynamefield {
+#page-mod-aiquiz-edit .categorynamefield {
     font-weight: bold;
 }
 
-#page-mod-assignquiz-edit .questionsortoptions {
+#page-mod-aiquiz-edit .questionsortoptions {
     background-color: #ddd;
 }
 
-#page-mod-assignquiz-edit div.questionbank .categorysortopotionscontainer {
+#page-mod-aiquiz-edit div.questionbank .categorysortopotionscontainer {
     padding-top: 0.5em;
     margin-top: 0.3em;
 }
 
-#page-mod-assignquiz-edit div.questionbank .categoryquestionscontainer,
+#page-mod-aiquiz-edit div.questionbank .categoryquestionscontainer,
 .questionbank .categorysortopotionscontainer,
 .questionbank .categorypagingbarcontainer,
 .questionbank .categoryselectallcontainer {
@@ -1045,70 +1045,70 @@ table#categoryquestions {
 
 /* Bulk edit actions */
 
-#page-mod-assignquiz-edit .btn-group.selectmultiplecommand,
-#page-mod-assignquiz-edit .selectmultiplecommandbuttons,
-#page-mod-assignquiz-edit .select-multiple-checkbox {
+#page-mod-aiquiz-edit .btn-group.selectmultiplecommand,
+#page-mod-aiquiz-edit .selectmultiplecommandbuttons,
+#page-mod-aiquiz-edit .select-multiple-checkbox {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple .selectmultiplecommand,
-#page-mod-assignquiz-edit.select-multiple .selectmultiplecommandbuttons,
-#page-mod-assignquiz-edit.select-multiple .select-multiple-checkbox {
+#page-mod-aiquiz-edit.select-multiple .selectmultiplecommand,
+#page-mod-aiquiz-edit.select-multiple .selectmultiplecommandbuttons,
+#page-mod-aiquiz-edit.select-multiple .select-multiple-checkbox {
     display: inline-block;
 }
 
-#page-mod-assignquiz-edit.select-multiple input.select-multiple-checkbox[type="checkbox"] {
+#page-mod-aiquiz-edit.select-multiple input.select-multiple-checkbox[type="checkbox"] {
     display: inline;
 }
 
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section .activity .editing_move,
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section .activity .commands {
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .editing_move,
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .commands {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section .page_split_join_wrapper {
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .page_split_join_wrapper {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section .activity .actions .editing_delete,
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section .activity .actions .editing_maxmark {
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .actions .editing_delete,
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .actions .editing_maxmark {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple#page-mod-assignquiz-edit .maxgrade,
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .last-add-menu {
+#page-mod-aiquiz-edit.select-multiple#page-mod-aiquiz-edit .maxgrade,
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .last-add-menu {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section-heading a,
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section-heading form,
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .section-heading .instanceshufflequestions {
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading a,
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading form,
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading .instanceshufflequestions {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple .mod-assignquiz-edit-content .edit-toolbar .mb-1 {
+#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .edit-toolbar .mb-1 {
     display: none;
 }
 
-#page-mod-assignquiz-edit.select-multiple#page-mod-assignquiz-edit ul.slots li.section li.activity .mod-indent-outer {
+#page-mod-aiquiz-edit.select-multiple#page-mod-aiquiz-edit ul.slots li.section li.activity .mod-indent-outer {
     padding-left: 3px;
 }
 
-#page-mod-assignquiz-edit .section .summary .iconsmall,
-#page-mod-assignquiz-edit .section .activity .iconsmall {
+#page-mod-aiquiz-edit .section .summary .iconsmall,
+#page-mod-aiquiz-edit .section .activity .iconsmall {
     float: left;
 }
 
 /* Base theme needs extra support. */
-#page-mod-assignquiz-edit ul.slots li.section ul.section {
+#page-mod-aiquiz-edit ul.slots li.section ul.section {
     list-style: none;
 }
 
 @media (max-width: 576px) {
-    #page-mod-assignquiz-edit ul.slots li.section li.activity {
+    #page-mod-aiquiz-edit ul.slots li.section li.activity {
         padding-top: 30px;
     }
-    #page-mod-assignquiz-edit ul.slots li.section li.activity .activityinstance {
+    #page-mod-aiquiz-edit ul.slots li.section li.activity .activityinstance {
         top: -30px;
         left: 0;
         padding-right: 0;
@@ -1122,56 +1122,56 @@ table#categoryquestions {
 /** Print formatting for attempt and review pages **/
 
 @media print {
-    #page-mod-assignquiz-attempt header.navbar,
-    #page-mod-assignquiz-review header.navbar {
+    #page-mod-aiquiz-attempt header.navbar,
+    #page-mod-aiquiz-review header.navbar {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt #dock,
-    #page-mod-assignquiz-review #dock {
+    #page-mod-aiquiz-attempt #dock,
+    #page-mod-aiquiz-review #dock {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt #page #page-header h1,
-    #page-mod-assignquiz-review #page #page-header h1 {
+    #page-mod-aiquiz-attempt #page #page-header h1,
+    #page-mod-aiquiz-review #page #page-header h1 {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt #region-main,
-    #page-mod-assignquiz-review #region-main {
+    #page-mod-aiquiz-attempt #region-main,
+    #page-mod-aiquiz-review #region-main {
         width: 100%;
     }
 
-    #page-mod-assignquiz-attempt #block-region-side-pre,
-    #page-mod-assignquiz-attempt #block-region-side-post,
-    #page-mod-assignquiz-review #block-region-side-pre,
-    #page-mod-assignquiz-review #block-region-side-post {
+    #page-mod-aiquiz-attempt #block-region-side-pre,
+    #page-mod-aiquiz-attempt #block-region-side-post,
+    #page-mod-aiquiz-review #block-region-side-pre,
+    #page-mod-aiquiz-review #block-region-side-post {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt #page-footer,
-    #page-mod-assignquiz-review #page-footer {
+    #page-mod-aiquiz-attempt #page-footer,
+    #page-mod-aiquiz-review #page-footer {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt .editquestion,
-    #page-mod-assignquiz-review .editquestion,
-    #page-mod-assignquiz-attempt .questionflag,
-    #page-mod-assignquiz-review .questionflag {
+    #page-mod-aiquiz-attempt .editquestion,
+    #page-mod-aiquiz-review .editquestion,
+    #page-mod-aiquiz-attempt .questionflag,
+    #page-mod-aiquiz-review .questionflag {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt .submitbtns,
-    #page-mod-assignquiz-review .submitbtns {
+    #page-mod-aiquiz-attempt .submitbtns,
+    #page-mod-aiquiz-review .submitbtns {
         display: none;
     }
 
-    #page-mod-assignquiz-review .que .commentlink {
+    #page-mod-aiquiz-review .que .commentlink {
         display: none;
     }
 
-    #page-mod-assignquiz-attempt .que,
-    #page-mod-assignquiz-review .que {
+    #page-mod-aiquiz-attempt .que,
+    #page-mod-aiquiz-review .que {
         page-break-inside: avoid;
     }
 }

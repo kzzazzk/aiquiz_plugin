@@ -1,7 +1,7 @@
 <?php
 function aiquiz_report_get_significant_questions($quiz) {
     $quizobj = \aiquiz::create($quiz->id);
-    $structure = \mod_assignquiz\assignquiz_structure::create_for_quiz($quizobj);
+    $structure = \mod_aiquiz\aiquiz_structure::create_for_quiz($quizobj);
     $slots = $structure->get_slots();
 
     $qsbyslot = [];
@@ -72,7 +72,7 @@ function aiquiz_no_questions_message($quiz, $cm, $context) {
     $output = '';
     $output .= $OUTPUT->notification(get_string('noquestions', 'quiz'));
     if (has_capability('mod/quiz:manage', $context)) {
-        $output .= $OUTPUT->single_button(new moodle_url('/mod/assignquiz/edit.php',
+        $output .= $OUTPUT->single_button(new moodle_url('/mod/aiquiz/edit.php',
             array('cmid' => $cm->id)), get_string('editquiz', 'quiz'), 'get');
     }
 

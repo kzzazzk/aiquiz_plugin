@@ -26,23 +26,23 @@ define('NO_OUTPUT_BUFFERING', true);
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/reportlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/default.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/grading/gradingsettings_form.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/grading/gradingsettings_form.php');
 
 $id = optional_param('id', 0, PARAM_INT);
 $q = optional_param('q', 0, PARAM_INT);
 $mode = optional_param('mode', '', PARAM_ALPHA);
 
 if ($id) {
-    if (!$cm = get_coursemodule_from_id('assignquiz', $id)) {
+    if (!$cm = get_coursemodule_from_id('aiquiz', $id)) {
         throw new \moodle_exception('invalidcoursemodule');
     }
     if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
         throw new \moodle_exception('coursemisconf');
     }
-    if (!$quiz = $DB->get_record('assignquiz', array('id' => $cm->instance))) {
+    if (!$quiz = $DB->get_record('aiquiz', array('id' => $cm->instance))) {
         throw new \moodle_exception('invalidcoursemodule');
     }
 
@@ -58,7 +58,7 @@ if ($id) {
     }
 }
 
-$url = new moodle_url('/mod/assignquiz/report.php', array('id' => $cm->id));
+$url = new moodle_url('/mod/aiquiz/report.php', array('id' => $cm->id));
 if ($mode !== '') {
     $url->param('mode', $mode);
 }
@@ -82,11 +82,11 @@ if ($mode == '') {
     throw new \moodle_exception('erroraccessingreport', 'quiz');
 }
 if (!is_readable("report/$mode/report.php")) {
-    throw new \moodle_exception('reportnotfound', 'assignquiz', '', $mode);
+    throw new \moodle_exception('reportnotfound', 'aiquiz', '', $mode);
 }
 
 // Open the selected quiz report and display it.
-$file = $CFG->dirroot . '/mod/assignquiz/report/' . $mode . '/report.php';
+$file = $CFG->dirroot . '/mod/aiquiz/report/' . $mode . '/report.php';
 if (is_readable($file)) {
     include_once($file);
 }
@@ -111,5 +111,5 @@ $params = array(
 );
 $event = \mod_quiz\event\report_viewed::create($params);
 $event->add_record_snapshot('course', $course);
-$event->add_record_snapshot('assignquiz', $quiz);
+$event->add_record_snapshot('aiquiz', $quiz);
 $event->trigger();

@@ -12,7 +12,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_assignquiz/question_slot
+    @template mod_aiquiz/question_slot
 
     This template renders the question slot content.
 
@@ -38,7 +38,7 @@
         {{#versionselection}}
             <label for="version-{{slotid}}" class="sr-only">{{#str}}question_version, question{{/str}}</label>
             <select id="version-{{slotid}}" name="version" class="form-control mr-2 h-auto version-selection"
-            data-action="mod_assignquiz-select_slot" data-slot-id="{{slotid}}">
+            data-action="mod_aiquiz-select_slot" data-slot-id="{{slotid}}">
                 {{#versionoption}}
                     <option value="{{version}}" {{#selected}}selected="selected"{{/selected}}>{{versionvalue}}</option>
                 {{/versionoption}}
@@ -51,5 +51,5 @@
     {{/canbeedited}}
 </div>
 {{#draftversion}}
-<div class="alert alert-danger" role="alert">{{#str}}questiondraftwillnotwork, mod_assignquiz{{/str}}</div>
+<div class="alert alert-danger" role="alert">{{#str}}questiondraftwillnotwork, mod_aiquiz{{/str}}</div>
 {{/draftversion}}

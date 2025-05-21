@@ -25,12 +25,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/responses_form.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/last_responses_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/first_or_all_responses_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/report.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/responses/responses_options.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/responses/responses_options.php');
 
 
 

@@ -20,7 +20,7 @@ if (!defined('AJAX_SCRIPT')) {
 }
 
 require_once(__DIR__ . '/../../config.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 
 // Initialise ALL the incoming parameters here, up front.
 $quizid     = required_param('quizid', PARAM_INT);
@@ -41,12 +41,12 @@ $newheading = optional_param('newheading', '', PARAM_TEXT);
 $shuffle    = optional_param('newshuffle', 0, PARAM_INT);
 $page       = optional_param('page', '', PARAM_INT);
 $ids        = optional_param('ids', '', PARAM_SEQUENCE);
-$PAGE->set_url('/mod/assignquiz/edit-rest.php',
+$PAGE->set_url('/mod/aiquiz/edit-rest.php',
     array('quizid' => $quizid, 'class' => $class));
 
 require_sesskey();
-$quiz = $DB->get_record('assignquiz', array('id' => $quizid), '*', MUST_EXIST);
-$cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+$quiz = $DB->get_record('aiquiz', array('id' => $quizid), '*', MUST_EXIST);
+$cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course);
 $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
 require_login($course, false, $cm);
 
@@ -106,7 +106,7 @@ switch($requestmethod) {
                             }
                         }
                         $structure->move_slot($id, $previousid, $page);
-                        assignquiz_delete_previews($quiz);
+                        aiquiz_delete_previews($quiz);
                         $result = array('visible' => true);
                         break;
 
@@ -121,10 +121,10 @@ switch($requestmethod) {
                         $slot = $structure->get_slot_by_id($id);
                         if ($structure->update_slot_maxmark($slot, $maxmark)) {
                             // Grade has really changed.
-                            assignquiz_delete_previews($quiz);
-                            assignquiz_update_sumgrades($quiz);
-                            assignquiz_update_all_attempt_sumgrades($quiz);
-                            assignquiz_update_all_final_grades($quiz);
+                            aiquiz_delete_previews($quiz);
+                            aiquiz_update_sumgrades($quiz);
+                            aiquiz_update_all_attempt_sumgrades($quiz);
+                            aiquiz_update_all_final_grades($quiz);
                             quiz_update_grades($quiz, 0, true);
                         }
                         $result = array('instancemaxmark' => quiz_format_question_grade($quiz, $maxmark),
@@ -153,8 +153,8 @@ switch($requestmethod) {
                                 $structure->remove_slot($slot->slot);
                             }
                         }
-                        assignquiz_delete_previews($quiz);
-                        assignquiz_update_sumgrades($quiz);
+                        aiquiz_delete_previews($quiz);
+                        aiquiz_update_sumgrades($quiz);
 
                         $result = array('newsummarks' => quiz_format_grade($quiz, $quiz->sumgrades),
                             'deleted' => true, 'newnumquestions' => $structure->get_question_count());
@@ -193,8 +193,8 @@ switch($requestmethod) {
                         'moodle/question:useall', 'nopermissions', '');
                 }
                 $structure->remove_slot($slot->slot);
-                assignquiz_delete_previews($quiz);
-                assignquiz_update_sumgrades($quiz);
+                aiquiz_delete_previews($quiz);
+                aiquiz_update_sumgrades($quiz);
                 $result = array('newsummarks' => quiz_format_grade($quiz, $quiz->sumgrades),
                     'deleted' => true, 'newnumquestions' => $structure->get_question_count());
                 break;

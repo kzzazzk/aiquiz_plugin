@@ -63,7 +63,7 @@ class aiquiz_grading_settings_form extends moodleform {
         $this->shownames = $shownames;
         $this->showcustomfields = $showcustomfields;
         $this->context = $context;
-        parent::__construct($CFG->wwwroot . '/mod/assignquiz/report.php');
+        parent::__construct($CFG->wwwroot . '/mod/aiquiz/report.php');
     }
 
     protected function definition() {

@@ -15,13 +15,13 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Prints an instance of mod_assignquiz.
+ * Prints an instance of mod_aiquiz.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace mod_assignquiz\event;
+namespace mod_aiquiz\event;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -39,6 +39,6 @@ class course_module_viewed extends \core\event\course_module_viewed {
     }
 
     public static function get_objectid_mapping() {
-        return array('db' => 'assignquiz', 'restore' => 'aiquiz');
+        return array('db' => 'aiquiz', 'restore' => 'aiquiz');
     }
 }

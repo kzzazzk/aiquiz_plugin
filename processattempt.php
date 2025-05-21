@@ -31,7 +31,7 @@ global $DB, $OUTPUT;
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 
 // Remember the current time as the time any responses were submitted
 // (so as to make sure students don't get penalized for slow processing on this page).
@@ -48,7 +48,7 @@ $timeup        = optional_param('timeup',        0,      PARAM_BOOL); // True if
 $scrollpos     = optional_param('scrollpos',     '',     PARAM_RAW);
 $cmid          = optional_param('cmid', null, PARAM_INT);
 
-$attemptobj = assignquiz_create_attempt_handling_errors($attemptid, $cmid);
+$attemptobj = aiquiz_create_attempt_handling_errors($attemptid, $cmid);
 
 
 if ($next) {

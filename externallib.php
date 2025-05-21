@@ -1,5 +1,5 @@
 <?php
-namespace mod_assignquiz\external;
+namespace mod_aiquiz\external;
 
 use external_api;
 use external_function_parameters;
@@ -10,7 +10,7 @@ use stdClass;
 defined('MOODLE_INTERNAL') || die;
 global $CFG;
 
-require_once($CFG->dirroot.'/mod/assignquiz/lib.php'); // Required for external API methods
+require_once($CFG->dirroot.'/mod/aiquiz/lib.php'); // Required for external API methods
 
 class preserve_questions extends external_api {
 
@@ -22,7 +22,7 @@ class preserve_questions extends external_api {
      * @throws invalid_parameter_exception If invalid parameters are passed.
      */
     public static function execute($quizid) {
-        assignquiz_delete_and_relocate_questions($quizid); // Delete the quiz instance
+        aiquiz_delete_and_relocate_questions($quizid); // Delete the quiz instance
         return true; // Return success
     }
 

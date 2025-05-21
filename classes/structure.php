@@ -1,16 +1,16 @@
 <?php
-namespace mod_assignquiz;
+namespace mod_aiquiz;
 
-use mod_assignquiz\question\bank\assignquiz_qbank_helper;
-use mod_assignquiz\assignquiz_repaginate;
+use mod_aiquiz\question\bank\aiquiz_qbank_helper;
+use mod_aiquiz\aiquiz_repaginate;
 use mod_quiz\structure;
 
-require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/repaginate.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/assignquiz_qbank_helper.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/repaginate.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/aiquiz_qbank_helper.php');
 
 defined('MOODLE_INTERNAL') || die();
-class assignquiz_structure extends structure {
+class aiquiz_structure extends structure {
     public static function create() {
         return new self();
     }
@@ -23,7 +23,7 @@ class assignquiz_structure extends structure {
     protected function populate_structure() {
         global $DB;
 
-        $slots = assignquiz_qbank_helper::get_question_structure($this->quizobj->get_quizid(), $this->quizobj->get_context());
+        $slots = aiquiz_qbank_helper::get_question_structure($this->quizobj->get_quizid(), $this->quizobj->get_context());
 
         $this->questions = [];
         $this->slotsinorder = [];
@@ -45,7 +45,7 @@ class assignquiz_structure extends structure {
             $reportlink = quiz_attempt_summary_link_to_reports($this->get_quiz(),
                 $this->quizobj->get_cm(), $this->quizobj->get_context());
             throw new \moodle_exception('cannoteditafterattempts', 'quiz',
-                new \moodle_url('/mod/assignquiz/edit.php', array('cmid' => $this->get_cmid())), $reportlink);
+                new \moodle_url('/mod/aiquiz/edit.php', array('cmid' => $this->get_cmid())), $reportlink);
         }
     }
     public function add_section_heading($pagenumber, $heading = null) {
@@ -83,7 +83,7 @@ class assignquiz_structure extends structure {
         $slot = $this->get_slot_by_number($slotnumber);
 
         // Get all the versions which exist.
-        $versions = assignquiz_qbank_helper::get_version_options($slot->questionid);
+        $versions = aiquiz_qbank_helper::get_version_options($slot->questionid);
         $latestversion = reset($versions);
 
         // Format the choices for display.
@@ -117,11 +117,11 @@ class assignquiz_structure extends structure {
         $this->check_can_be_edited();
 
         $quizslots = $DB->get_records('aiquiz_slots', array('quizid' => $this->get_quizid()), 'slot');
-        $repaginate = new \mod_assignquiz\assignquiz_repaginate($this->get_quizid(), $quizslots);
+        $repaginate = new \mod_aiquiz\aiquiz_repaginate($this->get_quizid(), $quizslots);
         $repaginate->repaginate_slots($quizslots[$slotid]->slot, $type);
         $slots = $this->refresh_page_numbers_and_update_db();
 
-        if ($type == assignquiz_repaginate::LINK) {
+        if ($type == aiquiz_repaginate::LINK) {
             // Log page break created event.
             $event = \mod_quiz\event\page_break_deleted::create([
                 'context' => $this->quizobj->get_context(),
@@ -166,16 +166,16 @@ class assignquiz_structure extends structure {
         $trans = $DB->start_delegated_transaction();
         // Delete the reference if its a question.
         $questionreference = $DB->get_record('question_references',
-            ['component' => 'mod_assignquiz', 'questionarea' => 'slot', 'itemid' => $slot->id]);
+            ['component' => 'mod_aiquiz', 'questionarea' => 'slot', 'itemid' => $slot->id]);
         if ($questionreference) {
             $DB->delete_records('question_references', ['id' => $questionreference->id]);
         }
         // Delete the set reference if its a random question.
         $questionsetreference = $DB->get_record('question_set_references',
-            ['component' => 'mod_assignquiz', 'questionarea' => 'slot', 'itemid' => $slot->id]);
+            ['component' => 'mod_aiquiz', 'questionarea' => 'slot', 'itemid' => $slot->id]);
         if ($questionsetreference) {
             $DB->delete_records('question_set_references',
-                ['id' => $questionsetreference->id, 'component' => 'mod_assignquiz', 'questionarea' => 'slot']);
+                ['id' => $questionsetreference->id, 'component' => 'mod_aiquiz', 'questionarea' => 'slot']);
         }
         $DB->delete_records('aiquiz_slots', array('id' => $slot->id));
         for ($i = $slot->slot + 1; $i <= $maxslot; $i++) {

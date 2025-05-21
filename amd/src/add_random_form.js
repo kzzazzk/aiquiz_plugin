@@ -23,7 +23,7 @@
 define(
     [
         'jquery',
-        'mod_assignquiz/random_question_form_preview'
+        'mod_aiquiz/random_question_form_preview'
     ],
     function(
         $,

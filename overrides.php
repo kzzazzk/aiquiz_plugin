@@ -26,14 +26,14 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot.'/mod/quiz/lib.php');
 require_once($CFG->dirroot.'/mod/quiz/locallib.php');
 require_once($CFG->dirroot.'/mod/quiz/override_form.php');
-require_once($CFG->dirroot.'/mod/assignquiz/classes/output/overrides_actions.php');
+require_once($CFG->dirroot.'/mod/aiquiz/classes/output/overrides_actions.php');
 
 
 $cmid = required_param('cmid', PARAM_INT);
 $mode = optional_param('mode', '', PARAM_ALPHA); // One of 'user' or 'group', default is 'group'.
 
-list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'assignquiz');
-$quiz = $DB->get_record('assignquiz', ['id' => $cm->instance], '*', MUST_EXIST);
+list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'aiquiz');
+$quiz = $DB->get_record('aiquiz', ['id' => $cm->instance], '*', MUST_EXIST);
 
 require_login($course, false, $cm);
 
@@ -61,7 +61,7 @@ if ($mode != "user" and $mode != "group") {
 }
 $groupmode = ($mode == "group");
 
-$url = new moodle_url('/mod/assignquiz/overrides.php', ['cmid' => $cm->id, 'mode' => $mode]);
+$url = new moodle_url('/mod/aiquiz/overrides.php', ['cmid' => $cm->id, 'mode' => $mode]);
 
 $title = get_string('overridesforquiz', 'quiz',
         format_string($quiz->name, true, ['context' => $context]));
@@ -172,8 +172,8 @@ if ($canedit) {
 $userurl = new moodle_url('/user/view.php', []);
 $groupurl = new moodle_url('/group/overview.php', ['id' => $cm->course]);
 
-$overridedeleteurl = new moodle_url('/mod/assignquiz/overridedelete.php');
-$overrideediturl = new moodle_url('/mod/assignquiz/overrideedit.php');
+$overridedeleteurl = new moodle_url('/mod/aiquiz/overridedelete.php');
+$overrideediturl = new moodle_url('/mod/aiquiz/overrideedit.php');
 
 $hasinactive = false; // Whether there are any inactive overrides.
 
@@ -339,8 +339,8 @@ if ($canedit) {
 
 // Tertiary navigation.
 echo $OUTPUT->header();
-$renderer = $PAGE->get_renderer('mod_assignquiz');
-$tertiarynav = new \mod_assignquiz\output\assignquiz_overrides_actions($cmid, $mode, $canedit, $addenabled);
+$renderer = $PAGE->get_renderer('mod_aiquiz');
+$tertiarynav = new \mod_aiquiz\output\aiquiz_overrides_actions($cmid, $mode, $canedit, $addenabled);
 echo $renderer->render($tertiarynav);
 
 if ($mode === 'user') {

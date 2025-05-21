@@ -1,14 +1,14 @@
 <?php
 
-use mod_assignquiz\output\assignquizedit_renderer;
-use mod_assignquiz\question\bank\assignquiz_qbank_helper;
+use mod_aiquiz\output\aiquizedit_renderer;
+use mod_aiquiz\question\bank\aiquiz_qbank_helper;
 
 require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/lib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/accessmanager.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/structure.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/assignquiz_qbank_helper.php');
+require_once($CFG->dirroot . '/mod/aiquiz/lib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/accessmanager.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/structure.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/aiquiz_qbank_helper.php');
 
 class aiquiz extends quiz
 {
@@ -17,9 +17,9 @@ class aiquiz extends quiz
         global $DB;
 
         $quiz = aiquiz_access_manager::load_quiz_and_settings($quizid);
-        $courseid = $DB->get_field('assignquiz', 'course', array('id' => $quiz->id), MUST_EXIST);
+        $courseid = $DB->get_field('aiquiz', 'course', array('id' => $quiz->id), MUST_EXIST);
         $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $course->id, false, MUST_EXIST);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $course->id, false, MUST_EXIST);
 
         // Update quiz with override information.
         if ($userid) {
@@ -31,7 +31,7 @@ class aiquiz extends quiz
 
     public function get_structure()
     {
-        return \mod_assignquiz\assignquiz_structure::create_for_quiz($this);
+        return \mod_aiquiz\aiquiz_structure::create_for_quiz($this);
     }
 
     public function create_attempt_object($attemptdata)
@@ -40,7 +40,7 @@ class aiquiz extends quiz
     }
 
     public function preload_questions() {
-        $slots = assignquiz_qbank_helper::get_question_structure($this->quiz->id, $this->context);
+        $slots = aiquiz_qbank_helper::get_question_structure($this->quiz->id, $this->context);
         $this->questions = [];
         foreach ($slots as $slot) {
             $this->questions[$slot->questionid] = $slot;
@@ -49,14 +49,14 @@ class aiquiz extends quiz
 
     public function view_url() {
         global $CFG;
-        return $CFG->wwwroot . '/mod/assignquiz/view.php?id=' . $this->cm->id;
+        return $CFG->wwwroot . '/mod/aiquiz/view.php?id=' . $this->cm->id;
     }
     public function start_attempt_url($page = 0) {
         $params = array('cmid' => $this->cm->id, 'sesskey' => sesskey());
         if ($page) {
             $params['page'] = $page;
         }
-        return new moodle_url('/mod/assignquiz/startattempt.php', $params);
+        return new moodle_url('/mod/aiquiz/startattempt.php', $params);
     }
 
     public function is_preview_user() {
@@ -68,7 +68,7 @@ class aiquiz extends quiz
 
     public function edit_url() {
         global $CFG;
-        return $CFG->wwwroot . '/mod/assignquiz/edit.php?cmid=' . $this->cm->id;
+        return $CFG->wwwroot . '/mod/aiquiz/edit.php?cmid=' . $this->cm->id;
     }
 
     public function get_access_manager($timenow) {
@@ -81,7 +81,7 @@ class aiquiz extends quiz
 
     public function attempt_url($attemptid, $page = 0) {
         global $CFG;
-        $url = $CFG->wwwroot . '/mod/assignquiz/attempt.php?attempt=' . $attemptid;
+        $url = $CFG->wwwroot . '/mod/aiquiz/attempt.php?attempt=' . $attemptid;
         if ($page) {
             $url .= '&page=' . $page;
         }
@@ -98,7 +98,7 @@ class aiquiz extends quiz
     }
 
     public function review_url($attemptid) {
-        return new moodle_url('/mod/assignquiz/review.php', array('attempt' => $attemptid, 'cmid' => $this->get_cmid()));
+        return new moodle_url('/mod/aiquiz/review.php', array('attempt' => $attemptid, 'cmid' => $this->get_cmid()));
     }
 }
 
@@ -152,7 +152,7 @@ class aiquiz_attempt extends quiz_attempt{
             return new moodle_url($fragment);
 
         } else {
-            $url = new moodle_url('/mod/assignquiz/' . $script . '.php' . $fragment,
+            $url = new moodle_url('/mod/aiquiz/' . $script . '.php' . $fragment,
                 array('attempt' => $this->attempt->id, 'cmid' => $this->get_cmid()));
             if ($page == 0 && $showall != $defaultshowall) {
                 $url->param('showall', (int) $showall);
@@ -168,10 +168,10 @@ class aiquiz_attempt extends quiz_attempt{
         $attempt = $DB->get_record('aiquiz_attempts', $conditions, '*', MUST_EXIST);
         $quiz = aiquiz_access_manager::load_quiz_and_settings($attempt->quiz);
         $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $course->id, false, MUST_EXIST);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $course->id, false, MUST_EXIST);
 
         // Update quiz with override information.
-        $quiz = assignquiz_update_effective_access($quiz, $attempt->userid);
+        $quiz = aiquiz_update_effective_access($quiz, $attempt->userid);
 
         return new aiquiz_attempt($attempt, $quiz, $cm, $course);
     }
@@ -180,7 +180,7 @@ class aiquiz_attempt extends quiz_attempt{
     }
 
     public function summary_url() {
-        return new moodle_url('/mod/assignquiz/summary.php', array('attempt' => $this->attempt->id, 'cmid' => $this->get_cmid()));
+        return new moodle_url('/mod/aiquiz/summary.php', array('attempt' => $this->attempt->id, 'cmid' => $this->get_cmid()));
     }
     public function load_questions() {
         global $DB;
@@ -214,7 +214,7 @@ class aiquiz_attempt extends quiz_attempt{
         $event->trigger();
     }
     public function processattempt_url() {
-        return new moodle_url('/mod/assignquiz/processattempt.php');
+        return new moodle_url('/mod/aiquiz/processattempt.php');
     }
     public function fire_attempt_summary_viewed_event() {
 
@@ -232,7 +232,7 @@ class aiquiz_attempt extends quiz_attempt{
         $event->trigger();
     }
 
-    public function assignquiz_get_navigation_panel(mod_assignquiz_renderer $output,
+    public function aiquiz_get_navigation_panel(mod_aiquiz_renderer $output,
                                                            $panelclass, $page, $showall = false) {
         $panel = new $panelclass($this, $this->get_display_options(true), $page, $showall);
 
@@ -274,7 +274,7 @@ class aiquiz_attempt extends quiz_attempt{
         }
 
         if (!$this->is_preview() && $this->attempt->state == self::FINISHED) {
-            assignquiz_save_best_grade($this->get_quiz(), $this->get_userid());
+            aiquiz_save_best_grade($this->get_quiz(), $this->get_userid());
         }
 
         $transaction->allow_commit();
@@ -294,7 +294,7 @@ class aiquiz_attempt extends quiz_attempt{
 
         $transaction->allow_commit();
 
-        assignquiz_send_overdue_message($this);
+        aiquiz_send_overdue_message($this);
     }
 
     protected function fire_state_transition_event($eventclass, $timestamp, $studentisonline) {
@@ -319,7 +319,7 @@ class aiquiz_attempt extends quiz_attempt{
     public function get_display_options($reviewing) {
         if ($reviewing) {
             if (is_null($this->reviewoptions)) {
-                $this->reviewoptions = assignquiz_get_review_options($this->get_quiz(),
+                $this->reviewoptions = aiquiz_get_review_options($this->get_quiz(),
                     $this->attempt, $this->quizobj->get_context());
                 if ($this->is_own_preview()) {
                     // It should  always be possible for a teacher to review their
@@ -506,7 +506,7 @@ class aiquiz_attempt extends quiz_attempt{
         $DB->update_record('aiquiz_attempts', $this->attempt);
 
         if (!$this->is_preview()) {
-            assignquiz_save_best_grade($this->get_quiz(), $this->attempt->userid);
+            aiquiz_save_best_grade($this->get_quiz(), $this->attempt->userid);
 
             // Trigger event.
             $this->fire_state_transition_event('\mod_quiz\event\attempt_submitted', $timestamp, $studentisonline);
@@ -519,7 +519,7 @@ class aiquiz_attempt extends quiz_attempt{
     }
 }
 
-abstract class assignquiz_nav_panel_base extends quiz_nav_panel_base {
+abstract class aiquiz_nav_panel_base extends quiz_nav_panel_base {
     public function __construct(aiquiz_attempt $attemptobj, question_display_options $options, $page, $showall)
     {
        parent::__construct($attemptobj, $options, $page, $showall);
@@ -527,7 +527,7 @@ abstract class assignquiz_nav_panel_base extends quiz_nav_panel_base {
 
 }
 
-class assignquiz_attempt_nav_panel extends assignquiz_nav_panel_base
+class aiquiz_attempt_nav_panel extends aiquiz_nav_panel_base
 {
     public function get_question_url($slot) {
         if ($this->attemptobj->can_navigate_to($slot)) {

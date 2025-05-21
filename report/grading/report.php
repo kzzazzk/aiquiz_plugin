@@ -276,7 +276,7 @@ class aiquiz_grading_report extends quiz_grading_report {
      * @return moodle_url the URL.
      */
     protected function base_url() {
-        return new moodle_url('/mod/assignquiz/report.php',
+        return new moodle_url('/mod/aiquiz/report.php',
                 ['id' => $this->cm->id, 'mode' => 'grading']);
     }
 

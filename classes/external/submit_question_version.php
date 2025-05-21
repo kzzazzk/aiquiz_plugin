@@ -1,6 +1,6 @@
 <?php
 
-namespace mod_assignquiz\external;
+namespace mod_aiquiz\external;
 
 require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/question/engine/lib.php');
@@ -55,11 +55,11 @@ class submit_question_version extends external_api {
         $response = ['result' => false];
         // Get the required data.
         $referencedata = $DB->get_record('question_references',
-            ['itemid' => $params['slotid'], 'component' => 'mod_assignquiz', 'questionarea' => 'slot']);
+            ['itemid' => $params['slotid'], 'component' => 'mod_aiquiz', 'questionarea' => 'slot']);
         $slotdata = $DB->get_record('aiquiz_slots', ['id' => $slotid]);
 
         // Capability check.
-        list($course, $cm) = get_course_and_cm_from_instance($slotdata->quizid, 'assignquiz');
+        list($course, $cm) = get_course_and_cm_from_instance($slotdata->quizid, 'aiquiz');
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
         require_capability('mod/quiz:manage', $context);

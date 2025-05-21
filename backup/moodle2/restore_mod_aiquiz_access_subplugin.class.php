@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2011 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_mod_assignquiz_access_subplugin extends restore_subplugin {
+class restore_mod_aiquiz_access_subplugin extends restore_subplugin {
 
     /**
      * Use this method to describe the XML paths that store your sub-plugin's

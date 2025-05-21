@@ -135,7 +135,7 @@ class mod_aiquiz_attempts_report_options {
      * @return moodle_url the URL.
      */
     public function get_url() {
-        return new moodle_url('/mod/assignquiz/report.php', $this->get_url_params());
+        return new moodle_url('/mod/aiquiz/report.php', $this->get_url_params());
     }
 
     /**

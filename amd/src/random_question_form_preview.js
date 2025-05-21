@@ -40,7 +40,7 @@ define(
     ) {
 
     var ITEMS_PER_PAGE = 5;
-    var TEMPLATE_NAME = 'mod_assignquiz/random_question_form_preview_question_list';
+    var TEMPLATE_NAME = 'mod_aiquiz/random_question_form_preview_question_list';
     var SELECTORS = {
         LOADING_ICON_CONTAINER: '[data-region="overlay-icon-container"]',
         QUESTION_COUNT_CONTAINER: '[data-region="question-count-container"]',

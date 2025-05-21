@@ -17,7 +17,7 @@
 /**
  * Library of interface functions and constants.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,18 +30,18 @@
  */
 
 
-use mod_assignquiz\question\bank\assignquiz_custom_view;
+use mod_aiquiz\question\bank\aiquiz_custom_view;
 use mod_quiz\question\bank\custom_view;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\PdfParserException;
-use mod_assignquiz\observer;
+use mod_aiquiz\observer;
 
-require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
-require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/custom_view.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/vendor/autoload.php');
 
-function assignquiz_supports($feature)
+function aiquiz_supports($feature)
 {
     switch ($feature) {
         case FEATURE_GROUPS:
@@ -77,30 +77,30 @@ function assignquiz_supports($feature)
 }
 
 /**
- * Saves a new instance of the mod_assignquiz into the database.
+ * Saves a new instance of the mod_aiquiz into the database.
  *
  * Given an object containing all the necessary data, (defined by the form
  * in mod_form.php) this function will create a new instance and return the id
  * number of the instance.
  *
  * @param object $moduleinstance An object from the form.
- * @param mod_assignquiz_mod_form $mform The form.
+ * @param mod_aiquiz_mod_form $mform The form.
  * @return int The id of the newly inserted record.
  */
-function assignquiz_add_instance($moduleinstance, $mform)
+function aiquiz_add_instance($moduleinstance, $mform)
 {
     global $DB, $USER, $CFG;
-    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
+    $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
     $moduleinstance->timemodified = time();
     $result = quiz_process_options($moduleinstance);
     if ($result && is_string($result)) {
         return $result;
     }
-    $assignquizid = $DB->insert_record('assignquiz', $moduleinstance);
-    $DB->insert_record('aiquiz_sections', array('quizid' => $assignquizid,
+    $aiquizid = $DB->insert_record('aiquiz', $moduleinstance);
+    $DB->insert_record('aiquiz_sections', array('quizid' => $aiquizid,
         'firstslot' => 1, 'heading' => '', 'shufflequestions' => 0));
-    $moduleinstance->id = $assignquizid;
-    assignquiz_after_add_or_update($moduleinstance);
+    $moduleinstance->id = $aiquizid;
+    aiquiz_after_add_or_update($moduleinstance);
 
     $context = context_course::instance($moduleinstance->course);
     $coursename = get_course($moduleinstance->course)->fullname;
@@ -109,24 +109,24 @@ function assignquiz_add_instance($moduleinstance, $mform)
     }
 
     generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
-    return $assignquizid;
+    return $aiquizid;
 }
 
 /**
- * Updates an instance of the mod_assignquiz in the database.
+ * Updates an instance of the mod_aiquiz in the database.
  *
  * Given an object containing all the necessary data (defined in mod_form.php),
  * this function will update an existing instance with new data.
  *
  * @param object $moduleinstance An object from the form in mod_form.php.
- * @param mod_assignquiz_mod_form $mform The form.
+ * @param mod_aiquiz_mod_form $mform The form.
  * @return bool True if successful, false otherwise.
  */
-function assignquiz_update_instance($moduleinstance, $mform = null)
+function aiquiz_update_instance($moduleinstance, $mform = null)
 {
     global $DB;
     quiz_process_options($moduleinstance);
-    $oldquiz = $DB->get_record('assignquiz', array('id' => $moduleinstance->instance));
+    $oldquiz = $DB->get_record('aiquiz', array('id' => $moduleinstance->instance));
 
     // We need two values from the existing DB record that are not in the form,
     // in some of the function calls below.
@@ -135,51 +135,51 @@ function assignquiz_update_instance($moduleinstance, $mform = null)
 
     // Update the database.
     $moduleinstance->id = $moduleinstance->instance;
-    $DB->update_record('assignquiz', $moduleinstance);
+    $DB->update_record('aiquiz', $moduleinstance);
 
     // Do the processing required after an add or an update.
-    assignquiz_after_add_or_update($moduleinstance);
+    aiquiz_after_add_or_update($moduleinstance);
 
     if ($oldquiz->grademethod != $moduleinstance->grademethod) {
-        assignquiz_update_all_final_grades($moduleinstance);
-        assignquiz_update_grades($moduleinstance);
+        aiquiz_update_all_final_grades($moduleinstance);
+        aiquiz_update_grades($moduleinstance);
     }
 
     $quizdateschanged = $oldquiz->timelimit != $moduleinstance->timelimit
         || $oldquiz->timeclose != $moduleinstance->timeclose
         || $oldquiz->graceperiod != $moduleinstance->graceperiod;
     if ($quizdateschanged) {
-        assignquiz_update_open_attempts(array('quizid' => $moduleinstance->id));
+        aiquiz_update_open_attempts(array('quizid' => $moduleinstance->id));
     }
 
     // Delete any previous preview attempts.
-    assignquiz_delete_previews($moduleinstance);
+    aiquiz_delete_previews($moduleinstance);
 
     // Repaginate, if asked to.
-    if (!empty($moduleinstance->repaginatenow) && !assignquiz_has_attempts($moduleinstance->id)) {
-        assignquiz_repaginate_questions($moduleinstance->id, $moduleinstance->questionsperpage);
+    if (!empty($moduleinstance->repaginatenow) && !aiquiz_has_attempts($moduleinstance->id)) {
+        aiquiz_repaginate_questions($moduleinstance->id, $moduleinstance->questionsperpage);
     }
 
     return true;
 }
 
 /**
- * Removes an instance of the mod_assignquiz from the database.
+ * Removes an instance of the mod_aiquiz from the database.
  *
  * @param int $id Id of the module instance.
  * @return bool True if successful, false on failure.
  */
-function assignquiz_delete_instance($id)
+function aiquiz_delete_instance($id)
 {
     global $DB, $PAGE, $CFG;
 
-    $assignquiz = $DB->get_record('assignquiz', ['id' => $id]);
-    if (!$assignquiz) {
+    $aiquiz = $DB->get_record('aiquiz', ['id' => $id]);
+    if (!$aiquiz) {
         return false;
     }
 
     $fs = get_file_storage();
-    $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
+    $course_module = get_coursemodule_from_instance('aiquiz', $id, $aiquiz->course, false, MUST_EXIST);
 
     $contextid = $DB->get_field('context', 'id', [
         'instanceid' => $course_module->id,
@@ -187,59 +187,59 @@ function assignquiz_delete_instance($id)
     ], MUST_EXIST);
 
     // Delete files
-    $fs->delete_area_files($contextid, 'mod_assignquiz', 'feedbacksource', 0);
-    $fs->delete_area_files($contextid, 'mod_assignquiz', 'pdftext', 0);
+    $fs->delete_area_files($contextid, 'mod_aiquiz', 'feedbacksource', 0);
+    $fs->delete_area_files($contextid, 'mod_aiquiz', 'pdftext', 0);
 
     // Delete grade item
-    assignquiz_grade_item_delete($assignquiz);
+    aiquiz_grade_item_delete($aiquiz);
 
-    // Delete the assignquiz instance
-    $DB->delete_records('assignquiz', ['id' => $id]);
+    // Delete the aiquiz instance
+    $DB->delete_records('aiquiz', ['id' => $id]);
 
     $DB->delete_records('question_categories', ['contextid' => $contextid]);
 
 
-    $DB->delete_records('assignquiz', ['id' => $id]);
+    $DB->delete_records('aiquiz', ['id' => $id]);
 
     return true;
 }
 
 
 
-function assignquiz_after_add_or_update($assignquiz)
+function aiquiz_after_add_or_update($aiquiz)
 {
     global $DB;
-    $cmid = $assignquiz->coursemodule;
+    $cmid = $aiquiz->coursemodule;
 
     // We need to use context now, so we need to make sure all needed info is already in db.
-    $DB->set_field('course_modules', 'instance', $assignquiz->id, array('id' => $cmid));
+    $DB->set_field('course_modules', 'instance', $aiquiz->id, array('id' => $cmid));
 
     // Store any settings belonging to the access rules.
-    aiquiz_access_manager::save_settings($assignquiz);
+    aiquiz_access_manager::save_settings($aiquiz);
 
     // Update the events relating to this quiz.
-    assignquiz_update_events($assignquiz);
-    $completionexpected = (!empty($assignquiz->completionexpected)) ? $assignquiz->completionexpected : null;
-    \core_completion\api::update_completion_date_event($assignquiz->coursemodule, 'assignquiz', $assignquiz->id, $completionexpected);
-    assignquiz_grade_item_update($assignquiz);
+    aiquiz_update_events($aiquiz);
+    $completionexpected = (!empty($aiquiz->completionexpected)) ? $aiquiz->completionexpected : null;
+    \core_completion\api::update_completion_date_event($aiquiz->coursemodule, 'aiquiz', $aiquiz->id, $completionexpected);
+    aiquiz_grade_item_update($aiquiz);
 
 }
 
-function assignquiz_grade_item_update($assignquiz, $grades = null)
+function aiquiz_grade_item_update($aiquiz, $grades = null)
 {
     global $CFG, $OUTPUT;
     require_once($CFG->dirroot . '/mod/quiz/locallib.php');
     require_once($CFG->libdir . '/gradelib.php');
 
-    if (property_exists($assignquiz, 'cmidnumber')) { // May not be always present.
-        $params = array('itemname' => $assignquiz->name, 'idnumber' => $assignquiz->cmidnumber);
+    if (property_exists($aiquiz, 'cmidnumber')) { // May not be always present.
+        $params = array('itemname' => $aiquiz->name, 'idnumber' => $aiquiz->cmidnumber);
     } else {
-        $params = array('itemname' => $assignquiz->name);
+        $params = array('itemname' => $aiquiz->name);
     }
 
-    if ($assignquiz->grade > 0) {
+    if ($aiquiz->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax'] = $assignquiz->grade;
+        $params['grademax'] = $aiquiz->grade;
         $params['grademin'] = 0;
 
     } else {
@@ -253,9 +253,9 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
     // 2. If the quiz is set to not show grades at either of those times,
     //    create the grade_item as hidden.
     // 3. If the quiz is set to show grades, create the grade_item visible.
-    $openreviewoptions = mod_quiz_display_options::make_from_quiz($assignquiz,
+    $openreviewoptions = mod_quiz_display_options::make_from_quiz($aiquiz,
         mod_quiz_display_options::LATER_WHILE_OPEN);
-    $closedreviewoptions = mod_quiz_display_options::make_from_quiz($assignquiz,
+    $closedreviewoptions = mod_quiz_display_options::make_from_quiz($aiquiz,
         mod_quiz_display_options::AFTER_CLOSE);
     if ($openreviewoptions->marks < question_display_options::MARK_AND_MAX &&
         $closedreviewoptions->marks < question_display_options::MARK_AND_MAX) {
@@ -263,8 +263,8 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
 
     } else if ($openreviewoptions->marks < question_display_options::MARK_AND_MAX &&
         $closedreviewoptions->marks >= question_display_options::MARK_AND_MAX) {
-        if ($assignquiz->timeclose) {
-            $params['hidden'] = $assignquiz->timeclose;
+        if ($aiquiz->timeclose) {
+            $params['hidden'] = $aiquiz->timeclose;
         } else {
             $params['hidden'] = 1;
         }
@@ -280,11 +280,11 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
     if (!$params['hidden']) {
         // If the grade item is not hidden by the quiz logic, then we need to
         // hide it if the quiz is hidden from students.
-        if (property_exists($assignquiz, 'visible')) {
+        if (property_exists($aiquiz, 'visible')) {
             // Saving the quiz form, and cm not yet updated in the database.
-            $params['hidden'] = !$assignquiz->visible;
+            $params['hidden'] = !$aiquiz->visible;
         } else {
-            $cm = get_coursemodule_from_instance('assignquiz', $assignquiz->id);
+            $cm = get_coursemodule_from_instance('aiquiz', $aiquiz->id);
             $params['hidden'] = !$cm->visible;
         }
     }
@@ -294,7 +294,7 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
         $grades = null;
     }
 
-    $gradebook_grades = grade_get_grades($assignquiz->course, 'mod', 'assignquiz', $assignquiz->id);
+    $gradebook_grades = grade_get_grades($aiquiz->course, 'mod', 'aiquiz', $aiquiz->id);
     if (!empty($gradebook_grades->items)) {
         $grade_item = $gradebook_grades->items[0];
         if ($grade_item->locked) {
@@ -303,7 +303,7 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
             if (!$confirm_regrade) {
                 if (!AJAX_SCRIPT) {
                     $message = get_string('gradeitemislocked', 'grades');
-                    $back_link = $CFG->wwwroot . '/mod/quiz/report.php?q=' . $assignquiz->id .
+                    $back_link = $CFG->wwwroot . '/mod/quiz/report.php?q=' . $aiquiz->id .
                         '&amp;mode=overview';
                     $regrade_link = qualified_me() . '&amp;confirm_regrade=1';
                     echo $OUTPUT->box_start('generalbox', 'notice');
@@ -318,30 +318,30 @@ function assignquiz_grade_item_update($assignquiz, $grades = null)
             }
         }
     }
-    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->id, 0, $grades, $params);
+    return grade_update('mod/aiquiz', $aiquiz->course, 'mod', 'aiquiz', $aiquiz->id, 0, $grades, $params);
 }
 
 
-function assignquiz_grade_item_delete($assignquiz)
+function aiquiz_grade_item_delete($aiquiz)
 {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
-    return grade_update('mod/assignquiz', $assignquiz->course, 'mod', 'assignquiz', $assignquiz->id, 0,
+    return grade_update('mod/aiquiz', $aiquiz->course, 'mod', 'aiquiz', $aiquiz->id, 0,
         null, array('deleted' => 1));
 }
 
 //displays info on course view
-function assignquiz_get_coursemodule_info($coursemodule)
+function aiquiz_get_coursemodule_info($coursemodule)
 {
     global $DB;
 
-    // Fetch assignquiz record
-    $assignquiz_record = $DB->get_record('assignquiz', ['id' => $coursemodule->instance], '*', MUST_EXIST);
+    // Fetch aiquiz record
+    $aiquiz_record = $DB->get_record('aiquiz', ['id' => $coursemodule->instance], '*', MUST_EXIST);
 
     // Fetch aiquiz ID (handle case where no record exists)
-    $assignquizid = $DB->get_field('assignquiz', 'id', ['id' => $coursemodule->instance]);
-    if (!$assignquizid) {
+    $aiquizid = $DB->get_field('aiquiz', 'id', ['id' => $coursemodule->instance]);
+    if (!$aiquizid) {
         return null;
     }
 
@@ -349,42 +349,42 @@ function assignquiz_get_coursemodule_info($coursemodule)
     $info = new cached_cm_info();
 
     // Set the name of the activity (this is required)
-    $info->name = $assignquiz_record->name;
+    $info->name = $aiquiz_record->name;
 
     // Format availability text properly
-    if (!empty($assignquiz_record->timeopen) && !empty($assignquiz_record->timeclose)) {
-        $info->content = get_string('availablefromuntilquiz', 'assignquiz', [
-            'timeopen' => userdate($assignquiz_record->timeopen),
-            'timeclose' => userdate($assignquiz_record->timeclose)
+    if (!empty($aiquiz_record->timeopen) && !empty($aiquiz_record->timeclose)) {
+        $info->content = get_string('availablefromuntilquiz', 'aiquiz', [
+            'timeopen' => userdate($aiquiz_record->timeopen),
+            'timeclose' => userdate($aiquiz_record->timeclose)
         ]);
-    } elseif (!empty($assignquiz_record->timeopen)) {
-        $info->content = get_string('availablefrom', 'assignquiz', [
-            'timeopen' => userdate($assignquiz_record->timeopen)
+    } elseif (!empty($aiquiz_record->timeopen)) {
+        $info->content = get_string('availablefrom', 'aiquiz', [
+            'timeopen' => userdate($aiquiz_record->timeopen)
         ]);
-    } elseif (!empty($assignquiz_record->timeclose)) {
-        $info->content = get_string('availableuntil', 'assignquiz', [
-            'timeclose' => userdate($assignquiz_record->timeclose)
+    } elseif (!empty($aiquiz_record->timeclose)) {
+        $info->content = get_string('availableuntil', 'aiquiz', [
+            'timeclose' => userdate($aiquiz_record->timeclose)
         ]);
     }
 
     // Check if the description should be shown
     $showdescription = $DB->get_field('course_modules', 'showdescription', ['instance' => $coursemodule->instance], MUST_EXIST);
-    if ($showdescription && !empty($assignquiz_record->intro)) {
-        $info->content .= ' <hr/>' . $assignquiz_record->intro;
+    if ($showdescription && !empty($aiquiz_record->intro)) {
+        $info->content .= ' <hr/>' . $aiquiz_record->intro;
     }
 
     // Return the course module info
     return $info;
 }
 
-function assignquiz_extend_settings_navigation($settings, $assignquiznode)
+function aiquiz_extend_settings_navigation($settings, $aiquiznode)
 {
     global $CFG;
 
     require_once($CFG->libdir . '/questionlib.php');  // Only include when needed.
 
     // Get a list of existing child nodes.
-    $keys = $assignquiznode->get_children_key_list();
+    $keys = $aiquiznode->get_children_key_list();
     $beforekey = null;
 
     // Find the "Edit settings" node or the first child to insert the new nodes before.
@@ -397,52 +397,52 @@ function assignquiz_extend_settings_navigation($settings, $assignquiznode)
 
     // Add "Overrides" node if the user has required capabilities.
     if (has_any_capability(['mod/quiz:manageoverrides', 'mod/quiz:viewoverrides'], $settings->get_page()->cm->context)) {
-        $url = new moodle_url('/mod/assignquiz/overrides.php', ['cmid' => $settings->get_page()->cm->id, 'mode' => 'user']);
+        $url = new moodle_url('/mod/aiquiz/overrides.php', ['cmid' => $settings->get_page()->cm->id, 'mode' => 'user']);
         $node = navigation_node::create(get_string('overrides', 'quiz'), $url, navigation_node::TYPE_SETTING, null, 'mod_quiz_useroverrides');
-        $assignquiznode->add_node($node, $beforekey);
+        $aiquiznode->add_node($node, $beforekey);
     }
 
     // Add "Questions" node if the user can manage quizzes.
     if (has_capability('mod/quiz:manage', $settings->get_page()->cm->context)) {
         $node = navigation_node::create(get_string('questions', 'quiz'),
-            new moodle_url('/mod/assignquiz/edit.php', array('cmid' => $settings->get_page()->cm->id)),
+            new moodle_url('/mod/aiquiz/edit.php', array('cmid' => $settings->get_page()->cm->id)),
             navigation_node::TYPE_SETTING, null, 'mod_quiz_edit', new pix_icon('t/edit', ''));
-        $assignquiznode->add_node($node, $beforekey);
+        $aiquiznode->add_node($node, $beforekey);
     }
 
     // Add "Preview" node if the user can preview quizzes.
     if (has_capability('mod/quiz:preview', $settings->get_page()->cm->context)) {
-        $url = new moodle_url('/mod/assignquiz/startattempt.php', array('cmid' => $settings->get_page()->cm->id, 'sesskey' => sesskey()));
+        $url = new moodle_url('/mod/aiquiz/startattempt.php', array('cmid' => $settings->get_page()->cm->id, 'sesskey' => sesskey()));
         $node = navigation_node::create(get_string('preview', 'quiz'), $url,
             navigation_node::TYPE_SETTING, null, 'mod_quiz_preview', new pix_icon('i/preview', ''));
-        $previewnode = $assignquiznode->add_node($node, $beforekey);
+        $previewnode = $aiquiznode->add_node($node, $beforekey);
         $previewnode->set_show_in_secondary_navigation(false);  // Optionally hide in secondary navigation.
     }
 
     // Add question settings if any exist.
-    question_extend_settings_navigation($assignquiznode, $settings->get_page()->cm->context)->trim_if_empty();
+    question_extend_settings_navigation($aiquiznode, $settings->get_page()->cm->context)->trim_if_empty();
 
     // Add "Results" node if the user can view reports.
     if (has_any_capability(['mod/quiz:viewreports', 'mod/quiz:grade'], $settings->get_page()->cm->context)) {
         require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
         $reportlist = quiz_report_list($settings->get_page()->cm->context);
 
-        $url = new moodle_url('/mod/assignquiz/report.php', array('id' => $settings->get_page()->cm->id, 'mode' => reset($reportlist)));
-        $reportnode = $assignquiznode->add_node(navigation_node::create(get_string('results', 'quiz'), $url,
+        $url = new moodle_url('/mod/aiquiz/report.php', array('id' => $settings->get_page()->cm->id, 'mode' => reset($reportlist)));
+        $reportnode = $aiquiznode->add_node(navigation_node::create(get_string('results', 'quiz'), $url,
             navigation_node::TYPE_SETTING, null, 'quiz_report', new pix_icon('i/report', '')));
 
         foreach ($reportlist as $report) {
-            $url = new moodle_url('/mod/assignquiz/report.php', ['id' => $settings->get_page()->cm->id, 'mode' => $report]);
+            $url = new moodle_url('/mod/aiquiz/report.php', ['id' => $settings->get_page()->cm->id, 'mode' => $report]);
             $reportnode->add_node(navigation_node::create(get_string($report, 'quiz_' . $report), $url,
                 navigation_node::TYPE_SETTING, null, 'quiz_report_' . $report, new pix_icon('i/item', '')));
         }
     }
 }
 
-function mod_assignquiz_output_fragment_quiz_question_bank($args)
+function mod_aiquiz_output_fragment_quiz_question_bank($args)
 {
     global $CFG, $DB, $PAGE;
-    require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+    require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
     require_once($CFG->dirroot . '/question/editlib.php');
 
     $querystring = preg_replace('/^\?/', '', $args['querystring']);
@@ -452,22 +452,22 @@ function mod_assignquiz_output_fragment_quiz_question_bank($args)
     // Build the required resources. The $params are all cleaned as
     // part of this process.
     list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
-        question_build_edit_resources('editq', '/mod/assignquiz/edit.php', $params, custom_view::DEFAULT_PAGE_SIZE);
+        question_build_edit_resources('editq', '/mod/aiquiz/edit.php', $params, custom_view::DEFAULT_PAGE_SIZE);
 
     // Get the course object and related bits.
     $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
     require_capability('mod/quiz:manage', $contexts->lowest());
 
     // Create quiz question bank view.
-    $questionbank = new assignquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
+    $questionbank = new aiquiz_custom_view($contexts, $thispageurl, $course, $cm, $quiz);
     $questionbank->set_quiz_has_attempts(quiz_has_attempts($quiz->id));
 
     // Output.
-    $renderer = $PAGE->get_renderer('mod_assignquiz', 'assignquizedit');
-    return $renderer->assignquiz_question_bank_contents($questionbank, $pagevars);
+    $renderer = $PAGE->get_renderer('mod_aiquiz', 'aiquizedit');
+    return $renderer->aiquiz_question_bank_contents($questionbank, $pagevars);
 }
 
-function mod_assignquiz_output_fragment_add_random_question_form($args)
+function mod_aiquiz_output_fragment_add_random_question_form($args)
 {
     global $CFG;
     require_once($CFG->dirroot . '/mod/quiz/addrandomform.php');
@@ -485,7 +485,7 @@ function mod_assignquiz_output_fragment_add_random_question_form($args)
     ];
 
     $form = new quiz_add_random_form(
-        new \moodle_url('/mod/assignquiz/addrandom.php'),
+        new \moodle_url('/mod/aiquiz/addrandom.php'),
         $formoptions,
         'post',
         '',
@@ -498,7 +498,7 @@ function mod_assignquiz_output_fragment_add_random_question_form($args)
     return $form->render();
 }
 
-function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false)
+function aiquiz_get_user_attempts($quizids, $userid, $status = 'finished', $includepreviews = false)
 {
     global $DB, $CFG;
     // TODO MDL-33071 it is very annoying to have to included all of locallib.php
@@ -541,7 +541,7 @@ function assignquiz_get_user_attempts($quizids, $userid, $status = 'finished', $
         $params, 'quiz  , attempt ASC');
 }
 
-function assignquiz_get_best_grade($quiz, $userid)
+function aiquiz_get_best_grade($quiz, $userid)
 {
     global $DB;
     $grade = $DB->get_field('aiquiz_grades', 'grade',
@@ -555,12 +555,12 @@ function assignquiz_get_best_grade($quiz, $userid)
     return $grade + 0; // Convert to number.
 }
 
-function assignquiz_get_grade_format($quiz)
+function aiquiz_get_grade_format($quiz)
 {
     global $DB;
 
     // Get the grade format.
-    $gradeformat = $DB->get_field('assignquiz', 'gradeformat', array('id' => $quiz->id));
+    $gradeformat = $DB->get_field('aiquiz', 'gradeformat', array('id' => $quiz->id));
 
     // If the quiz is not graded, return null.
     if ($gradeformat == GRADE_TYPE_NONE) {
@@ -571,7 +571,7 @@ function assignquiz_get_grade_format($quiz)
     return $gradeformat;
 }
 
-function assignquiz_update_effective_access($quiz, $userid)
+function aiquiz_update_effective_access($quiz, $userid)
 {
     global $DB;
 
@@ -712,7 +712,7 @@ function generate_quiz_questions($data, $apikey)
         ? $existing_category->id
         : create_question_category($data, $sectionname, $pdffilename);
     $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
-    $DB->set_field('assignquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
+    $DB->set_field('aiquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
 
     if ($mergedPdfTempFilename) {
         try {
@@ -744,7 +744,7 @@ function store_file($mergedPdfTempFilename, $filearea, $data)
     $filename = $prefix . $data->coursemodule . '.pdf';
     $fileinfo = [
         'contextid' => $context->id,
-        'component' => 'mod_assignquiz',
+        'component' => 'mod_aiquiz',
         'filearea' => $filearea,
         'itemid' => 0,
         'filepath' => '/',
@@ -760,7 +760,7 @@ function store_file($mergedPdfTempFilename, $filearea, $data)
 
 function get_temp_directory($CFG)
 {
-    $tempDir = $CFG->dataroot . '/temp/assignquiz_pdf/';
+    $tempDir = $CFG->dataroot . '/temp/aiquiz_pdf/';
     if (!file_exists($tempDir)) {
         mkdir($tempDir, 0777, true);
     }
@@ -952,14 +952,14 @@ function add_question_to_question_bank($response, $question_category_id, $data)
         // Create question reference.
         $question_reference = new stdClass();
         $question_reference->usingcontextid = context_module::instance($data->coursemodule)->id;
-        $question_reference->component = 'mod_assignquiz';
+        $question_reference->component = 'mod_aiquiz';
         $question_reference->questionarea = 'slot';
         $question_reference->itemid = $slot_id; // Usually the question id or slot id
         $question_reference->questionbankentryid = get_question_bank_entry($question->id)->id;
 
         $DB->insert_record('question_references', $question_reference);
 
-        assignquiz_update_sumgrades($data);
+        aiquiz_update_sumgrades($data);
 
     }
 }
@@ -1067,7 +1067,7 @@ function call_api($filepath, $data, $apikey)
     file_put_contents($tempFile, $pdf_text);
     store_file($tempFile, 'feedbacksource', $data);
     unlink($tempFile);
-    $assistant_id = get_config('mod_assignquiz', 'quiz_gen_assistant_id');
+    $assistant_id = get_config('mod_aiquiz', 'quiz_gen_assistant_id');
     $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id, $data);
     return $create_thread_response;
 }
@@ -1098,7 +1098,7 @@ function quiz_generation_assistant_create($client)
             D. [Opción 4]
             Respuesta correcta: [Letra]',
         'name' => 'Quiz Question Generator',
-        'model' => get_config('mod_assignquiz', 'questiongenmodel'),
+        'model' => get_config('mod_aiquiz', 'questiongenmodel'),
     ]);
     return $response['id'];
 }
@@ -1138,29 +1138,29 @@ function openai_create_thread($client, $text, $assistant_id, $data)
     }
 }
 
-function assignquiz_update_grades($quiz, $userid = 0, $nullifnone = true)
+function aiquiz_update_grades($quiz, $userid = 0, $nullifnone = true)
 {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
     if ($quiz->grade == 0) {
-        assignquiz_grade_item_update($quiz);
+        aiquiz_grade_item_update($quiz);
 
-    } else if ($grades = assignquiz_get_user_grades($quiz, $userid)) {
-        assignquiz_grade_item_update($quiz, $grades);
+    } else if ($grades = aiquiz_get_user_grades($quiz, $userid)) {
+        aiquiz_grade_item_update($quiz, $grades);
 
     } else if ($userid && $nullifnone) {
         $grade = new stdClass();
         $grade->userid = $userid;
         $grade->rawgrade = null;
-        assignquiz_grade_item_update($quiz, $grade);
+        aiquiz_grade_item_update($quiz, $grade);
 
     } else {
-        assignquiz_grade_item_update($quiz);
+        aiquiz_grade_item_update($quiz);
     }
 }
 
-function assignquiz_get_user_grades($quiz, $userid = 0)
+function aiquiz_get_user_grades($quiz, $userid = 0)
 {
     global $CFG, $DB;
 
@@ -1187,12 +1187,12 @@ function assignquiz_get_user_grades($quiz, $userid = 0)
             GROUP BY u.id, qg.grade, qg.timemodified", $params);
 }
 
-function assignquiz_update_events($quiz, $override = null)
+function aiquiz_update_events($quiz, $override = null)
 {
     global $DB;
 
     // Load the old events relating to this quiz.
-    $conds = array('modulename' => 'assignquiz',
+    $conds = array('modulename' => 'aiquiz',
         'instance' => $quiz->id);
     if (!empty($override)) {
         // Only load events for this override.
@@ -1219,7 +1219,7 @@ function assignquiz_update_events($quiz, $override = null)
     }
 
     // Get group override priorities.
-    $grouppriorities = assignquiz_get_group_override_priorities($quiz->id);
+    $grouppriorities = aiquiz_get_group_override_priorities($quiz->id);
 
     foreach ($overrides as $current) {
         $groupid = isset($current->groupid) ? $current->groupid : 0;
@@ -1234,23 +1234,23 @@ function assignquiz_update_events($quiz, $override = null)
         if (!empty($quiz->coursemodule)) {
             $cmid = $quiz->coursemodule;
         } else {
-            $cmid = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course)->id;
+            $cmid = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course)->id;
         }
 
         $event = new stdClass();
         $event->type = !$timeclose ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
-        $event->description = format_module_intro('assignquiz', $quiz, $cmid, false);
+        $event->description = format_module_intro('aiquiz', $quiz, $cmid, false);
         $event->format = FORMAT_HTML;
         // Events module won't show user events when the courseid is nonzero.
         $event->courseid = ($userid) ? 0 : $quiz->course;
         $event->groupid = $groupid;
         $event->userid = $userid;
-        $event->modulename = 'assignquiz';
+        $event->modulename = 'aiquiz';
         $event->instance = $quiz->id;
         $event->timestart = $timeopen;
         $event->timeduration = max($timeclose - $timeopen, 0);
         $event->timesort = $timeopen;
-        $event->visible = instance_is_visible('assignquiz', $quiz);
+        $event->visible = instance_is_visible('aiquiz', $quiz);
         $event->eventtype = QUIZ_EVENT_TYPE_OPEN;
         $event->priority = null;
 
@@ -1326,12 +1326,12 @@ function assignquiz_update_events($quiz, $override = null)
     }
 }
 
-function assignquiz_delete_override($quiz, $overrideid, $log = true)
+function aiquiz_delete_override($quiz, $overrideid, $log = true)
 {
     global $DB;
 
     if (!isset($quiz->cmid)) {
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course);
         $quiz->cmid = $cm->id;
     }
 
@@ -1356,7 +1356,7 @@ function assignquiz_delete_override($quiz, $overrideid, $log = true)
     }
 
     $DB->delete_records('aiquiz_overrides', array('id' => $overrideid));
-    cache::make('mod_assignquiz', 'overrides')->delete($cachekey);
+    cache::make('mod_aiquiz', 'overrides')->delete($cachekey);
 
     if ($log) {
         // Set the common parameters for one of the events we will be triggering.
@@ -1384,7 +1384,7 @@ function assignquiz_delete_override($quiz, $overrideid, $log = true)
     return true;
 }
 
-function assignquiz_get_group_override_priorities($quizid)
+function aiquiz_get_group_override_priorities($quizid)
 {
     global $DB;
 
@@ -1462,24 +1462,24 @@ function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgro
 }
 
 
-//function assignquiz_cm_info_view(cm_info $cm)
+//function aiquiz_cm_info_view(cm_info $cm)
 //{
 //    global $PAGE, $DB;
-//    if ($cm->modname === 'assignquiz') {
-//        $assignquizid = $DB->get_field('course_modules', 'instance', ['id' => $cm->id]);
-//        $courseid = $DB->get_field('assignquiz', 'course', ['id' => $assignquizid]);
+//    if ($cm->modname === 'aiquiz') {
+//        $aiquizid = $DB->get_field('course_modules', 'instance', ['id' => $cm->id]);
+//        $courseid = $DB->get_field('aiquiz', 'course', ['id' => $aiquizid]);
 //        $fullcoursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
-//        error_log("Assignquiz ID: $assignquizid, CM ID: $cm->id, Full Course Name: $fullcoursename");
-//        $PAGE->requires->js_call_amd('mod_assignquiz/doubleconfirm', 'init', [$assignquizid, $cm->id, $fullcoursename]);
+//        error_log("aiquiz ID: $aiquizid, CM ID: $cm->id, Full Course Name: $fullcoursename");
+//        $PAGE->requires->js_call_amd('mod_aiquiz/doubleconfirm', 'init', [$aiquizid, $cm->id, $fullcoursename]);
 //    }
 //}
-function assignquiz_delete_and_relocate_questions($id)
+function aiquiz_delete_and_relocate_questions($id)
 {
     global $DB, $PAGE, $CFG;
-    $assignquiz = $DB->get_record('assignquiz', ['id' => $id]);
-    $course_module = get_coursemodule_from_instance('assignquiz', $id, $assignquiz->course, false, MUST_EXIST);
+    $aiquiz = $DB->get_record('aiquiz', ['id' => $id]);
+    $course_module = get_coursemodule_from_instance('aiquiz', $id, $aiquiz->course, false, MUST_EXIST);
     course_delete_module($course_module->id);
-    rebuild_course_cache($assignquiz->course, true);
+    rebuild_course_cache($aiquiz->course, true);
     return true;
 }
 

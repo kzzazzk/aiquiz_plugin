@@ -30,6 +30,6 @@ $definitions = [
     'overrides' => [
         'mode' => cache_store::MODE_APPLICATION,
         'simplekeys' => true,
-        'datasource' => '\mod_assignquiz\cache\overrides',
+        'datasource' => '\mod_aiquiz\cache\overrides',
     ],
 ];

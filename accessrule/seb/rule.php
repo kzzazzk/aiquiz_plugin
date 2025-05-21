@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/seb/rule.php');
-require_once($CFG->dirroot . '/mod/assignquiz/accessrule/seb/classes/assignquiz_settings.php');
+require_once($CFG->dirroot . '/mod/aiquiz/accessrule/seb/classes/aiquiz_settings.php');
 
 /**
  * Implementation of the quizaccess_seb plugin.
@@ -18,16 +18,16 @@ require_once($CFG->dirroot . '/mod/assignquiz/accessrule/seb/classes/assignquiz_
  * @copyright  2020 Catalyst IT
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class assignquizaccess_seb extends quizaccess_seb{
-    public static function save_settings($assignquiz)
+class aiquizaccess_seb extends quizaccess_seb{
+    public static function save_settings($aiquiz)
     {
-        $context = context_module::instance($assignquiz->coursemodule);
+        $context = context_module::instance($aiquiz->coursemodule);
 
         if (!settings_provider::can_configure_seb($context)) {
             return;
         }
 
-        if (settings_provider::is_seb_settings_locked($assignquiz->id)) {
+        if (settings_provider::is_seb_settings_locked($aiquiz->id)) {
             return;
         }
 
@@ -35,16 +35,16 @@ class assignquizaccess_seb extends quizaccess_seb{
             return;
         }
 
-        $cm = get_coursemodule_from_instance('assignquiz', $assignquiz->id, $assignquiz->course, false, MUST_EXIST);
+        $cm = get_coursemodule_from_instance('aiquiz', $aiquiz->id, $aiquiz->course, false, MUST_EXIST);
 
-        $settings = settings_provider::filter_plugin_settings($assignquiz);
-        $settings->quizid = $assignquiz->id;
+        $settings = settings_provider::filter_plugin_settings($aiquiz);
+        $settings->quizid = $aiquiz->id;
         $settings->cmid = $cm->id;
 
         // Get existing settings or create new settings if none exist.
-        $quizsettings = assignquiz_settings::get_by_quiz_id($assignquiz->id);
+        $quizsettings = aiquiz_settings::get_by_quiz_id($aiquiz->id);
         if (empty($quizsettings)) {
-            $quizsettings = new assignquiz_settings(0, $settings);
+            $quizsettings = new aiquiz_settings(0, $settings);
         } else {
             $settings->id = $quizsettings->get('id');
             $quizsettings->from_record($settings);

@@ -1,10 +1,10 @@
 <?php
 
-namespace mod_assignquiz\local\structure;
+namespace mod_aiquiz\local\structure;
 
 use mod_quiz\local\structure\slot_random;
 
-class assignquiz_slot_random extends slot_random
+class aiquiz_slot_random extends slot_random
 {
     public function insert($page)
     {
@@ -58,7 +58,7 @@ class assignquiz_slot_random extends slot_random
 
         $this->record->id = $DB->insert_record('aiquiz_slots', $this->record);
 
-        $this->referencerecord->component = 'mod_assignquiz';
+        $this->referencerecord->component = 'mod_aiquiz';
         $this->referencerecord->questionarea = 'slot';
         $this->referencerecord->itemid = $this->record->id;
         $this->referencerecord->filtercondition = $this->filtercondition;
@@ -67,7 +67,7 @@ class assignquiz_slot_random extends slot_random
         $trans->allow_commit();
 
         // Log slot created event.
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id);
         $event = \mod_quiz\event\slot_created::create([
             'context' => \context_module::instance($cm->id),
             'objectid' => $this->record->id,

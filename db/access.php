@@ -28,7 +28,7 @@ defined("MOODLE_INTERNAL") || die();
 $capabilities = [
     // Ability to see that the AI quiz exists, and the basic information
     // about it, for example the start date and time limit.
-    "mod/assignquiz:view" => [
+    "mod/aiquiz:view" => [
         "captype" => "read",
         "contextlevel" => CONTEXT_MODULE,
         "archetypes" => [
@@ -41,7 +41,7 @@ $capabilities = [
     ],
 
     // Ability to add a new AI quiz to the course.
-    "mod/assignquiz:addinstance" => [
+    "mod/aiquiz:addinstance" => [
         "riskbitmask" => RISK_XSS,
 
         "captype" => "write",
@@ -54,7 +54,7 @@ $capabilities = [
     ],
 
     // Ability to do the AI quiz as a 'student'.
-    "mod/assignquiz:attempt" => [
+    "mod/aiquiz:attempt" => [
         "riskbitmask" => RISK_SPAM,
         "captype" => "write",
         "contextlevel" => CONTEXT_MODULE,
@@ -65,7 +65,7 @@ $capabilities = [
 
     // Ability for a 'Student' to review their previous attempts. Review by
     // 'Teachers' is controlled by mod/quiz:viewreports.
-    "mod/assignquiz:reviewmyattempts" => [
+    "mod/aiquiz:reviewmyattempts" => [
         "captype" => "read",
         "contextlevel" => CONTEXT_MODULE,
         "archetypes" => [
@@ -75,7 +75,7 @@ $capabilities = [
     ],
 
     // Edit the AI quiz settings, add and remove questions.
-    "mod/assignquiz:manage" => [
+    "mod/aiquiz:manage" => [
         "riskbitmask" => RISK_SPAM,
         "captype" => "write",
         "contextlevel" => CONTEXT_MODULE,
@@ -86,7 +86,7 @@ $capabilities = [
     ],
 
     // Edit the AI quiz overrides.
-    "mod/assignquiz:manageoverrides" => [
+    "mod/aiquiz:manageoverrides" => [
         "captype" => "write",
         "contextlevel" => CONTEXT_MODULE,
         "archetypes" => [
@@ -96,7 +96,7 @@ $capabilities = [
     ],
 
     // View the AI quiz overrides (only checked for users who don't have mod/aiquiz:manageoverrides.
-    "mod/assignquiz:viewoverrides" => [
+    "mod/aiquiz:viewoverrides" => [
         "captype" => "read",
         "contextlevel" => CONTEXT_MODULE,
         "archetypes" => [
@@ -107,7 +107,7 @@ $capabilities = [
     ],
 
     // Preview the AI quiz.
-    "mod/assignquiz:preview" => [
+    "mod/aiquiz:preview" => [
         "captype" => "write", // Only just a write.
         "contextlevel" => CONTEXT_MODULE,
         "archetypes" => [
@@ -118,7 +118,7 @@ $capabilities = [
     ],
 
     // Manually grade and comment on student attempts at a question.
-    "mod/assignquiz:gradequiz" => [
+    "mod/aiquiz:gradequiz" => [
         "riskbitmask" => RISK_SPAM | RISK_XSS,
         "captype" => "write",
         "contextlevel" => CONTEXT_MODULE,
@@ -129,7 +129,7 @@ $capabilities = [
         ],
 
         // Regrade quizzes.
-        "mod/assignquiz:regrade" => [
+        "mod/aiquiz:regrade" => [
             "riskbitmask" => RISK_SPAM,
             "captype" => "write",
             "contextlevel" => CONTEXT_MODULE,
@@ -138,11 +138,11 @@ $capabilities = [
                 "editingteacher" => CAP_ALLOW,
                 "manager" => CAP_ALLOW,
             ],
-            "clonepermissionsfrom" => "mod/assignquiz:gradequiz",
+            "clonepermissionsfrom" => "mod/aiquiz:gradequiz",
         ],
 
         // View the AI quiz reports.
-        "mod/assignquiz:viewreports" => [
+        "mod/aiquiz:viewreports" => [
             "riskbitmask" => RISK_PERSONAL,
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
@@ -154,7 +154,7 @@ $capabilities = [
         ],
 
         // Delete attempts using the overview report.
-        "mod/assignquiz:deleteattempts" => [
+        "mod/aiquiz:deleteattempts" => [
             "riskbitmask" => RISK_DATALOSS,
             "captype" => "write",
             "contextlevel" => CONTEXT_MODULE,
@@ -165,35 +165,35 @@ $capabilities = [
         ],
 
         // Do not have the time limit imposed. Used for accessibility legislation compliance.
-        "mod/assignquiz:ignoretimelimits" => [
+        "mod/aiquiz:ignoretimelimits" => [
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
             "archetypes" => [],
         ],
 
         // Receive a confirmation message of own AI quiz submission.
-        "mod/assignquiz:emailconfirmsubmission" => [
+        "mod/aiquiz:emailconfirmsubmission" => [
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
             "archetypes" => [],
         ],
 
         // Receive a notification message of other peoples' AI quiz submissions.
-        "mod/assignquiz:emailnotifysubmission" => [
+        "mod/aiquiz:emailnotifysubmission" => [
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
             "archetypes" => [],
         ],
 
         // Receive a notification message when an AI quiz attempt becomes overdue.
-        "mod/assignquiz:emailwarnoverdue" => [
+        "mod/aiquiz:emailwarnoverdue" => [
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
             "archetypes" => [],
         ],
 
         // Receive a notification message when an AI quiz attempt manual graded.
-        "mod/assignquiz:emailnotifyattemptgraded" => [
+        "mod/aiquiz:emailnotifyattemptgraded" => [
             "captype" => "read",
             "contextlevel" => CONTEXT_MODULE,
             "archetypes" => [],

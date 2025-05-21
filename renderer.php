@@ -1,6 +1,6 @@
 <?php
 
-class mod_assignquiz_renderer extends mod_quiz_renderer
+class mod_aiquiz_renderer extends mod_quiz_renderer
 {
     public function summary_page_controls($attemptobj) {
         $output = '';
@@ -36,7 +36,7 @@ class mod_assignquiz_renderer extends mod_quiz_renderer
                 // Only count the unanswered question if the navigation method is set to free.
                 $totalunanswered = $attemptobj->get_number_of_unanswered_questions();
             }
-            $this->page->requires->js_call_amd('mod_assignquiz/submission_confirmation', 'init', [$totalunanswered]);
+            $this->page->requires->js_call_amd('mod_aiquiz/submission_confirmation', 'init', [$totalunanswered]);
         }
         $button->primary = true;
 
@@ -169,7 +169,7 @@ class mod_assignquiz_renderer extends mod_quiz_renderer
 
             if ($viewobj->feedbackcolumn && $attemptobj->is_finished()) {
                 if ($attemptoptions->overallfeedback) {
-                    $row[] = assignquiz_feedback_for_grade($attemptgrade, $quiz, $context);
+                    $row[] = aiquiz_feedback_for_grade($attemptgrade, $quiz, $context);
                 } else {
                     $row[] = '';
                 }
@@ -222,7 +222,7 @@ class mod_assignquiz_renderer extends mod_quiz_renderer
         if ($viewobj->feedbackcolumn) {
             $resultinfo .= $this->heading(get_string('overallfeedback', 'quiz'), 3);
             $resultinfo .= html_writer::div(
-                    assignquiz_feedback_for_grade($viewobj->mygrade, $quiz, $context),
+                    aiquiz_feedback_for_grade($viewobj->mygrade, $quiz, $context),
                     'quizgradefeedback') . "\n";
         }
 
@@ -239,8 +239,8 @@ class mod_assignquiz_renderer extends mod_quiz_renderer
             return '';
         }
 
-        require_once($CFG->dirroot . '/mod/assignquiz/report/reportlib.php');
-        $url = new moodle_url('/mod/assignquiz/report.php', array(
+        require_once($CFG->dirroot . '/mod/aiquiz/report/reportlib.php');
+        $url = new moodle_url('/mod/aiquiz/report.php', array(
             'id' => $cm->id, 'mode' => quiz_report_default_report($context)));
         return html_writer::link($url, $summary);
     }

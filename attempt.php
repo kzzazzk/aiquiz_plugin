@@ -24,17 +24,17 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 
 // Look for old-style URLs, such as may be in the logs, and redirect them to startattemtp.php.
 if ($id = optional_param('id', 0, PARAM_INT)) {
-    redirect($CFG->wwwroot . '/mod/assignquiz/startattempt.php?cmid=' . $id . '&sesskey=' . sesskey());
+    redirect($CFG->wwwroot . '/mod/aiquiz/startattempt.php?cmid=' . $id . '&sesskey=' . sesskey());
 } else if ($qid = optional_param('q', 0, PARAM_INT)) {
-    if (!$cm = get_coursemodule_from_instance('assignquiz', $qid)) {
+    if (!$cm = get_coursemodule_from_instance('aiquiz', $qid)) {
         throw new \moodle_exception('invalidquizid', 'quiz');
     }
-    redirect(new moodle_url('/mod/assignquiz/startattempt.php',
+    redirect(new moodle_url('/mod/aiquiz/startattempt.php',
         array('cmid' => $cm->id, 'sesskey' => sesskey())));
 }
 
@@ -43,7 +43,7 @@ $attemptid = required_param('attempt', PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
 $cmid = optional_param('cmid', null, PARAM_INT);
 
-$attemptobj = assignquiz_create_attempt_handling_errors($attemptid, $cmid);
+$attemptobj = aiquiz_create_attempt_handling_errors($attemptid, $cmid);
 $page = $attemptobj->force_page_number_into_range($page);
 $PAGE->set_url($attemptobj->attempt_url(null, $page));
 // During quiz attempts, the browser back/forwards buttons should force a reload.
@@ -84,7 +84,7 @@ if ($attemptobj->is_finished()) {
 // Check the access rules.
 $accessmanager = $attemptobj->get_access_manager(time());
 $accessmanager->setup_attempt_page($PAGE);
-$output = $PAGE->get_renderer('mod_assignquiz');
+$output = $PAGE->get_renderer('mod_aiquiz');
 $messages = $accessmanager->prevent_access();
 if (!$attemptobj->is_preview_user() && $messages) {
     throw new \moodle_exception('attempterror', 'quiz', $attemptobj->view_url(),

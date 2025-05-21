@@ -245,7 +245,7 @@ function(
      */
     ModalAddRandomQuestion.prototype.loadForm = function() {
         return Fragment.loadFragment(
-            'mod_assignquiz',
+            'mod_aiquiz',
             'add_random_question_form',
             this.getContextId(),
             {
@@ -261,7 +261,7 @@ function(
                 // Debugging: Log to ensure the form is found
 
                 // Change form action URL
-                form.attr('action', M.cfg.wwwroot + "/mod/assignquiz/addrandom.php"); // Change this to your desired URL
+                form.attr('action', M.cfg.wwwroot + "/mod/aiquiz/addrandom.php"); // Change this to your desired URL
 
                 Templates.replaceNode(this.getBody().find(SELECTORS.TAB_CONTENT), form, js);
                 return;

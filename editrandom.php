@@ -25,7 +25,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 
 $slotid = required_param('slotid', PARAM_INT);
 $returnurl = optional_param('returnurl', '', PARAM_LOCALURL);
@@ -40,23 +40,23 @@ if (!$quiz = $DB->get_record('quiz', ['id' => $slot->quizid])) {
     new moodle_exception('invalidquizid', 'quiz');
 }
 
-$cm = get_coursemodule_from_instance('assignquiz', $slot->quizid, $quiz->course);
+$cm = get_coursemodule_from_instance('aiquiz', $slot->quizid, $quiz->course);
 
 require_login($cm->course, false, $cm);
 
 if ($returnurl) {
     $returnurl = new moodle_url($returnurl);
 } else {
-    $returnurl = new moodle_url('/mod/assignquiz/edit.php', ['cmid' => $cm->id]);
+    $returnurl = new moodle_url('/mod/aiquiz/edit.php', ['cmid' => $cm->id]);
 }
 
-$url = new moodle_url('/mod/assignquiz/editrandom.php', ['slotid' => $slotid]);
+$url = new moodle_url('/mod/aiquiz/editrandom.php', ['slotid' => $slotid]);
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('admin');
 $PAGE->add_body_class('limitedwidth');
 
 $setreference = $DB->get_record('question_set_references',
-    ['itemid' => $slot->id, 'component' => 'mod_assignquiz', 'questionarea' => 'slot']);
+    ['itemid' => $slot->id, 'component' => 'mod_aiquiz', 'questionarea' => 'slot']);
 $filterconditions = json_decode($setreference->filtercondition);
 
 // Validate the question category.
@@ -72,7 +72,7 @@ $thiscontext = context_module::instance($cm->id);
 $contexts = new core_question\local\bank\question_edit_contexts($thiscontext);
 
 // Create the editing form.
-$mform = new mod_quiz\form\randomquestion_form(new moodle_url('/mod/assignquiz/editrandom.php'), ['contexts' => $contexts]);
+$mform = new mod_quiz\form\randomquestion_form(new moodle_url('/mod/aiquiz/editrandom.php'), ['contexts' => $contexts]);
 
 // Set the form data.
 $toform = new stdClass();

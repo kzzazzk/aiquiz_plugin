@@ -27,8 +27,8 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 // Get submitted parameters.
@@ -36,7 +36,7 @@ $id = required_param('cmid', PARAM_INT); // Course module id
 $forcenew = optional_param('forcenew', false, PARAM_BOOL); // Used to force a new preview
 $page = optional_param('page', -1, PARAM_INT); // Page to jump to in the attempt.
 
-if (!$cm = get_coursemodule_from_id('assignquiz', $id)) {
+if (!$cm = get_coursemodule_from_id('aiquiz', $id)) {
     throw new \moodle_exception('invalidcoursemodule');
 }
 if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
@@ -69,11 +69,11 @@ $accessmanager = $quizobj->get_access_manager($timenow);
 
 // Validate permissions for creating a new attempt and start a new preview attempt if required.
 list($currentattemptid, $attemptnumber, $lastattempt, $messages, $page) =
-    assignquiz_validate_new_attempt($quizobj, $accessmanager, $forcenew, $page, true);
+    aiquiz_validate_new_attempt($quizobj, $accessmanager, $forcenew, $page, true);
 
 // Check access.
 if (!$quizobj->is_preview_user() && $messages) {
-    $output = $PAGE->get_renderer('mod_assignquiz');
+    $output = $PAGE->get_renderer('mod_aiquiz');
     throw new \moodle_exception('attempterror', 'quiz', $quizobj->view_url(),
         $output->access_messages($messages));
 }
@@ -84,7 +84,7 @@ if ($accessmanager->is_preflight_check_required($currentattemptid)) {
         $quizobj->start_attempt_url($page), $currentattemptid);
 
     if ($mform->is_cancelled()) {
-        $accessmanager->back_to_view_page($PAGE->get_renderer('mod_assignquiz'));
+        $accessmanager->back_to_view_page($PAGE->get_renderer('mod_aiquiz'));
 
     } else if (!$mform->get_data()) {
 
@@ -112,7 +112,7 @@ if ($currentattemptid) {
     }
 }
 
-$attempt = assignquiz_prepare_and_start_new_attempt($quizobj, $attemptnumber, $lastattempt);
+$attempt = aiquiz_prepare_and_start_new_attempt($quizobj, $attemptnumber, $lastattempt);
 
 // Redirect to the attempt page.
 redirect($quizobj->attempt_url($attempt->id, $page));

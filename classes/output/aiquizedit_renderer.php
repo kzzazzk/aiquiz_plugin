@@ -1,11 +1,11 @@
 <?php
-namespace mod_assignquiz\output;
+namespace mod_aiquiz\output;
 defined('MOODLE_INTERNAL') || die();
 
-use assignquiz_attempt_nav_panel;
+use aiquiz_attempt_nav_panel;
 use core_question\local\bank\question_version_status;
 use mod_quiz\output\edit_renderer;
-use mod_assignquiz\assignquiz_structure;
+use mod_aiquiz\aiquiz_structure;
 use mod_quiz\question\bank\qbank_helper;
 use \mod_quiz\structure;
 use \html_writer;
@@ -13,8 +13,8 @@ use quiz_nav_panel_base;
 use quiz_attempt_nav_panel;
 
 require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/custom_view.php');
 /**
  * Renderer outputting the quiz editing UI.
  *
@@ -22,9 +22,9 @@ require_once($CFG->dirroot . '/mod/assignquiz/classes/question/bank/custom_view.
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since Moodle 2.7
  */
-class assignquizedit_renderer extends edit_renderer
+class aiquizedit_renderer extends edit_renderer
 {
-    public function assignquizpage_edit_page(\aiquiz $quizobj, assignquiz_structure $structure,
+    public function aiquizpage_edit_page(\aiquiz $quizobj, aiquiz_structure $structure,
                               \core_question\local\bank\question_edit_contexts $contexts, \moodle_url $pageurl, array $pagevars) {
         $output = '';
 
@@ -76,16 +76,16 @@ class assignquizedit_renderer extends edit_renderer
         $output .= $this->end_section_list();
 
         // Initialise the JavaScript.
-        $this->assignquiz_initialise_editing_javascript($structure, $contexts, $pagevars, $pageurl);
+        $this->aiquiz_initialise_editing_javascript($structure, $contexts, $pagevars, $pageurl);
 
         // Include the contents of any other popups required.
         if ($structure->can_be_edited()) {
             $thiscontext = $contexts->lowest();
-            $this->page->requires->js_call_amd('mod_assignquiz/quizquestionbank', 'init', [
+            $this->page->requires->js_call_amd('mod_aiquiz/quizquestionbank', 'init', [
                 $thiscontext->id
             ]);
 
-            $this->page->requires->js_call_amd('mod_assignquiz/add_random_question', 'init', [
+            $this->page->requires->js_call_amd('mod_aiquiz/add_random_question', 'init', [
                 $thiscontext->id,
                 $pagevars['cat'],
                 $pageurl->out_as_local_url(true),
@@ -120,7 +120,7 @@ class assignquizedit_renderer extends edit_renderer
             $joinhtml = $this->page_split_join_button($structure, $slot);
         }
         // Question HTML.
-        $questionhtml = $this->assignquiz_question($structure, $slot, $pageurl);
+        $questionhtml = $this->aiquiz_question($structure, $slot, $pageurl);
         $qtype = $structure->get_question_type_for_slot($slot);
         $questionclasses = 'activity ' . $qtype . ' qtype_' . $qtype . ' slot';
 
@@ -130,7 +130,7 @@ class assignquizedit_renderer extends edit_renderer
 
         return $output;
     }
-    public function assignquiz_question(assignquiz_structure $structure, int $slot, \moodle_url $pageurl) {
+    public function aiquiz_question(aiquiz_structure $structure, int $slot, \moodle_url $pageurl) {
         // Get the data required by the question_slot template.
         $slotid = $structure->get_slot_id_for_slot($slot);
 
@@ -145,7 +145,7 @@ class assignquizedit_renderer extends edit_renderer
             'canbeedited' => $structure->can_be_edited(),
             'checkbox' => $this->get_checkbox_render($structure, $slot),
             'questionnumber' => $this->question_number($structure->get_displayed_number_for_slot($slot)),
-            'questionname' => $this->assignquiz_get_question_name_for_slot($structure, $slot, $pageurl),
+            'questionname' => $this->aiquiz_get_question_name_for_slot($structure, $slot, $pageurl),
             'questionicons' => $this->get_action_icon($structure, $slot, $pageurl),
             'questiondependencyicon' => ($structure->can_be_edited() ? $this->question_dependency_icon($structure, $slot) : ''),
             'versionselection' => false,
@@ -156,20 +156,20 @@ class assignquizedit_renderer extends edit_renderer
         if ($structure->get_slot_by_number($slot)->qtype !== 'random') {
             $data['versionselection'] = true;
             $data['versionoption'] = $structure->get_version_choices_for_slot($slot);
-            $this->page->requires->js_call_amd('mod_assignquiz/question_slot', 'init', [$slotid]);
+            $this->page->requires->js_call_amd('mod_aiquiz/question_slot', 'init', [$slotid]);
         }
 
         // Render the question slot template.
-        $output .= $this->render_from_template('mod_assignquiz/question_slot', $data);
+        $output .= $this->render_from_template('mod_aiquiz/question_slot', $data);
 
         $output .= html_writer::end_tag('div');
 
         return $output;
     }
-    public function assignquiz_initialise_editing_javascript(assignquiz_structure $structure, \core_question\local\bank\question_edit_contexts $contexts, array $pagevars, \moodle_url $pageurl){
+    public function aiquiz_initialise_editing_javascript(aiquiz_structure $structure, \core_question\local\bank\question_edit_contexts $contexts, array $pagevars, \moodle_url $pageurl){
         $config = new \stdClass();
-        $config->resourceurl = '/mod/assignquiz/edit_rest.php';
-        $config->sectionurl = '/mod/assignquiz/edit_rest.php';
+        $config->resourceurl = '/mod/aiquiz/edit_rest.php';
+        $config->sectionurl = '/mod/aiquiz/edit_rest.php';
         $config->pageparams = array();
         $config->questiondecimalpoints = $structure->get_decimal_places_for_question_marks();
         $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);
@@ -298,9 +298,9 @@ class assignquizedit_renderer extends edit_renderer
 
         // Add a random question.
         if ($structure->can_add_random_questions()) {
-            $returnurl = new \moodle_url('/mod/assignquiz/edit.php', array('cmid' => $structure->get_cmid(), 'data-addonpage' => $page));
+            $returnurl = new \moodle_url('/mod/aiquiz/edit.php', array('cmid' => $structure->get_cmid(), 'data-addonpage' => $page));
             $params = ['returnurl' => $returnurl, 'cmid' => $structure->get_cmid(), 'appendqnumstring' => 'addarandomquestion'];
-            $url = new \moodle_url('/mod/assignquiz/addrandom.php', $params);
+            $url = new \moodle_url('/mod/aiquiz/addrandom.php', $params);
             $icon = new \pix_icon('t/add', $str->addarandomquestion, 'moodle', array('class' => 'iconsmall', 'title' => ''));
             $attributes = array('class' => 'cm-edit-action addarandomquestion', 'data-action' => 'addarandomquestion');
             if ($page) {
@@ -325,15 +325,15 @@ class assignquizedit_renderer extends edit_renderer
 
         return $actions;
     }
-    public function assignquiz_question_bank_contents(\mod_assignquiz\question\bank\assignquiz_custom_view $questionbank, array $pagevars) {
+    public function aiquiz_question_bank_contents(\mod_aiquiz\question\bank\aiquiz_custom_view $questionbank, array $pagevars) {
 
         $qbank = $questionbank->render($pagevars, 'editq');
         return html_writer::div(html_writer::div($qbank, 'bd'), 'questionbankformforpopup');
     }
-    public function assignquiz_random_question(assignquiz_structure $structure, $slotnumber, $pageurl) {
+    public function aiquiz_random_question(aiquiz_structure $structure, $slotnumber, $pageurl) {
         $question = $structure->get_question_in_slot($slotnumber);
         $slot = $structure->get_slot_by_number($slotnumber);
-        $editurl = new \moodle_url('/mod/assignquiz/editrandom.php',
+        $editurl = new \moodle_url('/mod/aiquiz/editrandom.php',
             array('returnurl' => $pageurl->out_as_local_url(), 'slotid' => $slot->id));
 
         $temp = clone($question);
@@ -367,15 +367,15 @@ class assignquizedit_renderer extends edit_renderer
         // selected from in the question bank.
         $qbankurl = new \moodle_url('/question/edit.php', $qbankurlparams);
         $qbanklink = ' ' . \html_writer::link($qbankurl,
-                get_string('seequestions', 'quiz'), array('class' => 'mod_assignquiz_random_qbank_link'));
+                get_string('seequestions', 'quiz'), array('class' => 'mod_aiquiz_random_qbank_link'));
 
         return html_writer::link($editurl, $icon . $editicon, array('title' => $configuretitle)) .
             ' ' . $instancename . ' ' . $qbanklink;
     }
-    public function assignquiz_get_question_name_for_slot(assignquiz_structure $structure, int $slot, \moodle_url $pageurl) : string {
+    public function aiquiz_get_question_name_for_slot(aiquiz_structure $structure, int $slot, \moodle_url $pageurl) : string {
         // Display the link to the question (or do nothing if question has no url).
         if ($structure->get_question_type_for_slot($slot) === 'random') {
-            $questionname = $this->assignquiz_random_question($structure, $slot, $pageurl);
+            $questionname = $this->aiquiz_random_question($structure, $slot, $pageurl);
         } else {
             $questionname = $this->question_name($structure, $slot, $pageurl);
         }
@@ -386,8 +386,8 @@ class assignquizedit_renderer extends edit_renderer
                                                      \core_question\local\bank\question_edit_contexts $contexts, array $pagevars, \moodle_url $pageurl) {
 
         $config = new \stdClass();
-        $config->resourceurl = '/mod/assignquiz/edit_rest.php';
-        $config->sectionurl = '/mod/assignquiz/edit_rest.php';
+        $config->resourceurl = '/mod/aiquiz/edit_rest.php';
+        $config->sectionurl = '/mod/aiquiz/edit_rest.php';
         $config->pageparams = array();
         $config->questiondecimalpoints = $structure->get_decimal_places_for_question_marks();
         $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);

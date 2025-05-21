@@ -1,5 +1,5 @@
 <?php
-namespace assignquiz\settings;
+namespace aiquiz\settings;
 
 
 defined('MOODLE_INTERNAL') || die();
@@ -17,7 +17,7 @@ class admin_setting_apikey extends \admin_setting_configpasswordunmask {
 
     public function get_setting() {
         global $CFG;
-        $env = parse_ini_file($CFG->dirroot.'/mod/assignquiz/.env');
+        $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
         if ($env[$this->envkey]) {
             $return_value = $env[$this->envkey];
         }
@@ -32,7 +32,7 @@ class admin_setting_apikey extends \admin_setting_configpasswordunmask {
         global $CFG;
         $data = str_replace(' ', '', $data);
         // Option 1: Write to a custom file you read on app bootstrap
-        $envFile = $CFG->dirroot . '/mod/assignquiz/.env';
+        $envFile = $CFG->dirroot . '/mod/aiquiz/.env';
 
         if (!file_exists($envFile) || filesize($envFile) === 0) {
             // If file doesn't exist or is empty, write the new key

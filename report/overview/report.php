@@ -26,14 +26,14 @@ use mod_quiz\question\bank\qbank_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_options.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/overview/overview_form.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/overview/overview_table.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/overview/report.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/overview/report.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport_options.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/overview/aiquiz_overview_options.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/overview/overview_form.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/overview/overview_table.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/overview/report.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/overview/report.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport_options.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/overview/aiquiz_overview_options.php');
 
 
 

@@ -17,7 +17,7 @@
 /**
  * Plugin strings are defined here.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @category    string
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,14 +25,12 @@
 
 
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'Assign Quiz';
-$string['modulename'] = 'Assign Quiz';
-$string['modulenameplural'] = 'Assign Quizzes';
-$string['modulename_help'] = 'The AssignQuiz plugin enables teachers to create personalized quizzes with AI-generated questions based on student-uploaded content. It includes all standard quiz features plus:
+$string['pluginname'] = 'AI Quiz';
+$string['modulename'] = 'AI Quiz';
+$string['modulenameplural'] = 'AI Quizzes';
+$string['modulename_help'] = 'The AI Quiz plugin enables teachers to create personalized quizzes with AI-generated questions based on uploaded documents in a certain section. It includes all standard quiz features plus:
 
 * A long-text input for specifying required knowledge
-* Custom dates for practice submission and quiz opening
-* File upload option for students before practice submission deadline
 * AI-generated quizzes based on uploaded content
 * AI-generated feedback on quiz performance
 
@@ -61,8 +59,8 @@ $string['availablefromuntilassign'] = 'Submission Phase: <br>
 $string['availablefromuntilquiz'] = 'Quiz Phase: <br>
 &ensp;&ensp;<b>Opened:</b> {$a->timeopen}<br>
 &ensp;&ensp;<b>Close:</b> {$a->timeclose}';
-$string['phase_switch_task'] = 'Switch phases in AssignQuiz plugin';
-$string['visible_after_allowsubmissionfromdate'] = 'Makes AssignQuiz visible after the admission date has passed only if "Always show description" is disabled.';
+$string['phase_switch_task'] = 'Switch phases in AI Quiz plugin';
+$string['visible_after_allowsubmissionfromdate'] = 'Makes AI Quiz visible after the admission date has passed only if "Always show description" is disabled.';
 $string['mingrade'] = 'Minimum grade';
 $string['maxgrade'] = 'Maximum grade';
 $string['submissionphasedescription'] = 'Submission phase description';

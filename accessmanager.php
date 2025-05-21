@@ -15,23 +15,23 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Prints an instance of mod_assignquiz.
+ * Prints an instance of mod_aiquiz.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/accessmanager.php');
-require_once($CFG->dirroot . '/mod/assignquiz/accessrule/seb/rule.php');
+require_once($CFG->dirroot . '/mod/aiquiz/accessrule/seb/rule.php');
 
 class aiquiz_access_manager extends quiz_access_manager
 {
     public static function load_quiz_and_settings($quizid) {
         global $DB;
         $rules = self::get_rule_classes();
-        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
-        list($sql, $params) = self::get_load_sql($quizid, $rules, 'assignquiz.*');
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'aiquizaccess_seb', 'aiquizaccess_seb');
+        list($sql, $params) = self::get_load_sql($quizid, $rules, 'aiquiz.*');
         $quiz = $DB->get_record_sql($sql, $params, MUST_EXIST);
 
         foreach ($rules as $rule) {
@@ -42,8 +42,8 @@ class aiquiz_access_manager extends quiz_access_manager
 
         return $quiz;
     }
-    public static function assignquiz_validate_settings_form_fields(array $errors,
-                                                         array $data, $files, mod_assignquiz_mod_form $quizform) {
+    public static function aiquiz_validate_settings_form_fields(array $errors,
+                                                         array $data, $files, mod_aiquiz_mod_form $quizform) {
 
         foreach (self::get_rule_classes() as $rule) {
             $errors = $rule::validate_settings_form_fields($errors, $data, $files, $quizform);
@@ -55,7 +55,7 @@ class aiquiz_access_manager extends quiz_access_manager
         global $DB;
 
         $rules = self::get_rule_classes();
-        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'aiquizaccess_seb', 'aiquizaccess_seb');
         list($sql, $params) = self::get_load_sql($quizid, $rules, '');
 
         if ($sql) {
@@ -73,7 +73,7 @@ class aiquiz_access_manager extends quiz_access_manager
     protected static function get_load_sql($quizid, $rules, $basefields) {
         global $DB;
         $allfields = $basefields;
-        $alljoins = '{assignquiz} assignquiz';  // Alias is 'aiquiz'
+        $alljoins = '{aiquiz} aiquiz';  // Alias is 'aiquiz'
         $allparams = array('quizid' => $quizid);
 
         foreach ($rules as $rule) {
@@ -85,8 +85,8 @@ class aiquiz_access_manager extends quiz_access_manager
                 $allfields .= $fields;
             }
             if ($joins) {
-                // Ensure the JOIN clauses use the correct alias 'assignquiz'
-                $joins = str_replace('quiz.id', 'assignquiz.id', $joins); //For some reason some joins are hardcoded, this fixes it.
+                // Ensure the JOIN clauses use the correct alias 'aiquiz'
+                $joins = str_replace('quiz.id', 'aiquiz.id', $joins); //For some reason some joins are hardcoded, this fixes it.
                 $alljoins .= ' ' . $joins;
             }
             if ($params) {
@@ -98,13 +98,13 @@ class aiquiz_access_manager extends quiz_access_manager
             return array('', array());
         }
 
-        return array("SELECT $allfields FROM $alljoins WHERE assignquiz.id = :quizid", $allparams);
+        return array("SELECT $allfields FROM $alljoins WHERE aiquiz.id = :quizid", $allparams);
     }
 
     public static function save_settings($quiz)
     {
         $rules = self::get_rule_classes();
-        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'assignquizaccess_seb', 'assignquizaccess_seb');
+        $rules = self::name_reset_rule($rules, 'quizaccess_seb', 'aiquizaccess_seb', 'aiquizaccess_seb');
         foreach ($rules as $rule) {
             $rule::save_settings($quiz);
         }

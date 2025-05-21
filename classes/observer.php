@@ -1,6 +1,6 @@
 <?php
 
-namespace mod_assignquiz;
+namespace mod_aiquiz;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -33,7 +33,7 @@ class observer {
         $topcategory = \question_get_top_category($contextid, true);
         $category = new \stdClass();
         $category->name = "[AI Question Vault for $coursename course]";
-        $category->info = 'Auto-generated questions from PDFs (assignquiz plugin)';
+        $category->info = 'Auto-generated questions from PDFs (aiquiz plugin)';
         $category->contextid = $contextid;
         $category->parent = $topcategory->id;
         $category->sortorder = 999;

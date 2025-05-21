@@ -26,7 +26,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot.'/mod/quiz/lib.php');
 require_once($CFG->dirroot.'/mod/quiz/locallib.php');
-require_once($CFG->dirroot.'/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot.'/mod/aiquiz/locallib.php');
 require_once($CFG->dirroot.'/mod/quiz/override_form.php');
 
 
@@ -41,21 +41,21 @@ if ($overrideid) {
     if (! $override = $DB->get_record('aiquiz_overrides', array('id' => $overrideid))) {
         throw new \moodle_exception('invalidoverrideid', 'quiz');
     }
-    if (! $quiz = $DB->get_record('assignquiz', array('id' => $override->quiz))) {
+    if (! $quiz = $DB->get_record('aiquiz', array('id' => $override->quiz))) {
         throw new \moodle_exception('invalidcoursemodule');
     }
-    list($course, $cm) = get_course_and_cm_from_instance($quiz, 'assignquiz');
+    list($course, $cm) = get_course_and_cm_from_instance($quiz, 'aiquiz');
 
 } else if ($cmid) {
-    list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'assignquiz');
-    $quiz = $DB->get_record('assignquiz', array('id' => $cm->instance), '*', MUST_EXIST);
+    list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'aiquiz');
+    $quiz = $DB->get_record('aiquiz', array('id' => $cm->instance), '*', MUST_EXIST);
 
 } else {
     throw new \moodle_exception('invalidcoursemodule');
 }
 $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
 
-$url = new moodle_url('/mod/assignquiz/overrideedit.php');
+$url = new moodle_url('/mod/aiquiz/overrideedit.php');
 if ($action) {
     $url->param('action', $action);
 }
@@ -68,7 +68,7 @@ if ($overrideid) {
 $PAGE->set_url($url);
 
 // Activate the secondary nav tab.
-$PAGE->set_secondary_active_tab("mod_assignquiz_useroverrides");
+$PAGE->set_secondary_active_tab("mod_aiquiz_useroverrides");
 
 require_login($course, false, $cm);
 
@@ -114,7 +114,7 @@ if ($action === 'duplicate') {
 // True if group-based override.
 $groupmode = !empty($data->groupid) || ($action === 'addgroup' && empty($overrideid));
 
-$overridelisturl = new moodle_url('/mod/assignquiz/overrides.php', array('cmid'=>$cm->id));
+$overridelisturl = new moodle_url('/mod/aiquiz/overrides.php', array('cmid'=>$cm->id));
 if (!$groupmode) {
     $overridelisturl->param('mode', 'user');
 }
@@ -166,7 +166,7 @@ if ($mform->is_cancelled()) {
             }
             // Set the course module id before calling quiz_delete_override().
             $quiz->cmid = $cm->id;
-            assignquiz_delete_override($quiz, $oldoverride->id);
+            aiquiz_delete_override($quiz, $oldoverride->id);
         }
     }
 
@@ -181,7 +181,7 @@ if ($mform->is_cancelled()) {
         $fromform->id = $override->id;
         $DB->update_record('aiquiz_overrides', $fromform);
         $cachekey = $groupmode ? "{$fromform->quiz}_g_{$fromform->groupid}" : "{$fromform->quiz}_u_{$fromform->userid}";
-        cache::make('mod_assignquiz', 'overrides')->delete($cachekey);
+        cache::make('mod_aiquiz', 'overrides')->delete($cachekey);
 
         // Determine which override updated event to fire.
         $params['objectid'] = $override->id;
@@ -199,7 +199,7 @@ if ($mform->is_cancelled()) {
         unset($fromform->id);
         $fromform->id = $DB->insert_record('aiquiz_overrides', $fromform);
         $cachekey = $groupmode ? "{$fromform->quiz}_g_{$fromform->groupid}" : "{$fromform->quiz}_u_{$fromform->userid}";
-        cache::make('mod_assignquiz', 'overrides')->delete($cachekey);
+        cache::make('mod_aiquiz', 'overrides')->delete($cachekey);
 
         // Determine which override created event to fire.
         $params['objectid'] = $fromform->id;
@@ -215,13 +215,13 @@ if ($mform->is_cancelled()) {
         $event->trigger();
     }
 
-    assignquiz_update_open_attempts(array('quizid'=>$quiz->id));
+    aiquiz_update_open_attempts(array('quizid'=>$quiz->id));
     if ($groupmode) {
         // Priorities may have shifted, so we need to update all of the calendar events for group overrides.
-        assignquiz_update_events($quiz);
+        aiquiz_update_events($quiz);
     } else {
         // User override. We only need to update the calendar event for this user override.
-        assignquiz_update_events($quiz, $fromform);
+        aiquiz_update_events($quiz, $fromform);
     }
 
     if (!empty($fromform->submitbutton)) {

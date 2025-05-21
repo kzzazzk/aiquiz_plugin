@@ -3,17 +3,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/assignquiz/classes/local/structure/slot_random.php');
-require_once($CFG->dirroot.'/mod/assignquiz/attemptlib.php');
+require_once($CFG->dirroot.'/mod/aiquiz/classes/local/structure/slot_random.php');
+require_once($CFG->dirroot.'/mod/aiquiz/attemptlib.php');
 
-use mod_assignquiz\local\structure\assignquiz_slot_random;
+use mod_aiquiz\local\structure\aiquiz_slot_random;
 use qbank_previewquestion\question_preview_options;
 
-function assignquiz_has_attempts($quizid) {
+function aiquiz_has_attempts($quizid) {
     global $DB;
     return $DB->record_exists('aiquiz_attempts', array('quiz' => $quizid, 'preview' => 0));
 }
-function assignquiz_repaginate_questions($quizid, $slotsperpage) {
+function aiquiz_repaginate_questions($quizid, $slotsperpage) {
     global $DB;
     $trans = $DB->start_delegated_transaction();
 
@@ -45,7 +45,7 @@ function assignquiz_repaginate_questions($quizid, $slotsperpage) {
     $trans->allow_commit();
 
     // Log quiz re-paginated event.
-    $cm = get_coursemodule_from_instance('assignquiz', $quizid);
+    $cm = get_coursemodule_from_instance('aiquiz', $quizid);
     $event = \mod_quiz\event\quiz_repaginated::create([
         'context' => \context_module::instance($cm->id),
         'objectid' => $quizid,
@@ -57,7 +57,7 @@ function assignquiz_repaginate_questions($quizid, $slotsperpage) {
 
 }
 
-function assignquiz_delete_previews($quiz, $userid = null) {
+function aiquiz_delete_previews($quiz, $userid = null) {
     global $DB;
     $conditions = array('quiz' => $quiz->id, 'preview' => 1);
     if (!empty($userid)) {
@@ -65,16 +65,16 @@ function assignquiz_delete_previews($quiz, $userid = null) {
     }
     $previewattempts = $DB->get_records('aiquiz_attempts', $conditions);
     foreach ($previewattempts as $attempt) {
-        assignquiz_delete_attempt($attempt, $quiz);
+        aiquiz_delete_attempt($attempt, $quiz);
     }
 }
 
 
-function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = null) {
+function aiquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = null) {
     global $DB;
 
     if (!isset($quiz->cmid)) {
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course);
         $quiz->cmid = $cm->id;
     }
 
@@ -97,7 +97,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
                AND qr.questionarea = ?
                AND qr.usingcontextid = ?";
 
-    $questionslots = $DB->get_records_sql($sql, [$quiz->id, 'mod_assignquiz', 'slot',
+    $questionslots = $DB->get_records_sql($sql, [$quiz->id, 'mod_aiquiz', 'slot',
         context_module::instance($quiz->cmid)->id]);
 
     $currententry = get_question_bank_entry($questionid);
@@ -149,7 +149,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
         $slot->slot = $lastslotbefore + 1;
         $slot->page = min($page, $maxpage + 1);
 
-        assignquiz_update_section_firstslots($quiz->id, 1, max($lastslotbefore, 1));
+        aiquiz_update_section_firstslots($quiz->id, 1, max($lastslotbefore, 1));
 
     } else {
         $lastslot = end($slots);
@@ -178,13 +178,13 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
                AND qs.id = ?
                AND qr.component = ?
                AND qr.questionarea = ?";
-    $qreferenceitem = $DB->get_record_sql($sql, [$questionid, $slotid, 'mod_assignquiz', 'slot']);
+    $qreferenceitem = $DB->get_record_sql($sql, [$questionid, $slotid, 'mod_aiquiz', 'slot']);
 
     if (!$qreferenceitem) {
         // Create a new reference record for questions created already.
         $questionreferences = new \StdClass();
         $questionreferences->usingcontextid = context_module::instance($quiz->cmid)->id;
-        $questionreferences->component = 'mod_assignquiz';
+        $questionreferences->component = 'mod_aiquiz';
         $questionreferences->questionarea = 'slot';
         $questionreferences->itemid = $slotid;
         $questionreferences->questionbankentryid = get_question_bank_entry($questionid)->id;
@@ -200,7 +200,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
         // If the reference record exits for another quiz.
         $questionreferences = new \StdClass();
         $questionreferences->usingcontextid = context_module::instance($quiz->cmid)->id;
-        $questionreferences->component = 'mod_assignquiz';
+        $questionreferences->component = 'mod_aiquiz';
         $questionreferences->questionarea = 'slot';
         $questionreferences->itemid = $slotid;
         $questionreferences->questionbankentryid = get_question_bank_entry($questionid)->id;
@@ -211,7 +211,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
     $trans->allow_commit();
 
     // Log slot created event.
-    $cm = get_coursemodule_from_instance('assignquiz', $quiz->id);
+    $cm = get_coursemodule_from_instance('aiquiz', $quiz->id);
     $event = \mod_quiz\event\slot_created::create([
         'context' => context_module::instance($cm->id),
         'objectid' => $slotid,
@@ -225,7 +225,7 @@ function assignquiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = 
 }
 
 
-function assignquiz_update_section_firstslots($quizid, $direction, $afterslot, $beforeslot = null) {
+function aiquiz_update_section_firstslots($quizid, $direction, $afterslot, $beforeslot = null) {
     global $DB;
     $where = 'quizid = ? AND firstslot > ?';
     $params = [$direction, $quizid, $afterslot];
@@ -239,33 +239,33 @@ function assignquiz_update_section_firstslots($quizid, $direction, $afterslot, $
 }
 
 
-function assignquiz_update_sumgrades($quiz) {
+function aiquiz_update_sumgrades($quiz) {
     global $DB;
 
-    $sql = 'UPDATE {assignquiz}
+    $sql = 'UPDATE {aiquiz}
             SET sumgrades = COALESCE((
                 SELECT SUM(maxmark)
                 FROM {aiquiz_slots}
-                WHERE quizid = {assignquiz}.id
+                WHERE quizid = {aiquiz}.id
             ), 0)
             WHERE id = ?';
     $DB->execute($sql, array($quiz->id));
-    $quiz->sumgrades = $DB->get_field('assignquiz', 'sumgrades', array('id' => $quiz->id));
+    $quiz->sumgrades = $DB->get_field('aiquiz', 'sumgrades', array('id' => $quiz->id));
 
-    if ($quiz->sumgrades < 0.000005 && assignquiz_has_attempts($quiz->id)) {
+    if ($quiz->sumgrades < 0.000005 && aiquiz_has_attempts($quiz->id)) {
         // If the quiz has been attempted, and the sumgrades has been
         // set to 0, then we must also set the maximum possible grade to 0, or
         // we will get a divide by zero error.
-        assignquiz_set_grade(0, $quiz);
+        aiquiz_set_grade(0, $quiz);
     }
 
-    $callbackclasses = \core_component::get_plugin_list_with_class('assignquiz', 'quiz_structure_modified');
+    $callbackclasses = \core_component::get_plugin_list_with_class('aiquiz', 'quiz_structure_modified');
     foreach ($callbackclasses as $callbackclass) {
         component_class_callback($callbackclass, 'callback', [$quiz->id]);
     }
 }
 
-function assignquiz_set_grade($newgrade, $quiz) {
+function aiquiz_set_grade($newgrade, $quiz) {
     global $DB;
     // This is potentially expensive, so only do it if necessary.
     if (abs($quiz->grade - $newgrade) < 1e-7) {
@@ -280,12 +280,12 @@ function assignquiz_set_grade($newgrade, $quiz) {
     $transaction = $DB->start_delegated_transaction();
 
     // Update the quiz table.
-    $DB->set_field('assignquiz', 'grade', $newgrade, array('id' => $quiz->instance));
+    $DB->set_field('aiquiz', 'grade', $newgrade, array('id' => $quiz->instance));
 
     if ($oldgrade < 1) {
         // If the old grade was zero, we cannot rescale, we have to recompute.
         // We also recompute if the old grade was too small to avoid underflow problems.
-        assignquiz_update_all_final_grades($quiz);
+        aiquiz_update_all_final_grades($quiz);
 
     } else {
         // We can rescale the grades efficiently.
@@ -308,14 +308,14 @@ function assignquiz_set_grade($newgrade, $quiz) {
     }
 
     // Update grade item and send all grades to gradebook.
-    assignquiz_grade_item_update($quiz);
-    assignquiz_update_grades($quiz);
+    aiquiz_grade_item_update($quiz);
+    aiquiz_update_grades($quiz);
 
     $transaction->allow_commit();
 
     // Log quiz grade updated event.
     // We use $num + 0 as a trick to remove the useless 0 digits from decimals.
-    $cm = get_coursemodule_from_instance('assignquiz', $quiz->id);
+    $cm = get_coursemodule_from_instance('aiquiz', $quiz->id);
     $event = \mod_quiz\event\quiz_grade_updated::create([
         'context' => \context_module::instance($cm->id),
         'objectid' => $quiz->id,
@@ -327,7 +327,7 @@ function assignquiz_set_grade($newgrade, $quiz) {
     $event->trigger();
     return true;
 }
-function assignquiz_update_all_final_grades($quiz) {
+function aiquiz_update_all_final_grades($quiz) {
     global $DB;
 
     if (!$quiz->sumgrades) {
@@ -467,7 +467,7 @@ function assignquiz_update_all_final_grades($quiz) {
     }
 }
 
-    function assignquiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
+    function aiquiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
                                        $includesubcategories, $tagids = []) {
             global $DB;
 
@@ -496,7 +496,7 @@ function assignquiz_update_all_final_grades($quiz) {
                 }
 
                 if (!isset($quiz->cmid)) {
-                    $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+                    $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course);
                     $quiz->cmid = $cm->id;
                 }
 
@@ -507,13 +507,13 @@ function assignquiz_update_all_final_grades($quiz) {
                 $randomslotdata->questionscontextid = $category->contextid;
                 $randomslotdata->maxmark = 1;
 
-                $randomslot = new assignquiz_slot_random($randomslotdata);
+                $randomslot = new aiquiz_slot_random($randomslotdata);
                 $randomslot->set_quiz($quiz);
                 $randomslot->set_filter_condition($filtercondition);
                 $randomslot->insert($addonpage);
             }
         }
-    function assignquiz_update_all_attempt_sumgrades($quiz){
+    function aiquiz_update_all_attempt_sumgrades($quiz){
         global $DB;
         $dm = new question_engine_data_mapper();
         $timenow = time();
@@ -529,15 +529,15 @@ function assignquiz_update_all_final_grades($quiz) {
             'finishedstate' => quiz_attempt::FINISHED));
     }
 
-    function assignquiz_get_user_attempt_unfinished($quizid, $userid) {
-            $attempts = assignquiz_get_user_attempts($quizid, $userid, 'unfinished', true);
+    function aiquiz_get_user_attempt_unfinished($quizid, $userid) {
+            $attempts = aiquiz_get_user_attempts($quizid, $userid, 'unfinished', true);
             if ($attempts) {
                 return array_shift($attempts);
             } else {
                 return false;
             }
     }
-    function assignquiz_prepare_and_start_new_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt,
+    function aiquiz_prepare_and_start_new_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt,
                                                      $offlineattempt = false, $forcedrandomquestions = [], $forcedvariants = [], $userid = null) {
         global $DB, $USER;
 
@@ -548,17 +548,17 @@ function assignquiz_update_all_final_grades($quiz) {
             $ispreviewuser = has_capability('mod/quiz:preview', $quizobj->get_context(), $userid);
         }
         // Delete any previous preview attempts belonging to this user.
-        assignquiz_delete_previews($quizobj->get_quiz(), $userid);
+        aiquiz_delete_previews($quizobj->get_quiz(), $userid);
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_assignquiz', $quizobj->get_context());
+        $quba = question_engine::make_questions_usage_by_activity('mod_aiquiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
 
         // Create the new attempt and initialize the question sessions
         $timenow = time(); // Update time now, in case the server is running really slowly.
-        $attempt = assignquiz_create_attempt($quizobj, $attemptnumber, $lastattempt, $timenow, $ispreviewuser, $userid);
+        $attempt = aiquiz_create_attempt($quizobj, $attemptnumber, $lastattempt, $timenow, $ispreviewuser, $userid);
 
         if (!($quizobj->get_quiz()->attemptonlast && $lastattempt)) {
-            $attempt = assignquiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
+            $attempt = aiquiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
                 $forcedrandomquestions, $forcedvariants);
         } else {
             $attempt = quiz_start_attempt_built_on_last($quba, $attempt, $lastattempt);
@@ -570,7 +570,7 @@ function assignquiz_update_all_final_grades($quiz) {
         if ($offlineattempt) {
             $attempt->timemodifiedoffline = $attempt->timemodified;
         }
-        $attempt = assignquiz_attempt_save_started($quizobj, $quba, $attempt);
+        $attempt = aiquiz_attempt_save_started($quizobj, $quba, $attempt);
 
         $transaction->allow_commit();
 
@@ -578,7 +578,7 @@ function assignquiz_update_all_final_grades($quiz) {
     }
 
 
-function assignquiz_create_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt, $timenow, $ispreview = false, $userid = null) {
+function aiquiz_create_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt, $timenow, $ispreview = false, $userid = null) {
     global $USER;
 
     if ($userid === null) {
@@ -588,7 +588,7 @@ function assignquiz_create_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt
     $quiz = $quizobj->get_quiz();
     if ($quiz->sumgrades < 0.000005 && $quiz->grade > 0.000005) {
         throw new moodle_exception('cannotstartgradesmismatch', 'quiz',
-            new moodle_url('/mod/assignquiz/view.php', array('q' => $quiz->id)),
+            new moodle_url('/mod/aiquiz/view.php', array('q' => $quiz->id)),
             array('grade' => quiz_format_grade($quiz, $quiz->grade)));
     }
 
@@ -631,13 +631,13 @@ function assignquiz_create_attempt(aiquiz $quizobj, $attemptnumber, $lastattempt
 
     return $attempt;
 }
-function assignquiz_create_attempt_handling_errors($attemptid, $cmid = null) {
+function aiquiz_create_attempt_handling_errors($attemptid, $cmid = null) {
     try {
         $attempobj = aiquiz_attempt::create($attemptid);
     } catch (moodle_exception $e) {
         if (!empty($cmid)) {
-            list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'assignquiz');
-            $continuelink = new moodle_url('/mod/assignquiz/view.php', array('id' => $cmid));
+            list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'aiquiz');
+            $continuelink = new moodle_url('/mod/aiquiz/view.php', array('id' => $cmid));
             $context = context_module::instance($cm->id);
             if (has_capability('mod/quiz:preview', $context)) { // hay que arreglar esto par aque no salga siempre la review
                 throw new moodle_exception('attempterrorcontentchange', 'quiz', $continuelink);
@@ -654,7 +654,7 @@ function assignquiz_create_attempt_handling_errors($attemptid, $cmid = null) {
         return $attempobj;
     }
 }
-function assignquiz_validate_new_attempt(aiquiz $quizobj, aiquiz_access_manager $accessmanager, $forcenew, $page, $redirect) {
+function aiquiz_validate_new_attempt(aiquiz $quizobj, aiquiz_access_manager $accessmanager, $forcenew, $page, $redirect) {
     global $DB, $USER;
     $timenow = time();
 
@@ -676,7 +676,7 @@ function assignquiz_validate_new_attempt(aiquiz $quizobj, aiquiz_access_manager 
     }
 
     // Look for an existing attempt.
-    $attempts = assignquiz_get_user_attempts($quizobj->get_quizid(), $USER->id, 'all', true);
+    $attempts = aiquiz_get_user_attempts($quizobj->get_quizid(), $USER->id, 'all', true);
     $lastattempt = end($attempts);
 
     $attemptnumber = null;
@@ -726,7 +726,7 @@ function assignquiz_validate_new_attempt(aiquiz $quizobj, aiquiz_access_manager 
     }
     return array($currentattemptid, $attemptnumber, $lastattempt, $messages, $page);
 }
-function assignquiz_attempt_save_started($quizobj, $quba, $attempt) {
+function aiquiz_attempt_save_started($quizobj, $quba, $attempt) {
     global $DB;
     // Save the attempt in the database.
     question_engine::save_questions_usage_by_activity($quba);
@@ -752,13 +752,13 @@ function assignquiz_attempt_save_started($quizobj, $quba, $attempt) {
     }
 
     // Trigger the event.
-    $event->add_record_snapshot('assignquiz', $quizobj->get_quiz());
+    $event->add_record_snapshot('aiquiz', $quizobj->get_quiz());
     $event->add_record_snapshot('aiquiz_attempts', $attempt);
     $event->trigger();
 
     return $attempt;
 }
-function assignquiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
+function aiquiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
                                 $questionids = array(), $forcedvariantsbyslot = array()) {
 
     // Usages for this user's previous quiz attempts.
@@ -904,7 +904,7 @@ function assignquiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber,
     $attempt->layout = implode(',', $layout);
     return $attempt;
 }
-function assignquiz_get_review_options($quiz, $attempt, $context) {
+function aiquiz_get_review_options($quiz, $attempt, $context) {
     $options = mod_quiz_display_options::make_from_quiz($quiz, quiz_attempt_state($quiz, $attempt));
 
     $options->readonly = true;
@@ -944,7 +944,7 @@ function assignquiz_get_review_options($quiz, $attempt, $context) {
     return $options;
 }
 
-function assignquiz_send_overdue_message($attemptobj) {
+function aiquiz_send_overdue_message($attemptobj) {
     global $CFG, $DB;
 
     $submitter = $DB->get_record('user', array('id' => $attemptobj->get_userid()), '*', MUST_EXIST);
@@ -993,7 +993,7 @@ function assignquiz_send_overdue_message($attemptobj) {
     // Prepare the message.
     $eventdata = new \core\message\message();
     $eventdata->courseid          = $a->courseid;
-    $eventdata->component         = 'mod_assignquiz';
+    $eventdata->component         = 'mod_aiquiz';
     $eventdata->name              = 'attempt_overdue';
     $eventdata->notification      = 1;
 
@@ -1016,7 +1016,7 @@ function assignquiz_send_overdue_message($attemptobj) {
     // Send the message.
     return message_send($eventdata);
 }
-function assignquiz_save_best_grade($quiz, $userid = null, $attempts = array()) {
+function aiquiz_save_best_grade($quiz, $userid = null, $attempts = array()) {
     global $DB, $OUTPUT, $USER;
 
     if (empty($userid)) {
@@ -1025,7 +1025,7 @@ function assignquiz_save_best_grade($quiz, $userid = null, $attempts = array()) 
 
     if (!$attempts) {
         // Get all the attempts made by the user.
-        $attempts = assignquiz_get_user_attempts($quiz->id, $userid);
+        $attempts = aiquiz_get_user_attempts($quiz->id, $userid);
     }
 
     // Calculate the best grade.
@@ -1051,9 +1051,9 @@ function assignquiz_save_best_grade($quiz, $userid = null, $attempts = array()) 
         $DB->insert_record('aiquiz_grades', $grade);
     }
 
-    assignquiz_update_grades($quiz, $userid);
+    aiquiz_update_grades($quiz, $userid);
 }
-function assignquiz_has_feedback($quiz) {
+function aiquiz_has_feedback($quiz) {
     global $DB;
     static $cache = array();
     if (!array_key_exists($quiz->id, $cache)) {
@@ -1065,13 +1065,13 @@ function assignquiz_has_feedback($quiz) {
     return $cache[$quiz->id];
 }
 
-function assignquiz_feedback_for_grade($grade, $quiz, $context) {
+function aiquiz_feedback_for_grade($grade, $quiz, $context) {
 
     if (is_null($grade)) {
         return '';
     }
 
-    $feedback = assignquiz_feedback_record_for_grade($grade, $quiz);
+    $feedback = aiquiz_feedback_record_for_grade($grade, $quiz);
 
     if (empty($feedback->feedbacktext)) {
         return '';
@@ -1081,12 +1081,12 @@ function assignquiz_feedback_for_grade($grade, $quiz, $context) {
     $formatoptions = new stdClass();
     $formatoptions->noclean = true;
     $feedbacktext = file_rewrite_pluginfile_urls($feedback->feedbacktext, 'pluginfile.php',
-        $context->id, 'mod_assignquiz', 'feedback', $feedback->id);
+        $context->id, 'mod_aiquiz', 'feedback', $feedback->id);
     $feedbacktext = format_text($feedbacktext, $feedback->feedbacktextformat, $formatoptions);
 
     return $feedbacktext;
 }
-function assignquiz_feedback_record_for_grade($grade, $quiz) {
+function aiquiz_feedback_record_for_grade($grade, $quiz) {
     global $DB;
 
     // With CBM etc, it is possible to get -ve grades, which would then not match
@@ -1102,7 +1102,7 @@ function assignquiz_feedback_record_for_grade($grade, $quiz) {
 function ai_feedback_generation($course_module_id) {
     global $DB, $CFG;
     // Retrieve the stored persistent filename from the DB.
-    $persistentfilename = $DB->get_field('assignquiz', 'generativefilename', [
+    $persistentfilename = $DB->get_field('aiquiz', 'generativefilename', [
         'id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])
     ]);
     $attemptid = optional_param('attempt', 0, PARAM_INT);
@@ -1187,14 +1187,14 @@ function remove_answer_info($question_summary) {
 function generate_feedback($json_text, $coursemodule_id)
 {
     global $CFG;
-    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
+    $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
     $client = OpenAI::client($env['OPENAI_API_KEY']);
     $filename = 'feedbacksource_'.$coursemodule_id.'.pdf';
     $fs = new file_storage();
     $context = context_module::instance($coursemodule_id);
-    $pdfFile = $fs->get_file($context->id, 'mod_assignquiz', 'feedbacksource', 0, '/', $filename);
+    $pdfFile = $fs->get_file($context->id, 'mod_aiquiz', 'feedbacksource', 0, '/', $filename);
     $pdftext = $pdfFile->get_content();
-    $assistant_id = get_config('mod_assignquiz', 'feedback_gen_assistant_id');
+    $assistant_id = get_config('mod_aiquiz', 'feedback_gen_assistant_id');
     $create_thread_response = openai_create_thread_feedback($client, $pdftext,$json_text, $assistant_id);
     return $create_thread_response;
 }
@@ -1211,7 +1211,7 @@ function feedback_generation_assistant_create($client){
 
     Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.',
         'name' => 'Quiz Feedback Generator',
-        'model' => get_config('mod_assignquiz','feedbackgenmodel'),
+        'model' => get_config('mod_aiquiz','feedbackgenmodel'),
     ]);
     return $response['id'];
 }
@@ -1253,7 +1253,7 @@ function openai_create_thread_feedback($client, $pdftext, $json_text, $assistant
         throw new Exception('Run did not complete in the expected time.');
     }
 }
-function assignquiz_delete_attempt($attempt, $quiz) {
+function aiquiz_delete_attempt($attempt, $quiz) {
     global $DB;
     if (is_numeric($attempt)) {
         if (!$attempt = $DB->get_record('aiquiz_attempts', array('id' => $attempt))) {
@@ -1268,7 +1268,7 @@ function assignquiz_delete_attempt($attempt, $quiz) {
     }
 
     if (!isset($quiz->cmid)) {
-        $cm = get_coursemodule_from_instance('assignquiz', $quiz->id, $quiz->course);
+        $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course);
         $quiz->cmid = $cm->id;
     }
 
@@ -1302,13 +1302,13 @@ function assignquiz_delete_attempt($attempt, $quiz) {
     if (!$DB->record_exists('aiquiz_attempts', array('userid' => $userid, 'quiz' => $quiz->id))) {
         $DB->delete_records('aiquiz_grades', array('userid' => $userid, 'quiz' => $quiz->id));
     } else {
-        assignquiz_save_best_grade($quiz, $userid);
+        aiquiz_save_best_grade($quiz, $userid);
     }
 
-    assignquiz_update_grades($quiz, $userid);
+    aiquiz_update_grades($quiz, $userid);
 }
 
-function assignquiz_update_open_attempts(array $conditions) {
+function aiquiz_update_open_attempts(array $conditions) {
     global $DB;
 
     foreach ($conditions as &$value) {
@@ -1324,10 +1324,10 @@ function assignquiz_update_open_attempts(array $conditions) {
     if (isset($conditions['courseid'])) {
         list ($incond, $inparams) = $DB->get_in_or_equal($conditions['courseid'], SQL_PARAMS_NAMED, 'cid');
         $params = array_merge($params, $inparams);
-        $wheres[] = "quiza.quiz IN (SELECT q.id FROM {assignquiz} q WHERE q.course $incond)";
+        $wheres[] = "quiza.quiz IN (SELECT q.id FROM {aiquiz} q WHERE q.course $incond)";
         list ($incond, $inparams) = $DB->get_in_or_equal($conditions['courseid'], SQL_PARAMS_NAMED, 'icid');
         $params = array_merge($params, $inparams);
-        $iwheres[] = "iquiza.quiz IN (SELECT q.id FROM {assignquiz} q WHERE q.course $incond)";
+        $iwheres[] = "iquiza.quiz IN (SELECT q.id FROM {aiquiz} q WHERE q.course $incond)";
     }
 
     if (isset($conditions['userid'])) {
@@ -1385,14 +1385,14 @@ function assignquiz_update_open_attempts(array $conditions) {
     $dbfamily = $DB->get_dbfamily();
     if ($dbfamily == 'mysql') {
         $updatesql = "UPDATE {aiquiz_attempts} quiza
-                        JOIN {assignquiz} quiz ON quiz.id = quiza.quiz
+                        JOIN {aiquiz} quiz ON quiz.id = quiza.quiz
                         JOIN ( $quizausersql ) quizauser ON quizauser.id = quiza.id
                          SET quiza.timecheckstate = $timecheckstatesql
                        WHERE $attemptselect";
     } else if ($dbfamily == 'postgres') {
         $updatesql = "UPDATE {quiz_attempts} quiza
                          SET timecheckstate = $timecheckstatesql
-                        FROM {assignquiz} quiz, ( $quizausersql ) quizauser
+                        FROM {aiquiz} quiz, ( $quizausersql ) quizauser
                        WHERE quiz.id = quiza.quiz
                          AND quizauser.id = quiza.id
                          AND $attemptselect";
@@ -1400,7 +1400,7 @@ function assignquiz_update_open_attempts(array $conditions) {
         $updatesql = "UPDATE quiza
                          SET timecheckstate = $timecheckstatesql
                         FROM {aiquiz_attempts} quiza
-                        JOIN {assignquiz} quiz ON quiz.id = quiza.quiz
+                        JOIN {aiquiz} quiz ON quiz.id = quiza.quiz
                         JOIN ( $quizausersql ) quizauser ON quizauser.id = quiza.id
                        WHERE $attemptselect";
     } else {
@@ -1408,7 +1408,7 @@ function assignquiz_update_open_attempts(array $conditions) {
         $updatesql = "UPDATE {aiquiz_attempts} quiza
                          SET timecheckstate = (
                            SELECT $timecheckstatesql
-                             FROM {assignquiz} quiz, ( $quizausersql ) quizauser
+                             FROM {aiquiz} quiz, ( $quizausersql ) quizauser
                             WHERE quiz.id = quiza.quiz
                               AND quizauser.id = quiza.id
                          )
@@ -1444,7 +1444,7 @@ function aiquiz_question_preview_button($quiz, $question, $label = false, $varia
 
 function get_openai_client() {
     global $CFG;
-    $env = parse_ini_file($CFG->dirroot . '/mod/assignquiz/.env');
+    $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
     $apiKey = $env['OPENAI_API_KEY'] ?? null;
 
     if (!$apiKey) {
@@ -1485,14 +1485,14 @@ function assistant_model_equivalent_to_openai_model($requested_assistant, $curre
 
 function is_openai_apikey_empty() {
     global $CFG;
-    $envFile = $CFG->dirroot . '/mod/assignquiz/.env';
+    $envFile = $CFG->dirroot . '/mod/aiquiz/.env';
     $env = parse_ini_file($envFile);
     return strlen($env['OPENAI_API_KEY']) === 0;
 }
 
 function delete_api_key_from_env() {
     global $CFG;
-    $envFile = $CFG->dirroot . '/mod/assignquiz/.env';
+    $envFile = $CFG->dirroot . '/mod/aiquiz/.env';
 
     if (file_exists($envFile)) {
         $lines = file($envFile, FILE_IGNORE_NEW_LINES);

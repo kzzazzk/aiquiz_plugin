@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_assignquiz\output;
+namespace mod_aiquiz\output;
 
 global $CFG;
 
@@ -37,7 +37,7 @@ use url_select;
  */
 require_once($CFG->dirroot . '/mod/quiz/classes/output/overrides_actions.php');
 use mod_quiz\output\overrides_actions;
-class assignquiz_overrides_actions extends overrides_actions {
+class aiquiz_overrides_actions extends overrides_actions {
     public function __construct(int $cmid, string $mode, bool $canedit, bool $addenabled) {
         $this->cmid = $cmid;
         $this->mode = $mode;
@@ -52,7 +52,7 @@ class assignquiz_overrides_actions extends overrides_actions {
      * @return \single_button the button, ready to reander.
      */
     public function create_add_button(\renderer_base $output): \single_button {
-        $addoverrideurl = new moodle_url('/mod/assignquiz/overrideedit.php',
+        $addoverrideurl = new moodle_url('/mod/aiquiz/overrideedit.php',
                 ['cmid' => $this->cmid, 'action' => 'add' . $this->mode]);
 
         if ($this->mode === 'group') {
@@ -74,8 +74,8 @@ class assignquiz_overrides_actions extends overrides_actions {
         $templatecontext = [];
 
         // Build the navigation drop-down.
-        $useroverridesurl = new moodle_url('/mod/assignquiz/overrides.php', ['cmid' => $this->cmid, 'mode' => 'user']);
-        $groupoverridesurl = new moodle_url('/mod/assignquiz/overrides.php', ['cmid' => $this->cmid, 'mode' => 'group']);
+        $useroverridesurl = new moodle_url('/mod/aiquiz/overrides.php', ['cmid' => $this->cmid, 'mode' => 'user']);
+        $groupoverridesurl = new moodle_url('/mod/aiquiz/overrides.php', ['cmid' => $this->cmid, 'mode' => 'group']);
 
         $menu = [
             $useroverridesurl->out(false) => get_string('useroverrides', 'quiz'),

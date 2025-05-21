@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Display information about all the mod_assignquiz modules in the requested course.
+ * Display information about all the mod_aiquiz modules in the requested course.
  *
- * @package     mod_assignquiz
+ * @package     mod_aiquiz
  * @copyright   2024 Zakaria Lasry zlsahraoui@alumnos.upm.es
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,26 +33,26 @@ require_course_login($course);
 
 $coursecontext = context_course::instance($course->id);
 
-$event = \mod_assignquiz\event\course_module_instance_list_viewed::create(array(
+$event = \mod_aiquiz\event\course_module_instance_list_viewed::create(array(
     'context' => $modulecontext
 ));
 $event->add_record_snapshot('course', $course);
 $event->trigger();
 
-$PAGE->set_url('/mod/assignquiz/index.php', array('id' => $id));
+$PAGE->set_url('/mod/aiquiz/index.php', array('id' => $id));
 $PAGE->set_title(format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($coursecontext);
 
 echo $OUTPUT->header();
 
-$modulenameplural = get_string('modulenameplural', 'mod_assignquiz');
+$modulenameplural = get_string('modulenameplural', 'mod_aiquiz');
 echo $OUTPUT->heading($modulenameplural);
 
-$assignquizs = get_all_instances_in_course('assignquiz', $course);
+$aiquizs = get_all_instances_in_course('aiquiz', $course);
 
-if (empty($assignquizs)) {
-    notice(get_string('no$assignquizinstances', 'mod_assignquiz'), new moodle_url('/course/view.php', array('id' => $course->id)));
+if (empty($aiquizs)) {
+    notice(get_string('no$aiquizinstances', 'mod_aiquiz'), new moodle_url('/course/view.php', array('id' => $course->id)));
 }
 
 $table = new html_table();
@@ -69,20 +69,20 @@ if ($course->format == 'weeks') {
     $table->align = array('left', 'left', 'left');
 }
 
-foreach ($assignquizs as $assignquiz) {
-    if (!$assignquiz->visible) {
+foreach ($aiquizs as $aiquiz) {
+    if (!$aiquiz->visible) {
         $link = html_writer::link(
-            new moodle_url('/mod/assignquiz/view.php', array('id' => $assignquiz->coursemodule)),
-            format_string($assignquiz->name, true),
+            new moodle_url('/mod/aiquiz/view.php', array('id' => $aiquiz->coursemodule)),
+            format_string($aiquiz->name, true),
             array('class' => 'dimmed'));
     } else {
         $link = html_writer::link(
-            new moodle_url('/mod/assignquiz/view.php', array('id' => $assignquiz->coursemodule)),
-            format_string($assignquiz->name, true));
+            new moodle_url('/mod/aiquiz/view.php', array('id' => $aiquiz->coursemodule)),
+            format_string($aiquiz->name, true));
     }
 
     if ($course->format == 'weeks' || $course->format == 'topics') {
-        $table->data[] = array($assignquiz->section, $link);
+        $table->data[] = array($aiquiz->section, $link);
     } else {
         $table->data[] = array($link);
     }

@@ -26,14 +26,14 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 require_once($CFG->dirroot . '/question/editlib.php');
 require_once($CFG->dirroot.'/mod/quiz/addrandomform.php');
 
 use qbank_managecategories\question_category_object;
 
 list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
-    question_edit_setup('editq', '/mod/assignquiz/addrandom.php', true);
+    question_edit_setup('editq', '/mod/aiquiz/addrandom.php', true);
 
 // These params are only passed from page request to request while we stay on
 // this page otherwise they would go in question_edit_setup.
@@ -58,7 +58,7 @@ $PAGE->set_url($thispageurl);
 if ($returnurl) {
     $returnurl = new moodle_url($returnurl);
 } else {
-    $returnurl = new moodle_url('/mod/assignquiz/edit.php', array('cmid' => $cmid));
+    $returnurl = new moodle_url('/mod/aiquiz/edit.php', array('cmid' => $cmid));
 }
 if ($scrollpos) {
     $returnurl->param('scrollpos', $scrollpos);
@@ -76,7 +76,7 @@ $qcobject = new question_category_object(
     null,
     $contexts->having_cap('moodle/question:add'));
 
-$mform = new quiz_add_random_form(new moodle_url('/mod/assignquiz/addrandom.php'),
+$mform = new quiz_add_random_form(new moodle_url('/mod/aiquiz/addrandom.php'),
     array('contexts' => $contexts, 'cat' => $pagevars['cat']));
 
 if ($mform->is_cancelled()) {
@@ -112,9 +112,9 @@ if ($data = $mform->get_data()) {
         return (int)explode(',', $tagstrings)[0];
     }, $data->fromtags);
 
-    assignquiz_add_random_questions($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories, $tagids);
-    assignquiz_delete_previews($quiz);
-    assignquiz_update_sumgrades($quiz);
+    aiquiz_add_random_questions($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories, $tagids);
+    aiquiz_delete_previews($quiz);
+    aiquiz_update_sumgrades($quiz);
     redirect($returnurl);
 }
 

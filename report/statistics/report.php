@@ -33,9 +33,9 @@ require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statistics_form.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statistics_question_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/statistics/statisticslib.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/statistics/statistics_form.php');
-require_once($CFG->dirroot . '/mod/assignquiz/report/statistics/statistics_table.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/statistics/statistics_form.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/statistics/statistics_table.php');
 
 /**
  * The quiz statistics report provides summary information about each question in
@@ -87,7 +87,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
         $pageoptions['id'] = $cm->id;
         $pageoptions['mode'] = 'statistics';
 
-        $reporturl = new moodle_url('/mod/assignquiz/report.php', $pageoptions);
+        $reporturl = new moodle_url('/mod/aiquiz/report.php', $pageoptions);
 
         $mform = new aiquiz_statistics_settings_form($reporturl, compact('quiz'));
 
@@ -553,7 +553,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
 
         $quiz = $quizorid;
         if (!is_object($quiz)) {
-            $quiz = $DB->get_record('assignquiz', array('id' => $quizorid), '*', MUST_EXIST);
+            $quiz = $DB->get_record('aiquiz', array('id' => $quizorid), '*', MUST_EXIST);
         }
 
         // Load the rest of the required data.
@@ -999,7 +999,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
             bool $performanalysis = true
         ): ?all_calculated_for_qubaid_condition {
         global $DB;
-        $quiz = $DB->get_record('assignquiz', ['id' => $quizid], '*', MUST_EXIST);
+        $quiz = $DB->get_record('aiquiz', ['id' => $quizid], '*', MUST_EXIST);
         $questions = $this->load_and_initialise_questions_for_calculations($quiz);
 
         [, $questionstats] = $this->get_all_stats_and_analysis($quiz,

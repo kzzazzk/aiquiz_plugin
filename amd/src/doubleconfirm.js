@@ -10,10 +10,10 @@ define([
             const originalConfirm = Notification.confirm;
 
             Notification.confirm = function (title, message, yesLabel, noLabel, yesCallback, noCallback) {
-                const isAssignQuizDeletion = typeof message === 'string' &&
+                const isaiquizDeletion = typeof message === 'string' &&
                     message.startsWith('Are you sure that you want to delete the Assign Quiz');
 
-                if (!isAssignQuizDeletion) {
+                if (!isaiquizDeletion) {
                     return originalConfirm(title, message, yesLabel, noLabel, yesCallback, noCallback);
                 }
 
@@ -44,7 +44,7 @@ define([
 
                             // 🔁 Call AJAX to preserve questions
                             Ajax.call([{
-                                methodname: 'mod_assignquiz_preserve_questions',
+                                methodname: 'mod_aiquiz_preserve_questions',
                                 args: {
                                     quizid: quizid
                                 },

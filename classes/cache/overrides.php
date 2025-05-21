@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace mod_assignquiz\cache;
+namespace mod_aiquiz\cache;
 
 use cache_definition;
 

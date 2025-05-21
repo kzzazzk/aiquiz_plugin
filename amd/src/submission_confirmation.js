@@ -16,7 +16,7 @@
 /**
  * A javascript module to handle submission confirmation for quiz.
  *
- * @module    mod_assignquiz/submission_confirmation
+ * @module    mod_aiquiz/submission_confirmation
  * @copyright 2022 Huong Nguyen <huongnv13@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     4.1
@@ -29,12 +29,12 @@ import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 
 const SELECTOR = {
-    attemptSubmitButton: '.path-mod-assignquiz .btn-finishattempt button',
+    attemptSubmitButton: '.path-mod-aiquiz .btn-finishattempt button',
     attemptSubmitForm: 'form#frm-finishattempt',
 };
 
 const TEMPLATES = {
-    submissionConfirmation: 'mod_assignquiz/submission_confirmation',
+    submissionConfirmation: 'mod_aiquiz/submission_confirmation',
 };
 
 /**
@@ -86,7 +86,7 @@ const registerEventListeners = (unAnsweredQuestions) => {
                 console.log("Form will be submitted"); // eslint-disable-line no-console
 
                 Notification.addNotification({
-                    message: await getString('submission_successful', 'mod_assignquiz'),
+                    message: await getString('submission_successful', 'mod_aiquiz'),
                     type: 'info',
                 });
 
@@ -106,7 +106,7 @@ export const init = (unAnsweredQuestions) => {
     Prefetch.prefetchStrings('core', ['submit']);
     Prefetch.prefetchStrings('core_admin', ['confirmation']);
     Prefetch.prefetchStrings('quiz', ['submitallandfinish', 'submission_confirmation']);
-    Prefetch.prefetchStrings('mod_assignquiz', ['submission_successful']);
+    Prefetch.prefetchStrings('mod_aiquiz', ['submission_successful']);
     Prefetch.prefetchTemplate(TEMPLATES.submissionConfirmation);
     registerEventListeners(unAnsweredQuestions);
 };

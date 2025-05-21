@@ -100,7 +100,7 @@ abstract class aiquiz_default_report extends quiz_default_report {
      * @return moodle_url the URL.
      */
     protected function get_base_url() {
-        return new moodle_url('/mod/assignquiz/report.php',
+        return new moodle_url('/mod/aiquiz/report.php',
                 array('id' => $this->context->instanceid, 'mode' => $this->mode));
     }
 

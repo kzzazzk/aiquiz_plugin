@@ -34,10 +34,10 @@ $confirm = optional_param('confirm', false, PARAM_BOOL);
 if (! $override = $DB->get_record('aiquiz_overrides', array('id' => $overrideid))) {
     throw new \moodle_exception('invalidoverrideid', 'quiz');
 }
-if (! $quiz = $DB->get_record('assignquiz', array('id' => $override->quiz))) {
+if (! $quiz = $DB->get_record('aiquiz', array('id' => $override->quiz))) {
     throw new \moodle_exception('invalidcoursemodule');
 }
-if (! $cm = get_coursemodule_from_instance("assignquiz", $quiz->id, $quiz->course)) {
+if (! $cm = get_coursemodule_from_instance("aiquiz", $quiz->id, $quiz->course)) {
     throw new \moodle_exception('invalidcoursemodule');
 }
 $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
@@ -59,9 +59,9 @@ if ($override->groupid) {
     }
 }
 
-$url = new moodle_url('/mod/assignquiz/overridedelete.php', array('id'=>$override->id));
+$url = new moodle_url('/mod/aiquiz/overridedelete.php', array('id'=>$override->id));
 $confirmurl = new moodle_url($url, array('id'=>$override->id, 'confirm'=>1));
-$cancelurl = new moodle_url('/mod/assignquiz/overrides.php', array('cmid'=>$cm->id));
+$cancelurl = new moodle_url('/mod/aiquiz/overrides.php', array('cmid'=>$cm->id));
 
 if (!empty($override->userid)) {
     $cancelurl->param('mode', 'user');
@@ -73,7 +73,7 @@ if ($confirm) {
 
     // Set the course module id before calling quiz_delete_override().
     $quiz->cmid = $cm->id;
-    assignquiz_delete_override($quiz, $override->id);
+    aiquiz_delete_override($quiz, $override->id);
 
     redirect($cancelurl);
 }

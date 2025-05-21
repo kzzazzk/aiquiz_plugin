@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_assignquiz;
+namespace mod_aiquiz;
 defined('MOODLE_INTERNAL') || die();
 use mod_quiz\repaginate;
 
@@ -35,7 +35,7 @@ use mod_quiz\repaginate;
  * @copyright 2014 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class assignquiz_repaginate extends repaginate {
+class aiquiz_repaginate extends repaginate {
 
     /** @var int means join pages. */
     const LINK = 1;

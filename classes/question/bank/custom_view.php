@@ -1,9 +1,9 @@
 <?php
-namespace mod_assignquiz\question\bank;
+namespace mod_aiquiz\question\bank;
 
 use mod_quiz\question\bank\custom_view;
 
-class assignquiz_custom_view extends custom_view
+class aiquiz_custom_view extends custom_view
 {
 
     public function render($pagevars, $tabname): string
@@ -20,7 +20,7 @@ class assignquiz_custom_view extends custom_view
         $params = $this->baseurl->params();
         $params['addquestion'] = $questionid;
         $params['sesskey'] = sesskey();
-        return new \moodle_url('/mod/assignquiz/edit.php', $params);
+        return new \moodle_url('/mod/aiquiz/edit.php', $params);
     }
 
     public function display($pagevars, $tabname): void

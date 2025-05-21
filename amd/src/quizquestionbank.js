@@ -22,8 +22,8 @@
  */
 define(
     [
-        'mod_assignquiz/add_question_modal_launcher',
-        'mod_assignquiz/modal_quiz_question_bank'
+        'mod_aiquiz/add_question_modal_launcher',
+        'mod_aiquiz/modal_quiz_question_bank'
     ],
     function(
         AddQuestionModalLauncher,

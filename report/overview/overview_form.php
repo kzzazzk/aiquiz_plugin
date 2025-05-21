@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/assignquiz/report/attemptsreport_form.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport_form.php');
 
 
 /**
