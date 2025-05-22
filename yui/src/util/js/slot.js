@@ -216,7 +216,7 @@ Y.Moodle.mod_aiquiz.util.slot = {
      * @return void
      */
     updateOneSlotSections: function() {
-        Y.all('.mod-aiquiz-edit-content ul.slots li.section').each(function(section) {
+        Y.all('.mod-quiz-edit-content ul.slots li.section').each(function(section) {
             if (section.all(this.SELECTORS.SLOT).size() > 1) {
                 section.removeClass('only-has-one-slot');
             } else {

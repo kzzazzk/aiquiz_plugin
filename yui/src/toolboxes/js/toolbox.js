@@ -118,7 +118,7 @@ Y.extend(TOOLBOX, Y.Base, {
 
         data.sesskey = M.cfg.sesskey;
         data.courseid = this.get('courseid');
-        data.aiquizid = this.get('aiquizid');
+        data.quizid = this.get('quizid');
 
         var uri = M.cfg.wwwroot + this.get('ajaxurl');
 
@@ -204,7 +204,7 @@ Y.extend(TOOLBOX, Y.Base, {
          * @default 'topics'
          * @type String
          */
-        aiquizid: {
+        quizid: {
             'value': 0
         },
         /**

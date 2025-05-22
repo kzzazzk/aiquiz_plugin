@@ -42,7 +42,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
             cloneNode: true
         });
         del.dd.plug(Y.Plugin.DDConstrained, {
-            // Keep it inside the .mod-aiquiz-edit-content
+            // Keep it inside the .mod-quiz-edit-content
             constrain: '#' + CSS.SLOTS
         });
         del.dd.plug(Y.Plugin.DDWinScroll);
@@ -58,7 +58,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
      * @param {String} baseselector The CSS selector or node to limit scope to
      */
     setup_for_section: function() {
-        Y.Node.all('.mod-aiquiz-edit-content ul.slots ul.section').each(function(resources) {
+        Y.Node.all('.mod-quiz-edit-content ul.slots ul.section').each(function(resources) {
             resources.setAttribute('data-draggroups', this.groups.join(' '));
             // Define empty ul as droptarget, so that item could be moved to empty list
             new Y.DD.Drop({
@@ -125,7 +125,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         // Prepare request parameters
         params.sesskey = M.cfg.sesskey;
         params.courseid = this.get('courseid');
-        params.aiquizid = this.get('aiquizid');
+        params.quizid = this.get('quizid');
         params['class'] = 'resource';
         params.field = 'move';
         params.id = Number(Y.Moodle.mod_aiquiz.util.slot.getId(dragnode));
@@ -215,7 +215,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         courseid: {
             value: null
         },
-        aiquizid: {
+        quizid: {
             value: null
         },
         ajaxurl: {

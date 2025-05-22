@@ -120,7 +120,7 @@ Y.extend(TOOLBOX, Y.Base, {
 
         data.sesskey = M.cfg.sesskey;
         data.courseid = this.get('courseid');
-        data.aiquizid = this.get('aiquizid');
+        data.quizid = this.get('quizid');
 
         var uri = M.cfg.wwwroot + this.get('ajaxurl');
 
@@ -206,7 +206,7 @@ Y.extend(TOOLBOX, Y.Base, {
          * @default 'topics'
          * @type String
          */
-        aiquizid: {
+        quizid: {
             'value': 0
         },
         /**
@@ -412,7 +412,7 @@ Y.extend(RESOURCETOOLBOX, TOOLBOX, {
             confirmstring = '',
             qtypename = M.util.get_string('pluginname',
                         'qtype_' + element.getAttribute('class').match(/qtype_([^\s]*)/)[1]);
-        confirmstring = M.util.get_string('confirmremovequestion', 'aiquiz', qtypename);
+        confirmstring = M.util.get_string('confirmremovequestion', 'quiz', qtypename);
 
         // Create the confirmation dialogue.
         var confirm = new M.core.confirm({
@@ -510,7 +510,7 @@ Y.extend(RESOURCETOOLBOX, TOOLBOX, {
             ids += Y.Moodle.mod_aiquiz.util.slot.getId(slot);
             slots.push(slot);
         });
-        var element = Y.one('div.mod-aiquiz-edit-content');
+        var element = Y.one('div.mod-quiz-edit-content');
 
         // Do nothing if no slots are selected.
         if (!slots || !slots.length) {
@@ -519,7 +519,7 @@ Y.extend(RESOURCETOOLBOX, TOOLBOX, {
 
         // Create the confirmation dialogue.
         var confirm = new M.core.confirm({
-            question: M.util.get_string('areyousureremoveselected', 'aiquiz'),
+            question: M.util.get_string('areyousureremoveselected', 'quiz'),
             modal: true
         });
 
@@ -802,7 +802,7 @@ Y.extend(RESOURCETOOLBOX, TOOLBOX, {
         courseid: {
             'value': 0
         },
-        aiquizid: {
+        quizid: {
             'value': 0
         }
     }
@@ -1166,7 +1166,7 @@ Y.extend(SECTIONTOOLBOX, TOOLBOX, {
         courseid: {
             'value': 0
         },
-        aiquizid: {
+        quizid: {
             'value': 0
         }
     }

@@ -350,7 +350,7 @@ Y.extend(SECTIONTOOLBOX, TOOLBOX, {
         courseid: {
             'value': 0
         },
-        aiquizid: {
+        quizid: {
             'value': 0
         }
     }

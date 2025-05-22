@@ -34,7 +34,7 @@ class aiquizedit_renderer extends edit_renderer
         // Information at the top.
         $output .= $this->quiz_state_warnings($structure);
 
-        $output .= html_writer::start_div('mod_quiz-edit-top-controls');
+        $output .= html_writer::start_div('mod_aiquiz-edit-top-controls');
 
         $output .= html_writer::start_div('d-flex justify-content-between flex-wrap mb-1');
         $output .= html_writer::start_div('d-flex flex-column justify-content-around');
@@ -44,7 +44,7 @@ class aiquizedit_renderer extends edit_renderer
         $output .= html_writer::end_tag('div');
 
         $output .= html_writer::start_div('d-flex justify-content-between flex-wrap mb-1');
-        $output .= html_writer::start_div('mod_quiz-edit-action-buttons btn-group edit-toolbar', ['role' => 'group']);
+        $output .= html_writer::start_div('mod_aiquiz-edit-action-buttons btn-group edit-toolbar', ['role' => 'group']);
         $output .= $this->repaginate_button($structure, $pageurl);
         $output .= $this->selectmultiple_button($structure);
         $output .= html_writer::end_tag('div');
@@ -381,103 +381,6 @@ class aiquizedit_renderer extends edit_renderer
         }
 
         return $questionname;
-    }
-    protected function initialise_editing_javascript(structure $structure,
-                                                     \core_question\local\bank\question_edit_contexts $contexts, array $pagevars, \moodle_url $pageurl) {
-
-        $config = new \stdClass();
-        $config->resourceurl = '/mod/aiquiz/edit_rest.php';
-        $config->sectionurl = '/mod/aiquiz/edit_rest.php';
-        $config->pageparams = array();
-        $config->questiondecimalpoints = $structure->get_decimal_places_for_question_marks();
-        $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);
-        $config->addpageiconhtml = $this->add_page_icon_template($structure);
-
-        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
-            'M.mod_aiquiz.init_resource_toolbox',
-            array(array(
-                'courseid' => $structure->get_courseid(),
-                'quizid' => $structure->get_quizid(),
-                'ajaxurl' => $config->resourceurl,
-                'config' => $config,
-            ))
-        );
-        unset($config->pagehtml);
-        unset($config->addpageiconhtml);
-
-        $this->page->requires->strings_for_js(array('areyousureremoveselected'), 'quiz');
-        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
-            'M.mod_aiquiz.init_section_toolbox',
-            array(array(
-                'courseid' => $structure,
-                'quizid' => $structure->get_quizid(),
-                'ajaxurl' => $config->sectionurl,
-                'config' => $config,
-            ))
-        );
-
-        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_section_dragdrop',
-            array(array(
-                'courseid' => $structure,
-                'quizid' => $structure->get_quizid(),
-                'ajaxurl' => $config->sectionurl,
-                'config' => $config,
-            )), null, true);
-
-        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_resource_dragdrop',
-            array(array(
-                'courseid' => $structure,
-                'quizid' => $structure->get_quizid(),
-                'ajaxurl' => $config->resourceurl,
-                'config' => $config,
-            )), null, true);
-
-        // Require various strings for the command toolbox.
-        $this->page->requires->strings_for_js(array(
-            'clicktohideshow',
-            'deletechecktype',
-            'deletechecktypename',
-            'edittitle',
-            'edittitleinstructions',
-            'emptydragdropregion',
-            'hide',
-            'markedthistopic',
-            'markthistopic',
-            'move',
-            'movecontent',
-            'moveleft',
-            'movesection',
-            'page',
-            'question',
-            'selectall',
-            'show',
-            'tocontent',
-        ), 'moodle');
-
-        $this->page->requires->strings_for_js(array(
-            'addpagebreak',
-            'cannotremoveallsectionslots',
-            'cannotremoveslots',
-            'confirmremovesectionheading',
-            'confirmremovequestion',
-            'dragtoafter',
-            'dragtostart',
-            'numquestionsx',
-            'sectionheadingedit',
-            'sectionheadingremove',
-            'sectionnoname',
-            'removepagebreak',
-            'questiondependencyadd',
-            'questiondependencyfree',
-            'questiondependencyremove',
-            'questiondependsonprevious',
-        ), 'quiz');
-
-        foreach (\question_bank::get_all_qtypes() as $qtype => $notused) {
-            $this->page->requires->string_for_js('pluginname', 'qtype_' . $qtype);
-        }
-
-        return true;
     }
 
 

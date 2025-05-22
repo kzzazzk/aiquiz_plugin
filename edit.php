@@ -186,7 +186,7 @@ $PAGE->requires->data_for_js('quiz_edit_config', $quizeditconfig);
 $PAGE->requires->js('/question/qengine.js');
 
 // Questions wrapper start.
-echo html_writer::start_tag('div', array('class' => 'mod-aiquiz-edit-content'));
+echo html_writer::start_tag('div', array('class' => 'mod-quiz-edit-content'));
 $value =  $output->aiquizpage_edit_page($quizobj, $structure, $contexts, $thispageurl, $pagevars);
 echo $value;
 // Questions wrapper end.

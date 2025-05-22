@@ -1061,32 +1061,32 @@ table#categoryquestions {
     display: inline;
 }
 
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .editing_move,
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .commands {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section .activity .editing_move,
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section .activity .commands {
     display: none;
 }
 
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .page_split_join_wrapper {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section .page_split_join_wrapper {
     display: none;
 }
 
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .actions .editing_delete,
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section .activity .actions .editing_maxmark {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section .activity .actions .editing_delete,
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section .activity .actions .editing_maxmark {
     display: none;
 }
 
 #page-mod-aiquiz-edit.select-multiple#page-mod-aiquiz-edit .maxgrade,
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .last-add-menu {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .last-add-menu {
     display: none;
 }
 
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading a,
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading form,
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .section-heading .instanceshufflequestions {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section-heading a,
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section-heading form,
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .section-heading .instanceshufflequestions {
     display: none;
 }
 
-#page-mod-aiquiz-edit.select-multiple .mod-aiquiz-edit-content .edit-toolbar .mb-1 {
+#page-mod-aiquiz-edit.select-multiple .mod-quiz-edit-content .edit-toolbar .mb-1 {
     display: none;
 }
 
