@@ -1,0 +1,8 @@
+{
+    "moodle-mod_aiquiz-quizbase": {
+        "requires": [
+            "base",
+            "node"
+        ]
+    }
+}

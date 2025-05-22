@@ -1,0 +1,12 @@
+{
+    "name": "moodle-mod_aiquiz-toolboxes",
+    "builds": {
+        "moodle-mod_aiquiz-toolboxes": {
+            "jsfiles": [
+                "toolbox.js",
+                "resource.js",
+                "section.js"
+            ]
+        }
+    }
+}

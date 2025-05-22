@@ -1,0 +1,1 @@
+YUI.add("moodle-mod_aiquiz-util-base",function(i,o){i.namespace("Moodle.mod_aiquiz.util")},"@VERSION@");

@@ -1,0 +1,10 @@
+{
+    "name": "moodle-mod_aiquiz-quizbase",
+    "builds": {
+        "moodle-mod_aiquiz-quizbase": {
+            "jsfiles": [
+                "quizbase.js"
+            ]
+        }
+    }
+}

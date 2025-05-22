@@ -1,0 +1,10 @@
+{
+    "name": "moodle-mod_aiquiz-autosave",
+    "builds": {
+        "moodle-mod_aiquiz-autosave": {
+            "jsfiles": [
+                "autosave.js"
+            ]
+        }
+    }
+}

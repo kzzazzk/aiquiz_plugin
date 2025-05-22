@@ -1,0 +1,26 @@
+{
+  "moodle-mod_aiquiz-util": {
+    "requires": [
+        "node", "moodle-core-actionmenu"
+    ],
+    "use": [
+        "moodle-mod_aiquiz-util-base"
+    ],
+    "submodules": {
+        "moodle-mod_aiquiz-util-base": {
+        },
+        "moodle-mod_aiquiz-util-slot": {
+            "requires": [
+                "node",
+                "moodle-mod_aiquiz-util-base"
+            ]
+        },
+        "moodle-mod_aiquiz-util-page": {
+            "requires": [
+                "node",
+                "moodle-mod_aiquiz-util-base"
+            ]
+        }
+    }
+  }
+}

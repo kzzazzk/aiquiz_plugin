@@ -175,8 +175,8 @@ class aiquizedit_renderer extends edit_renderer
         $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);
         $config->addpageiconhtml = $this->add_page_icon_template($structure);
 
-        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
-            'M.mod_quiz.init_resource_toolbox',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
+            'M.mod_aiquiz.init_resource_toolbox',
             array(array(
                 'courseid' => $structure->get_courseid(),
                 'quizid' => $structure->get_quizid(),
@@ -188,8 +188,8 @@ class aiquizedit_renderer extends edit_renderer
         unset($config->addpageiconhtml);
 
         $this->page->requires->strings_for_js(array('areyousureremoveselected'), 'quiz');
-        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
-            'M.mod_quiz.init_section_toolbox',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
+            'M.mod_aiquiz.init_section_toolbox',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),
@@ -198,7 +198,7 @@ class aiquizedit_renderer extends edit_renderer
             ))
         );
 
-        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_section_dragdrop',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_section_dragdrop',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),
@@ -206,7 +206,7 @@ class aiquizedit_renderer extends edit_renderer
                 'config' => $config,
             )), null, true);
 
-        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_resource_dragdrop',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_resource_dragdrop',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),
@@ -393,8 +393,8 @@ class aiquizedit_renderer extends edit_renderer
         $config->pagehtml = $this->new_page_template($structure, $contexts, $pagevars, $pageurl);
         $config->addpageiconhtml = $this->add_page_icon_template($structure);
 
-        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
-            'M.mod_quiz.init_resource_toolbox',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
+            'M.mod_aiquiz.init_resource_toolbox',
             array(array(
                 'courseid' => $structure->get_courseid(),
                 'quizid' => $structure->get_quizid(),
@@ -406,8 +406,8 @@ class aiquizedit_renderer extends edit_renderer
         unset($config->addpageiconhtml);
 
         $this->page->requires->strings_for_js(array('areyousureremoveselected'), 'quiz');
-        $this->page->requires->yui_module('moodle-mod_quiz-toolboxes',
-            'M.mod_quiz.init_section_toolbox',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-toolboxes',
+            'M.mod_aiquiz.init_section_toolbox',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),
@@ -416,7 +416,7 @@ class aiquizedit_renderer extends edit_renderer
             ))
         );
 
-        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_section_dragdrop',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_section_dragdrop',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),
@@ -424,7 +424,7 @@ class aiquizedit_renderer extends edit_renderer
                 'config' => $config,
             )), null, true);
 
-        $this->page->requires->yui_module('moodle-mod_quiz-dragdrop', 'M.mod_quiz.init_resource_dragdrop',
+        $this->page->requires->yui_module('moodle-mod_aiquiz-dragdrop', 'M.mod_aiquiz.init_resource_dragdrop',
             array(array(
                 'courseid' => $structure,
                 'quizid' => $structure->get_quizid(),

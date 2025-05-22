@@ -65,8 +65,15 @@ class mod_aiquiz_mod_form extends mod_quiz_mod_form
         $this->form_edit_modif();
 
         global $DB, $CFG, $OUTPUT, $PAGE;
-        $course = $this->optional_param('course', 0, PARAM_INT);
-        $section = $this->optional_param('section', 0, PARAM_INT);
+        if (!empty($this->current->instance)) {
+            $quiz = $DB->get_record('aiquiz', ['id' => $this->current->instance], '*', MUST_EXIST);
+            $course = $quiz->course;
+            $cm = get_coursemodule_from_instance('aiquiz', $quiz->id, $quiz->course, false, MUST_EXIST);
+            $section = $cm->section;
+        } else {
+            $course = $this->optional_param('course', 0, PARAM_INT);
+            $section = $this->optional_param('section', 0, PARAM_INT);
+        }
         $data = new stdClass();
         $data->course = $course;
         $data->section = $section;

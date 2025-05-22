@@ -1,0 +1,21 @@
+{
+  "name": "moodle-mod_aiquiz-util",
+  "builds": {
+    "moodle-mod_aiquiz-util-base": {
+      "jsfiles": [
+        "base.js"
+      ]
+    },
+    "moodle-mod_aiquiz-util-slot": {
+      "jsfiles": [
+        "slot.js"
+      ]
+    }
+    ,
+    "moodle-mod_aiquiz-util-page": {
+      "jsfiles": [
+        "page.js"
+      ]
+    }
+  }
+}
