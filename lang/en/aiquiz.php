@@ -87,7 +87,6 @@ $string['openaisettingsdescription'] = 'In this section, you can configure the O
 $string['openaisettings'] = 'OpenAI Settings';
 $string['quiz_gen_assistant_id'] = 'Quiz Question Generator';
 $string['feedback_gen_assistant_id'] = 'Quiz Feedback Generator';
-$string['submission_successful'] = 'Your quiz attempt has been submitted, please wait for the feedback to be generated!';
 $string['submitallandfinish'] = 'Once you submit your answers, you won’t be able to change them. Feedback will appear shortly after.';
 $string['delete'] = 'Delete';
 $string['cancel'] = 'Cancel';
@@ -101,5 +100,5 @@ $string['questionincorrectvalue'] = 'Value of incorrectly answered question';
 $string['questiongradecorrect_help'] = 'This is the number of points awarded for each correctly answered question in the quiz. It determines how much a correct response contributes to the total score.';
 $string['questiongradeincorrect_help'] = 'This is the number of points deducted for each incorrectly answered question. Typically set to 0, but you can assign negative values for penalties.';
 $string['numberofquestions_help'] = 'This is the number of questions that will be generated for the quiz. It is defaulted at 10 because it is generally a good number for a quiz and it is has been tested to not take too long, but you can change it to any number you want.';
-$string['numberofquestions'] = 'Number of Questions';
+$string['quiznavigation'] = 'AI Quiz navigation';
 

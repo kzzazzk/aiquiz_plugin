@@ -244,5 +244,7 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
             'id' => $cm->id, 'mode' => quiz_report_default_report($context)));
         return html_writer::link($url, $summary);
     }
+
+
 }
 

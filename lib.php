@@ -912,7 +912,6 @@ function add_question_to_question_bank($response, $question_category_id, $data)
         $form->correctfeedback = $question->correctfeedback;
         $form->incorrectfeedback = $question->incorrectfeedback;
 
-
         // Populate answer choices, feedback and fractions.
         $form->answer = array();
         $form->feedback = array();
@@ -929,7 +928,7 @@ function add_question_to_question_bank($response, $question_category_id, $data)
             ];
             // Default feedback; you can customize this as needed.
             $form->feedback[$index] = [
-                'text' => 'Your feedback here',
+                'text' => '',
                 'format' => FORMAT_HTML,
             ];
             // Set fraction: 1.0 for correct answer, -1.0 or 0 for incorrect.

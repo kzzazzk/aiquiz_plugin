@@ -88,7 +88,7 @@ if (empty($attemptobj->get_quiz()->showblocks)) {
     $PAGE->blocks->show_only_fake_blocks();
 }
 
-$navbc = $attemptobj->aiquiz_get_navigation_panel($output, 'aiquiz_attempt_nav_panel', -1);
+$navbc = $attemptobj->get_navigation_panel($output, 'aiquiz_attempt_nav_panel', -1);
 //$navbc = $attemptobj->get_navigation_panel($output, 'quiz_attempt_nav_panel', -1);
 $regions = $PAGE->blocks->get_regions();
 $PAGE->blocks->add_fake_block($navbc, reset($regions));

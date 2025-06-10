@@ -232,18 +232,17 @@ class aiquiz_attempt extends quiz_attempt{
         $event->trigger();
     }
 
-    public function aiquiz_get_navigation_panel(mod_aiquiz_renderer $output,
+    public function get_navigation_panel(mod_quiz_renderer $output,
                                                            $panelclass, $page, $showall = false) {
         $panel = new $panelclass($this, $this->get_display_options(true), $page, $showall);
 
         $bc = new block_contents();
-        $bc->attributes['id'] = 'mod_quiz_navblock';
+        $bc->attributes['id'] = 'mod_aiquiz_navblock';
         $bc->attributes['role'] = 'navigation';
-        $bc->title = get_string('quiznavigation', 'quiz');
+        $bc->title = get_string('quiznavigation', 'aiquiz');
         $bc->content = $output->navigation_panel($panel);
         return $bc;
     }
-
     public function process_submitted_actions($timestamp, $becomingoverdue = false, $simulatedresponses = null) {
         global $DB;
 

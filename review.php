@@ -29,6 +29,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
@@ -256,9 +257,9 @@ if ($showall) {
     $lastpage = $attemptobj->is_last_page($page);
 }
 
-$output = $PAGE->get_renderer('mod_aiquiz');
+$output = $PAGE->get_renderer('mod_quiz');
 // Arrange for the navigation to be displayed.
-$navbc = $attemptobj->aiquiz_get_navigation_panel($output, 'aiquiz_attempt_nav_panel', $page, $showall);
+$navbc = $attemptobj->get_navigation_panel($output, 'quiz_review_nav_panel', $page, $showall);
 $regions = $PAGE->blocks->get_regions();
 $PAGE->blocks->add_fake_block($navbc, reset($regions));
 
