@@ -152,7 +152,11 @@
 .path-mod-aiquiz .qnbutton.notyetanswered .trafficlight {
     background-color: white;
 }
-
+.path-mod-aiquiz #mod_aiquiz_navblock .qnbutton.complete .trafficlight,
+.path-mod-aiquiz #mod_aiquiz_navblock .qnbutton.answersaved .trafficlight,
+.path-mod-aiquiz #mod_aiquiz_navblock .qnbutton.requiresgrading .trafficlight {
+    background-color: #6a737b;
+}
 .path-mod-aiquiz .qn_buttons {
     display: flex;
     flex-wrap: wrap;
