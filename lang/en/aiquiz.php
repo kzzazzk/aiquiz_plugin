@@ -100,5 +100,6 @@ $string['questionincorrectvalue'] = 'Value of incorrectly answered question';
 $string['questiongradecorrect_help'] = 'This is the number of points awarded for each correctly answered question in the quiz. It determines how much a correct response contributes to the total score.';
 $string['questiongradeincorrect_help'] = 'This is the number of points deducted for each incorrectly answered question. Typically set to 0, but you can assign negative values for penalties.';
 $string['numberofquestions_help'] = 'This is the number of questions that will be generated for the quiz. It is defaulted at 10 because it is generally a good number for a quiz and it is has been tested to not take too long, but you can change it to any number you want.';
+$string['questionhdr_help'] = 'All of the options for the configuration of question generation are present here, these settings will only be applied when a new instance is created, it will not update the existing instances.';
 $string['quiznavigation'] = 'AI Quiz navigation';
 

@@ -15,7 +15,7 @@ class observer {
             'contextid' => $context->id,
             'name' => '[AI Generated Questions Vault]',
         ]);
-        if (!self::vault_category_exists($context->id)) {
+        if (!self::vault_category_exists($context->id, $coursename)) {
             self::add_vault_category($context->id, $coursename);
         }
     }

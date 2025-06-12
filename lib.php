@@ -682,7 +682,6 @@ function generate_quiz_questions($data, $apikey)
 
         $tempFilename = $tempDir . uniqid('moodle_pdf_', true) . '.pdf';
         file_put_contents($tempFilename, $file_content);
-
         $convertedFile = convert_pdf($tempFilename, $tempDir);
         if ($convertedFile) {
             $pdfFiles[] = $convertedFile;
@@ -725,6 +724,22 @@ function generate_quiz_questions($data, $apikey)
         }
     }
 }
+
+function convert_pdf_to_14($inputPath) {
+    $outputPath = $inputPath . '_converted.pdf';
+    $pdf = new \setasign\Fpdi\Tcpdf\Fpdi();
+    $pdf->setPDFVersion('1.4');
+    $pageCount = $pdf->setSourceFile($inputPath);
+    for ($i = 1; $i <= $pageCount; $i++) {
+        $tplId = $pdf->importPage($i);
+        $size = $pdf->getTemplateSize($tplId);
+        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+        $pdf->useTemplate($tplId);
+    }
+    $pdf->Output($outputPath, 'F');
+    return $outputPath;
+}
+
 
 /**
  * Persists the merged PDF using the Moodle File API.
@@ -1061,7 +1076,7 @@ function call_api($filepath, $data, $apikey)
 {
     global $CFG;
     $client = OpenAI::client($apikey);
-    $pdf_text = Spatie\PdfToText\Pdf::getText($filepath, getenv('POPPLER_PATH'));
+    $pdf_text = extractTextFromPdf($filepath);
     $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
     file_put_contents($tempFile, $pdf_text);
     store_file($tempFile, 'feedbacksource', $data);
@@ -1070,7 +1085,12 @@ function call_api($filepath, $data, $apikey)
     $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id, $data);
     return $create_thread_response;
 }
-
+function extractTextFromPdf($filePath) {
+    $parser = new \Smalot\PdfParser\Parser();
+    $pdf = $parser->parseFile($filePath);
+    $text = $pdf->getText();
+    return $text;
+}
 function quiz_generation_assistant_create($client)
 {
     $response = $client->assistants()->create([
