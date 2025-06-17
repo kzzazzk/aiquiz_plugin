@@ -1102,14 +1102,17 @@ function aiquiz_feedback_record_for_grade($grade, $quiz) {
 function ai_feedback_generation($course_module_id) {
     global $DB, $CFG;
     // Retrieve the stored persistent filename from the DB.
+    $quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
     $persistentfilename = $DB->get_field('aiquiz', 'generativefilename', [
-        'id' => $DB->get_field('course_modules', 'instance', ['id' => $course_module_id])
+        'id' => $quizid
     ]);
     $attemptid = optional_param('attempt', 0, PARAM_INT);
     $fs = get_file_storage();
     $context = context_module::instance($course_module_id);
     // Directly retrieve the file from Moodle's File API.
-    $grade = $DB->get_field('aiquiz_attempts', 'sumgrades', ['id' => $attemptid]);
+    $numquestions = $DB->count_records('aiquiz_slots',['quizid' => $quizid]);
+    $sumgrade = $DB->get_field('aiquiz_attempts', 'sumgrades', ['id' => $attemptid]);
+    $grade = ($sumgrade / $numquestions) * 10;
     // Prepare question attempt info for feedback generation.
     $question_usage_id = $DB->get_field('question_usages', 'id', ['contextid' => $context->id]);
     $question_attempt_info = $DB->get_records('question_attempts', ['questionusageid' => $question_usage_id], null, 'questionsummary, rightanswer, responsesummary');
@@ -1137,7 +1140,7 @@ function ai_feedback_generation($course_module_id) {
     if($grade < 2){
         $response = 'Revisión completa sugerida.';
     }
-    elseif($grade === 10){
+    elseif($grade == 10){
         $response = '¡Excelente! Sin errores.';
     }
     else{
