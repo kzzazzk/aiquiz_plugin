@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace quiz_statistics;
+namespace aiquiz_statistics;
+global $CFG;
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -29,6 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * @author     James Pratt me@jamiep.org
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+require_once($CFG->dirroot.'/mod/aiquiz/report/statistics/statisticslib.php');
 class calculator {
 
     /**
@@ -74,7 +76,7 @@ class calculator {
 
             // Recalculate sql again this time possibly including test for first attempt.
             list($fromqa, $whereqa, $qaparams) =
-                quiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $whichattempts);
+                aiquiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $whichattempts);
 
             $quizstats->median = $this->median($s, $fromqa, $whereqa, $qaparams);
             $this->progress->progress(2);
@@ -115,7 +117,7 @@ class calculator {
                 }
             }
 
-            $quizstats->cache(quiz_statistics_qubaids_condition($quizid, $groupstudentsjoins, $whichattempts));
+            $quizstats->cache(aiquiz_statistics_qubaids_condition($quizid, $groupstudentsjoins, $whichattempts));
         }
         $this->progress->end_progress();
         return $quizstats;
@@ -218,7 +220,7 @@ class calculator {
         $attempttotals = new \stdClass();
         foreach (array_keys(quiz_get_grading_options()) as $which) {
 
-            list($fromqa, $whereqa, $qaparams) = quiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $which);
+            list($fromqa, $whereqa, $qaparams) = aiquiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $which);
 
             $fromdb = $DB->get_record_sql("SELECT COUNT(*) AS rcount, AVG(sumgrades) AS average FROM $fromqa WHERE $whereqa",
                                             $qaparams);

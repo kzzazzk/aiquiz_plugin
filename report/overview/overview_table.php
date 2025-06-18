@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_table.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_table.php');
 
 
@@ -35,7 +35,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/overview/overview_table.php');
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_overview_table extends quiz_overview_table {
+class aiquiz_overview_table extends aiquiz_attempts_report_table {
 
     protected $regradedqs = array();
 
@@ -51,9 +51,9 @@ class aiquiz_overview_table extends quiz_overview_table {
      * @param moodle_url $reporturl
      */
     public function __construct($quiz, $context, $qmsubselect,
-            quiz_overview_options $options, \core\dml\sql_join $groupstudentsjoins,
+            aiquiz_overview_options $options, \core\dml\sql_join $groupstudentsjoins,
             \core\dml\sql_join $studentsjoins, $questions, $reporturl) {
-        parent::__construct('mod-quiz-report-overview-report', $quiz , $context,
+        parent::__construct('mod-aiquiz-report-overview-report', $quiz , $context,
                 $qmsubselect, $options, $groupstudentsjoins, $studentsjoins, $questions, $reporturl);
 
     }

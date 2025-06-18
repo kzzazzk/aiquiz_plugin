@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace quiz_statistics;
+namespace aiquiz_statistics;
 
 use core\dml\sql_join;
 
@@ -37,7 +37,7 @@ class quiz_structure_modified {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/mod/quiz/report/statistics/statisticslib.php');
         require_once($CFG->dirroot . '/mod/quiz/report/statistics/report.php');
-        $quiz = $DB->get_record('quiz', ['id' => $quizid]);
+        $quiz = $DB->get_record('aiquiz', ['id' => $quizid]);
         if (!$quiz) {
             throw new \coding_exception('Could not find quiz with ID ' . $quizid . '.');
         }

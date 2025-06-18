@@ -43,36 +43,22 @@ require_once($CFG->dirroot . '/vendor/autoload.php');
 
 function aiquiz_supports($feature)
 {
-    switch ($feature) {
-        case FEATURE_GROUPS:
-            return true;
-        case FEATURE_GROUPINGS:
-            return true;
-        case FEATURE_MOD_INTRO:
-            return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS:
-            return true;
-        case FEATURE_COMPLETION_HAS_RULES:
-            return true;
-        case FEATURE_GRADE_HAS_GRADE:
-            return true;
-        case FEATURE_GRADE_OUTCOMES:
-            return true;
-        case FEATURE_BACKUP_MOODLE2:
-            return true;
-        case FEATURE_SHOW_DESCRIPTION:
-            return true;
-        case FEATURE_CONTROLS_GRADE_VISIBILITY:
-            return true;
-        case FEATURE_USES_QUESTIONS:
-            return true;
-        case FEATURE_PLAGIARISM:
-            return true;
-        case FEATURE_MOD_PURPOSE:
-            return MOD_PURPOSE_ASSESSMENT;
+    switch($feature) {
+        case FEATURE_GROUPS:                    return true;
+        case FEATURE_GROUPINGS:                 return true;
+        case FEATURE_MOD_INTRO:                 return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:   return true;
+        case FEATURE_COMPLETION_HAS_RULES:      return true;
+        case FEATURE_GRADE_HAS_GRADE:           return true;
+        case FEATURE_GRADE_OUTCOMES:            return true;
+        case FEATURE_BACKUP_MOODLE2:            return true;
+        case FEATURE_SHOW_DESCRIPTION:          return true;
+        case FEATURE_CONTROLS_GRADE_VISIBILITY: return true;
+        case FEATURE_USES_QUESTIONS:            return true;
+        case FEATURE_PLAGIARISM:                return true;
+        case FEATURE_MOD_PURPOSE:               return MOD_PURPOSE_ASSESSMENT;
 
-        default:
-            return null;
+        default: return null;
     }
 }
 
@@ -465,6 +451,73 @@ function mod_aiquiz_output_fragment_quiz_question_bank($args)
     // Output.
     $renderer = $PAGE->get_renderer('mod_aiquiz', 'aiquizedit');
     return $renderer->aiquiz_question_bank_contents($questionbank, $pagevars);
+}
+
+function mod_aiquiz_core_calendar_provide_event_action(calendar_event $event,
+                                                     \core_calendar\action_factory $factory,
+                                                     int $userid = 0) {
+    global $CFG, $USER;
+
+    require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+
+    if (empty($userid)) {
+        $userid = $USER->id;
+    }
+
+    $cm = get_fast_modinfo($event->courseid, $userid)->instances['aiquiz'][$event->instance];
+    $quizobj = aiquiz::create($cm->instance, $userid);
+    $quiz = $quizobj->get_quiz();
+
+    // Check they have capabilities allowing them to view the quiz.
+    if (!has_any_capability(['mod/aiquiz:reviewmyattempts', 'mod/aiquiz:attempt'], $quizobj->get_context(), $userid)) {
+        return null;
+    }
+
+    $completion = new \completion_info($cm->get_course());
+
+    $completiondata = $completion->get_data($cm, false, $userid);
+
+    if ($completiondata->completionstate != COMPLETION_INCOMPLETE) {
+        return null;
+    }
+
+    aiquiz_update_effective_access($quiz, $userid);
+
+    // Check if quiz is closed, if so don't display it.
+    if (!empty($quiz->timeclose) && $quiz->timeclose <= time()) {
+        return null;
+    }
+
+    if (!$quizobj->is_participant($userid)) {
+        // If the user is not a participant then they have
+        // no action to take. This will filter out the events for teachers.
+        return null;
+    }
+
+    $attempts = aiquiz_get_user_attempts($quizobj->get_quizid(), $userid);
+    if (!empty($attempts)) {
+        // The student's last attempt is finished.
+        return null;
+    }
+
+    $name = get_string('attemptquiznow', 'quiz');
+    $url = new \moodle_url('/mod/aiquiz/view.php', [
+        'id' => $cm->id
+    ]);
+    $itemcount = 1;
+    $actionable = true;
+
+    // Check if the quiz is not currently actionable.
+    if (!empty($quiz->timeopen) && $quiz->timeopen > time()) {
+        $actionable = false;
+    }
+
+    return $factory->create_instance(
+        $name,
+        $url,
+        $itemcount,
+        $actionable
+    );
 }
 
 function mod_aiquiz_output_fragment_add_random_question_form($args)

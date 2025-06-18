@@ -26,9 +26,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport.php');
-require_once($CFG->dirroot . '/mod/quiz/report/responses/responses_form.php');
-require_once($CFG->dirroot . '/mod/quiz/report/responses/last_responses_table.php');
-require_once($CFG->dirroot . '/mod/quiz/report/responses/first_or_all_responses_table.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/responses/responses_form.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/responses/last_responses_table.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/responses/first_or_all_responses_table.php');
 require_once($CFG->dirroot . '/mod/quiz/report/responses/report.php');
 require_once($CFG->dirroot . '/mod/aiquiz/report/responses/responses_options.php');
 
@@ -49,16 +49,14 @@ require_once($CFG->dirroot . '/mod/aiquiz/report/responses/responses_options.php
  * @copyright 1999 onwards Martin Dougiamas and others {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_responses_report extends aiquiz_default_report {
+class aiquiz_responses_report extends aiquiz_attempts_report {
 
     public function display($quiz, $cm, $course) {
         global $OUTPUT, $DB;
-
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->init(
-                'responses', 'quiz_responses_settings_form', $quiz, $cm, $course);
+                'responses', 'aiquiz_responses_settings_form', $quiz, $cm, $course);
 
         $options = new aiquiz_responses_options('responses', $quiz, $cm, $course);
-
         if ($fromform = $this->form->get_data()) {
             $options->process_settings_from_form($fromform);
 
@@ -75,9 +73,9 @@ class aiquiz_responses_report extends aiquiz_default_report {
         $courseshortname = format_string($course->shortname, true,
                 array('context' => context_course::instance($course->id)));
         if ($options->whichtries === question_attempt::LAST_TRY) {
-            $tableclassname = 'quiz_last_responses_table';
+            $tableclassname = 'aiquiz_last_responses_table';
         } else {
-            $tableclassname = 'quiz_first_or_all_responses_table';
+            $tableclassname = 'aiquiz_first_or_all_responses_table';
         }
         $table = new $tableclassname($quiz, $this->context, $this->qmsubselect,
                 $options, $groupstudentsjoins, $studentsjoins, $questions, $options->get_url());

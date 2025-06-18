@@ -13,8 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-namespace quiz_statistics\task;
+namespace aiquiz_statistics\task;
 
 use core\dml\sql_join;
 use quiz_attempt;
@@ -67,7 +66,7 @@ class recalculate extends \core\task\adhoc_task {
         global $DB;
         $dateformat = get_string('strftimedatetimeshortaccurate', 'core_langconfig');
         $data = $this->get_custom_data();
-        $quiz = $DB->get_record('quiz', ['id' => $data->quizid]);
+        $quiz = $DB->get_record('aiquiz', ['id' => $data->quizid]);
         if (!$quiz) {
             mtrace('Could not find quiz with ID ' . $data->quizid . '.');
             return;

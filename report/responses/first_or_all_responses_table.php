@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @author    Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_first_or_all_responses_table extends quiz_last_responses_table {
+class aiquiz_first_or_all_responses_table extends aiquiz_last_responses_table {
 
     /**
      * The full question usage object for each try shown in report.

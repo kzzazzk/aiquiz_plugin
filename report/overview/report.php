@@ -43,14 +43,14 @@ require_once($CFG->dirroot . '/mod/aiquiz/report/overview/aiquiz_overview_option
  * @copyright 1999 onwards Martin Dougiamas and others {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_overview_report extends aiquiz_default_report {
+class aiquiz_overview_report extends aiquiz_attempts_report {
     public function display($quiz, $cm, $course) {
         global $DB, $OUTPUT, $PAGE;
 
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->init(
             'overview', 'aiquiz_overview_settings_form', $quiz, $cm, $course);
 
-        $options = new quiz_overview_options('overview', $quiz, $cm, $course);
+        $options = new aiquiz_overview_options('overview', $quiz, $cm, $course);
 
         if ($fromform = $this->form->get_data()) {
             $options->process_settings_from_form($fromform);
@@ -66,7 +66,7 @@ class aiquiz_overview_report extends aiquiz_default_report {
         // Prepare for downloading, if applicable.
         $courseshortname = format_string($course->shortname, true,
             array('context' => context_course::instance($course->id)));
-        $table = new quiz_overview_table($quiz, $this->context, $this->qmsubselect,
+        $table = new aiquiz_overview_table($quiz, $this->context, $this->qmsubselect,
             $options, $groupstudentsjoins, $studentsjoins, $questions, $options->get_url());
         $filename = quiz_report_download_filename(get_string('overviewfilename', 'quiz_overview'),
             $courseshortname, $quiz->name);

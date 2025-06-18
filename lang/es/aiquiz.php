@@ -57,9 +57,6 @@ $string['static'] = 'Estático';
 $string['activitydescription'] = 'Conocimiento requerido';
 $string['availablefrom'] = 'Disponible desde {$a->open}';
 $string['availableuntil'] = 'Disponible hasta {$a->close}';
-$string['availablefromuntilassign'] = '
-&ensp;&ensp;<b>Abierto:</b> {$a->open}<br>
-&ensp;&ensp;<b>Fecha límite:</b> {$a->due}';
 $string['availablefromuntilquiz'] ='
 &ensp;&ensp;<b>Abierto:</b> {$a->timeopen}<br>
 &ensp;&ensp;<b>Cierra:</b> {$a->timeclose}';

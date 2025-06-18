@@ -245,6 +245,42 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
         return html_writer::link($url, $summary);
     }
 
+    function aiquiz_report_list($context) {
+        global $DB;
+        static $reportlist = null;
+        if (!is_null($reportlist)) {
+            return $reportlist;
+        }
+
+        $reports = $DB->get_records('aiquiz_reports', null, 'displayorder DESC', 'name, capability');
+        $reportdirs = core_component::get_plugin_list('quiz');
+
+        // Order the reports tab in descending order of displayorder.
+        $reportcaps = array();
+        foreach ($reports as $key => $report) {
+            if (array_key_exists($report->name, $reportdirs)) {
+                $reportcaps[$report->name] = $report->capability;
+            }
+        }
+
+        // Add any other reports, which are on disc but not in the DB, on the end.
+        foreach ($reportdirs as $reportname => $notused) {
+            if (!isset($reportcaps[$reportname])) {
+                $reportcaps[$reportname] = null;
+            }
+        }
+        $reportlist = array();
+        foreach ($reportcaps as $name => $capability) {
+            if (empty($capability)) {
+                $capability = 'mod/quiz:viewreports';
+            }
+            if (has_capability($capability, $context)) {
+                $reportlist[] = $name;
+            }
+        }
+        return $reportlist;
+    }
+
 
 }
 

@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_options.php');
+require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport_options.php');
 
 
 /**
@@ -34,7 +34,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport_options.php');
  * @copyright 2012 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_responses_options extends quiz_responses_options {
+class aiquiz_responses_options extends mod_aiquiz_attempts_report_options {
 
     /** @var bool whether to show the question text columns. */
     public $showqtext = false;

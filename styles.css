@@ -153,6 +153,9 @@
     background-color: white;
 }
 
+.path-mod-aiquiz .qnbutton.answersaved .trafficlight {
+    background-color: #666;
+}
 .path-mod-aiquiz .qn_buttons {
     display: flex;
     flex-wrap: wrap;

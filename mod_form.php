@@ -161,12 +161,12 @@ document.addEventListener("DOMContentLoaded", function () {
         $mform->addElement('text', 'questioncorrectvalue', get_string('questioncorrectvalue', 'aiquiz'));
         $mform->addHelpButton('questioncorrectvalue', 'questiongradecorrect', 'aiquiz');
         $mform->insertElementBefore($mform->removeElement('questioncorrectvalue'), 'layouthdr');
-        $mform->setDefault('questioncorrectvalue', number_format(1.0, 1));
+        $mform->setDefault('questioncorrectvalue', number_format(1.0, 2,','));
         $mform->setType('questioncorrectvalue', PARAM_FLOAT);
         // Create and add the second element.
         $mform->addElement('text', 'questionincorrectvalue', get_string('questionincorrectvalue', 'aiquiz'));
         $mform->addHelpButton('questionincorrectvalue', 'questiongradeincorrect', 'aiquiz');
-        $mform->setDefault('questionincorrectvalue', number_format(0.0, 1));
+        $mform->setDefault('questionincorrectvalue', number_format(0.0, 2,','));
         $mform->insertElementBefore($mform->removeElement('questionincorrectvalue'), 'layouthdr');
         $mform->setType('questionincorrectvalue', PARAM_FLOAT);
 

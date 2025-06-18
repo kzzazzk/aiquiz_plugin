@@ -53,10 +53,7 @@ $string['static'] = 'Static';
 $string['activitydescription'] = 'Required knowledge';
 $string['availablefrom'] = 'Available from {$a->open}';
 $string['availableuntil'] = 'Available until {$a->close}';
-$string['availablefromuntilassign'] = 'Submission Phase: <br>
-&ensp;&ensp;<b>Opened:</b> {$a->open}<br>
-&ensp;&ensp;<b>Due:</b> {$a->due}';
-$string['availablefromuntilquiz'] = 'Quiz Phase: <br>
+$string['availablefromuntilquiz'] = '
 &ensp;&ensp;<b>Opened:</b> {$a->timeopen}<br>
 &ensp;&ensp;<b>Close:</b> {$a->timeclose}';
 $string['phase_switch_task'] = 'Switch phases in AI Quiz plugin';

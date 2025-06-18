@@ -39,7 +39,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/grading/report.php');
  * @copyright 2006 Gustav Delius
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_grading_report extends quiz_grading_report {
+class aiquiz_grading_report extends     quiz_default_report {
     const DEFAULT_PAGE_SIZE = 5;
     const DEFAULT_ORDER = 'random';
 

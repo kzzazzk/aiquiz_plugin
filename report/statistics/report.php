@@ -25,8 +25,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use aiquiz_statistics\calculated;
+use aiquiz_statistics\calculator;
 use core_question\statistics\responses\analyser;
 use core_question\statistics\questions\all_calculated_for_qubaid_condition;
+use aiquiz_statistics;
 
 require_once($CFG->dirroot . '/mod/quiz/report/default.php');
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
@@ -36,7 +39,8 @@ require_once($CFG->dirroot . '/mod/quiz/report/statistics/statisticslib.php');
 require_once($CFG->dirroot . '/mod/aiquiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/aiquiz/report/statistics/statistics_form.php');
 require_once($CFG->dirroot . '/mod/aiquiz/report/statistics/statistics_table.php');
-
+require_once ($CFG->dirroot . '/mod/aiquiz/report/statistics/classes/calculator.php');
+require_once ($CFG->dirroot . '/mod/aiquiz/report/statistics/classes/calculated.php');
 /**
  * The quiz statistics report provides summary information about each question in
  * a quiz, compared to the whole quiz. It also provides a drill-down to more
@@ -45,7 +49,7 @@ require_once($CFG->dirroot . '/mod/aiquiz/report/statistics/statistics_table.php
  * @copyright 2008 Jamie Pratt
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class aiquiz_statistics_report extends aiquiz_default_report {
+class aiquiz_statistics_report extends quiz_default_report {
 
     /** @var context_module context of this quiz.*/
     protected $context;
@@ -165,9 +169,10 @@ class aiquiz_statistics_report extends aiquiz_default_report {
             }
         } else {
             // Or create empty stats containers.
-            $quizstats = new \quiz_statistics\calculated($whichattempts);
+            $quizstats = new calculated($whichattempts);
             $questionstats = new \core_question\statistics\questions\all_calculated_for_qubaid_condition();
         }
+        error_log(print_r($quizstats, true));
 
         // Set up the table.
         $this->table->statistics_setup($quiz, $cm->id, $reporturl, $quizstats->s());
@@ -183,6 +188,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
             }
 
             if (!$this->table->is_downloading() && $quizstats->s() == 0) {
+
                 echo $OUTPUT->notification(get_string('nogradedattempts', 'quiz_statistics'));
             }
 
@@ -557,7 +563,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
         }
 
         // Load the rest of the required data.
-        $questions = quiz_report_get_significant_questions($quiz);
+        $questions = aiquiz_report_get_significant_questions($quiz);
 
         // Only load main question not sub questions.
         $questionstatistics = $DB->get_records_select('question_statistics',
@@ -654,7 +660,7 @@ class aiquiz_statistics_report extends aiquiz_default_report {
 
         $qcalc = new \core_question\statistics\questions\calculator($questions, $progress);
 
-        $quizcalc = new \quiz_statistics\calculator($progress);
+        $quizcalc = new calculator($progress);
 
         $progress->start_progress('', 4);
 
@@ -732,7 +738,6 @@ class aiquiz_statistics_report extends aiquiz_default_report {
         } finally {
             $lock->release();
         }
-
         return array($quizstats, $questionstats);
     }
 
