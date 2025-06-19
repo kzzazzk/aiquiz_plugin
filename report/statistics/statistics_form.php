@@ -43,7 +43,7 @@ class aiquiz_statistics_settings_form extends quiz_statistics_settings_form {
 
         $options = array();
         foreach (array_keys(quiz_get_grading_options()) as $which) {
-            $options[$which] = \quiz_statistics\calculator::using_attempts_lang_string($which);
+            $options[$which] = \aiquiz_statistics\calculator::using_attempts_lang_string($which);
         }
 
         $mform->addElement('select', 'whichattempts', get_string('calculatefrom', 'quiz_statistics'), $options);

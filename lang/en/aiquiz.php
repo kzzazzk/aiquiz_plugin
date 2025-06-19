@@ -99,4 +99,5 @@ $string['questiongradeincorrect_help'] = 'This is the number of points deducted 
 $string['numberofquestions_help'] = 'This is the number of questions that will be generated for the quiz. It is defaulted at 10 because it is generally a good number for a quiz and it is has been tested to not take too long, but you can change it to any number you want.';
 $string['questionhdr_help'] = 'All of the options for the configuration of question generation are present here, these settings will only be applied when a new instance is created, it will not update the existing instances.';
 $string['quiznavigation'] = 'AI Quiz navigation';
+$string['attemptquiznow'] = 'Attemp aiquiz now';
 

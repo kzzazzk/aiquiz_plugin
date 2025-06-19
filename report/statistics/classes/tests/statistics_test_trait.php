@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace aiquiz_statistics\tests;
 
-use quiz_statistics\task\recalculate;
+use aiquiz_statistics\task\recalculate;
 
 /**
  * Test methods for statistics recalculations

@@ -465,6 +465,7 @@ function mod_aiquiz_core_calendar_provide_event_action(calendar_event $event,
     }
 
     $cm = get_fast_modinfo($event->courseid, $userid)->instances['aiquiz'][$event->instance];
+
     $quizobj = aiquiz::create($cm->instance, $userid);
     $quiz = $quizobj->get_quiz();
 
@@ -500,7 +501,7 @@ function mod_aiquiz_core_calendar_provide_event_action(calendar_event $event,
         return null;
     }
 
-    $name = get_string('attemptquiznow', 'quiz');
+    $name = get_string('attemptquiznow', 'aiquiz');
     $url = new \moodle_url('/mod/aiquiz/view.php', [
         'id' => $cm->id
     ]);

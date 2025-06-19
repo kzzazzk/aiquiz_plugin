@@ -103,3 +103,4 @@ $string['questiongradeincorrect_help'] = 'Este es el número de puntos que se de
 $string['numberofquestions_help'] = 'Este es el número de preguntas que se generarán para el cuestionario. Por defecto está en 10 porque es generalmente un buen número para un cuestionario y se ha probado que no toma demasiado tiempo, pero puedes cambiarlo a cualquier número que quieras.';
 $string['questionhdr_help'] = 'Aquí están todas las opciones para la configuración de la generación de preguntas. Estas configuraciones solo se aplicarán cuando se cree una nueva instancia, no actualizarán las instancias existentes.';
 $string['quiznavigation'] = 'Navegación de AI Quiz';
+$string['attemptquiznow'] = 'Realizar intento de AI Quiz ahora';

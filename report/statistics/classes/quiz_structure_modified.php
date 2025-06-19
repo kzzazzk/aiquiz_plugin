@@ -41,7 +41,7 @@ class quiz_structure_modified {
         if (!$quiz) {
             throw new \coding_exception('Could not find quiz with ID ' . $quizid . '.');
         }
-        $qubaids = quiz_statistics_qubaids_condition(
+        $qubaids = aiquiz_statistics_qubaids_condition(
             $quiz->id,
             new sql_join(),
             $quiz->grademethod

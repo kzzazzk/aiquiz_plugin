@@ -37,7 +37,7 @@ class statistics_helper {
         while ($task = \core\task\manager::get_next_adhoc_task(
             time() + HOURSECS + 1,
             false,
-            '\quiz_statistics\task\recalculate'
+            '\aiquiz_statistics\task\recalculate'
         )) {
             if ($discardoutput) {
                 ob_start();

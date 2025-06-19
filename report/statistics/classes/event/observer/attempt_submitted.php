@@ -16,7 +16,7 @@
 
 namespace aiquiz_statistics\event\observer;
 
-use quiz_statistics\task\recalculate;
+ use aiquiz_statistics\task\recalculate;
 
 /**
  * Event observer for \mod_quiz\event\attempt_submitted

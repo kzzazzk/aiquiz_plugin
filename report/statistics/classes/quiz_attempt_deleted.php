@@ -16,7 +16,7 @@
 
 namespace aiquiz_statistics;
 
-use quiz_statistics\task\recalculate;
+use aiquiz_statistics\task\recalculate;
 
 /**
  * Queue a statistics recalculation when an attempt is deleted.

@@ -17,7 +17,7 @@ namespace aiquiz_statistics\task;
 
 use core\dml\sql_join;
 use quiz_attempt;
-use quiz_statistics_report;
+use aiquiz_statistics_report;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -38,7 +38,7 @@ class recalculate extends \core\task\adhoc_task {
     /**
      * The time to delay queued runs by, to prevent repeated recalculations.
      */
-    const DELAY = HOURSECS;
+    const DELAY = 10;
 
     /**
      * Create a new instance of the task.
@@ -50,7 +50,7 @@ class recalculate extends \core\task\adhoc_task {
      */
     public static function instance(int $quizid): recalculate {
         $task = new self();
-        $task->set_component('quiz_statistics');
+        $task->set_component('aiquiz_statistics');
         $task->set_custom_data((object)[
             'quizid' => $quizid,
         ]);
@@ -64,6 +64,7 @@ class recalculate extends \core\task\adhoc_task {
 
     public function execute(): void {
         global $DB;
+
         $dateformat = get_string('strftimedatetimeshortaccurate', 'core_langconfig');
         $data = $this->get_custom_data();
         $quiz = $DB->get_record('aiquiz', ['id' => $data->quizid]);
@@ -86,14 +87,15 @@ class recalculate extends \core\task\adhoc_task {
             "from course {$course->shortname} ({$course->id}) with {$attemptcount} attempts, start time " .
             userdate(time(), $dateformat) . " ...");
 
-        $qubaids = quiz_statistics_qubaids_condition(
+        $qubaids = aiquiz_statistics_qubaids_condition(
             $quiz->id,
             new sql_join(),
             $quiz->grademethod
         );
 
-        $report = new quiz_statistics_report();
+        $report = new aiquiz_statistics_report();
         $report->clear_cached_data($qubaids);
+            error_log('Recalculating statistics for quiz ' . $quiz->id . ' (' . $quiz->name . ')');
         $report->calculate_questions_stats_for_question_bank($quiz->id);
         mtrace('    Calculations completed at ' . userdate(time(), $dateformat) . '.');
     }

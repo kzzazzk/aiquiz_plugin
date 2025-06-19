@@ -62,7 +62,7 @@ class mod_aiquiz_mod_form extends mod_quiz_mod_form
         $mform->removeElement('feedbacktext[0]');
 
 
-        $this->form_edit_modif();
+        $this->form_modif();
 
         global $DB, $CFG, $OUTPUT, $PAGE;
         if (!empty($this->current->instance)) {
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
-    private function form_edit_modif()
+    private function form_modif()
     {
         $mform = $this->_form;
 

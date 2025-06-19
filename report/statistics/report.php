@@ -131,7 +131,7 @@ class aiquiz_statistics_report extends quiz_default_report {
             }
         }
 
-        $qubaids = quiz_statistics_qubaids_condition($quiz->id, $groupstudentsjoins, $whichattempts);
+        $qubaids = aiquiz_statistics_qubaids_condition($quiz->id, $groupstudentsjoins, $whichattempts);
 
         // If recalculate was requested, handle that.
         if ($recalculate && confirm_sesskey()) {
@@ -172,7 +172,6 @@ class aiquiz_statistics_report extends quiz_default_report {
             $quizstats = new calculated($whichattempts);
             $questionstats = new \core_question\statistics\questions\all_calculated_for_qubaid_condition();
         }
-        error_log(print_r($quizstats, true));
 
         // Set up the table.
         $this->table->statistics_setup($quiz, $cm->id, $reporturl, $quizstats->s());
@@ -556,7 +555,7 @@ class aiquiz_statistics_report extends quiz_default_report {
      */
     protected function output_statistics_graph($quizorid, $qubaids) {
         global $DB, $PAGE;
-
+        error_log('QUBAIDS: ' . print_r($qubaids, true));
         $quiz = $quizorid;
         if (!is_object($quiz)) {
             $quiz = $DB->get_record('aiquiz', array('id' => $quizorid), '*', MUST_EXIST);
@@ -578,6 +577,7 @@ class aiquiz_statistics_report extends quiz_default_report {
         $fieldstoplotfactor = ['facility' => 100, 'discriminativeefficiency' => 1];
 
         // Prepare the arrays to hold the data.
+
         $xdata = [];
         foreach (array_keys($fieldstoplot) as $fieldtoplot) {
             $ydata[$fieldtoplot] = [];
@@ -656,11 +656,11 @@ class aiquiz_statistics_report extends quiz_default_report {
             $progress = new \core\progress\none();
         }
 
-        $qubaids = quiz_statistics_qubaids_condition($quiz->id, $groupstudentsjoins, $whichattempts);
+        $qubaids = aiquiz_statistics_qubaids_condition($quiz->id, $groupstudentsjoins, $whichattempts);
 
         $qcalc = new \core_question\statistics\questions\calculator($questions, $progress);
 
-        $quizcalc = new calculator($progress);
+        $quizcalc = new \aiquiz_statistics\calculator($progress);
 
         $progress->start_progress('', 4);
 
@@ -1003,10 +1003,11 @@ class aiquiz_statistics_report extends quiz_default_report {
             bool $calculateifrequired = true,
             bool $performanalysis = true
         ): ?all_calculated_for_qubaid_condition {
+        error_log('Calculating question stats for quiz ID: ' . $quizid);
         global $DB;
         $quiz = $DB->get_record('aiquiz', ['id' => $quizid], '*', MUST_EXIST);
         $questions = $this->load_and_initialise_questions_for_calculations($quiz);
-
+        error_log('Quiz ID: ' . $quizid . ' - Questions: ' . json_encode($questions));
         [, $questionstats] = $this->get_all_stats_and_analysis($quiz,
             $quiz->grademethod, question_attempt::ALL_TRIES, new \core\dml\sql_join(),
             $questions, null, $calculateifrequired, $performanalysis);
