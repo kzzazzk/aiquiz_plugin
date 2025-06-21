@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_aiquiz';
 $plugin->release = '0.1.0';
-$plugin->version = 2025012424;
+$plugin->version = 2025012425;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;

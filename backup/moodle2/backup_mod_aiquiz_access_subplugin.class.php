@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2011 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_mod_quiz_access_subplugin extends backup_subplugin {
+class backup_mod_aiquiz_access_subplugin extends backup_subplugin {
 
     /**
      * Use this method to describe the XML structure required to store your

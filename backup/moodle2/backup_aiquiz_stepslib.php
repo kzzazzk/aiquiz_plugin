@@ -44,7 +44,7 @@ class backup_aiquiz_activity_structure_step extends backup_questions_activity_st
             'completionminattempts', 'allowofflineattempts']);
 
         // Define elements for access rule subplugin settings.
-        $this->add_subplugin_structure('quizaccess', $quiz, true);
+        $this->add_subplugin_structure('aiquizaccess', $quiz, true);
 
         $qinstances = new backup_nested_element('question_instances');
 
@@ -85,7 +85,7 @@ class backup_aiquiz_activity_structure_step extends backup_questions_activity_st
         $this->add_question_usages($attempt, 'uniqueid');
 
         // Define elements for access rule subplugin attempt data.
-        $this->add_subplugin_structure('quizaccess', $attempt, true);
+        $this->add_subplugin_structure('aiquizaccess', $attempt, true);
 
         // Build the tree.
         $quiz->add_child($qinstances);

@@ -209,7 +209,7 @@ function aiquiz_delete_all_questions($quizid) {
     // Delete quiz slots for the quiz.
     $DB->delete_records('aiquiz_slots', ['quizid' => $quizid]);
     $DB->delete_records('question_categories', ['contextid' => $context->id]);
-
+    $DB->delete_records('aiquiz_attempts', ['quiz' => $quizid]);
     // Get all questionbankentryid values from question_references in this context.
     $slots = $DB->get_records('question_references', ['usingcontextid' => $context->id], '', 'questionbankentryid');
 

@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/backup/moodle2/backup_quiz_stepslib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/backup/moodle2/backup_aiquiz_stepslib.php');
 
 /**
  * Provides the steps to perform one complete backup of the Quiz instance
@@ -47,7 +47,7 @@ class backup_aiquiz_activity_task extends backup_activity_task {
     protected function define_my_steps() {
         // Generate the quiz.xml file containing all the quiz information
         // and annotating used questions.
-        $this->add_step(new backup_quiz_activity_structure_step('quiz_structure', 'quiz.xml'));
+        $this->add_step(new backup_aiquiz_activity_structure_step('quiz_structure', 'quiz.xml'));
 
         // Note: Following  steps must be present
         // in all the activities using question banks (only quiz for now)
