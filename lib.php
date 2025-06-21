@@ -145,6 +145,13 @@ function aiquiz_update_instance($moduleinstance, $mform = null)
     if (!empty($moduleinstance->repaginatenow) && !aiquiz_has_attempts($moduleinstance->id)) {
         aiquiz_repaginate_questions($moduleinstance->id, $moduleinstance->questionsperpage);
     }
+    // If the quiz has been changed, we need to update the events.
+    if($moduleinstance->regeneratequestions == 1){
+        global $CFG;
+        $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
+        aiquiz_delete_all_questions($moduleinstance->instance);
+        generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
+    }
 
     return true;
 }
@@ -185,12 +192,43 @@ function aiquiz_delete_instance($id)
     $DB->delete_records('question_categories', ['contextid' => $contextid]);
 
 
-    $DB->delete_records('aiquiz', ['id' => $id]);
 
     return true;
 }
 
 
+function aiquiz_delete_all_questions($quizid) {
+    global $DB;
+
+    // Get the course module ID for the aiquiz instance.
+    $coursemodule = $DB->get_field('course_modules', 'id', ['instance' => $quizid], MUST_EXIST);
+
+    // Get the context of the module.
+    $context = context_module::instance($coursemodule);
+
+    // Delete quiz slots for the quiz.
+    $DB->delete_records('aiquiz_slots', ['quizid' => $quizid]);
+    $DB->delete_records('question_categories', ['contextid' => $context->id]);
+
+    // Get all questionbankentryid values from question_references in this context.
+    $slots = $DB->get_records('question_references', ['usingcontextid' => $context->id], '', 'questionbankentryid');
+
+    // Extract unique questionbankentryids.
+    $entryids = array_unique(array_map(function($slot) {
+        return $slot->questionbankentryid;
+    }, $slots));
+
+    // Fetch corresponding questionids from question_versions table.
+    if (!empty($entryids)) {
+        list($in_sql, $params) = $DB->get_in_or_equal($entryids);
+        $versions = $DB->get_records_select('question_versions', "questionbankentryid $in_sql", $params, '', 'questionid');
+
+        // Delete each question by ID.
+        foreach ($versions as $version) {
+            question_delete_question($version->questionid);
+        }
+    }
+}
 
 function aiquiz_after_add_or_update($aiquiz)
 {
@@ -779,21 +817,6 @@ function generate_quiz_questions($data, $apikey)
     }
 }
 
-function convert_pdf_to_14($inputPath) {
-    $outputPath = $inputPath . '_converted.pdf';
-    $pdf = new \setasign\Fpdi\Tcpdf\Fpdi();
-    $pdf->setPDFVersion('1.4');
-    $pageCount = $pdf->setSourceFile($inputPath);
-    for ($i = 1; $i <= $pageCount; $i++) {
-        $tplId = $pdf->importPage($i);
-        $size = $pdf->getTemplateSize($tplId);
-        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-        $pdf->useTemplate($tplId);
-    }
-    $pdf->Output($outputPath, 'F');
-    return $outputPath;
-}
-
 
 /**
  * Persists the merged PDF using the Moodle File API.
@@ -801,30 +824,52 @@ function convert_pdf_to_14($inputPath) {
 function store_file($mergedPdfTempFilename, $filearea, $data)
 {
     $fs = get_file_storage();
-    // Get the context from the course module.
     $context = context_module::instance($data->coursemodule);
 
-    // Define a filename (you could incorporate the course module id or a hash)
     if ($filearea == 'feedbacksource') {
         $prefix = 'feedbacksource_';
     } else {
         $prefix = 'merged_moodle_pdf_';
     }
     $filename = $prefix . $data->coursemodule . '.pdf';
-    $fileinfo = [
-        'contextid' => $context->id,
-        'component' => 'mod_aiquiz',
-        'filearea' => $filearea,
-        'itemid' => 0,
-        'filepath' => '/',
-        'filename' => $filename,
-    ];
 
-    // Create the file in Moodle's file storage.
-    $fs->create_file_from_pathname($fileinfo, $mergedPdfTempFilename);
-    // Remove the temporary file since it's now stored persistently.
+    // Assume file does not exist initially
+    $fileexists = false;
+
+    // Check if the file already exists
+    $existingfiles = $fs->get_area_files(
+        $context->id,
+        'mod_aiquiz',
+        $filearea,
+        0,
+        'filename',
+        false
+    );
+
+    foreach ($existingfiles as $file) {
+        if ($file->get_filename() === $filename) {
+            $fileexists = true;
+            break;
+        }
+    }
+
+    // If file doesn't exist, create it
+    if (!$fileexists) {
+        $fileinfo = [
+            'contextid' => $context->id,
+            'component' => 'mod_aiquiz',
+            'filearea' => $filearea,
+            'itemid' => 0,
+            'filepath' => '/',
+            'filename' => $filename,
+        ];
+
+        $fs->create_file_from_pathname($fileinfo, $mergedPdfTempFilename);
+    }
+
     return $filename;
 }
+
 
 
 function get_temp_directory($CFG)
@@ -1147,29 +1192,9 @@ function extractTextFromPdf($filePath) {
 }
 function quiz_generation_assistant_create($client)
 {
+    global $DB;
     $response = $client->assistants()->create([
-        'instructions' => '
-        Eres un generador de preguntas de opción múltiple en español basadas en documentos PDF.
-        Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
-
-        Reglas estrictas:
-        - No incluyas pistas en la redacción de las preguntas.
-        - Cubre todo el documento con las preguntas, no solo fragmentos.
-        - Usa español, salvo términos sin traducción en el texto original.
-        - No preguntes sobre ubicaciones (página/sección) dentro del documento, ni tampoco las uses como fundamento de pregunta.
-        - Evita preguntas de definición directa; prioriza preguntas conceptuales y aplicadas.
-        - No formules preguntas cuya respuesta se mencione directamente en el enunciado.
-        - No devuelvas saltos de línea en el texto.
-        - No utilices frases como "según el texto", "de acuerdo con el documento" o similares.
-
-        Formato de salida:
-            [Número]. Pregunta: [Texto de la pregunta]
-            Opciones:
-            A. [Opción 1]
-            B. [Opción 2]
-            C. [Opción 3]
-            D. [Opción 4]
-            Respuesta correcta: [Letra]',
+        'instructions' => $DB->get_field('config', 'value', ['name' => 'questiongenerationprompt']),
         'name' => 'Quiz Question Generator',
         'model' => get_config('mod_aiquiz', 'questiongenmodel'),
     ]);
@@ -1535,17 +1560,6 @@ function aiquiz_num_attempt_summary($quiz, $cm, $returnzero = false, $currentgro
 }
 
 
-//function aiquiz_cm_info_view(cm_info $cm)
-//{
-//    global $PAGE, $DB;
-//    if ($cm->modname === 'aiquiz') {
-//        $aiquizid = $DB->get_field('course_modules', 'instance', ['id' => $cm->id]);
-//        $courseid = $DB->get_field('aiquiz', 'course', ['id' => $aiquizid]);
-//        $fullcoursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
-//        error_log("aiquiz ID: $aiquizid, CM ID: $cm->id, Full Course Name: $fullcoursename");
-//        $PAGE->requires->js_call_amd('mod_aiquiz/doubleconfirm', 'init', [$aiquizid, $cm->id, $fullcoursename]);
-//    }
-//}
 function aiquiz_delete_and_relocate_questions($id)
 {
     global $DB, $PAGE, $CFG;

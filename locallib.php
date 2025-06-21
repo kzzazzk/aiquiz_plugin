@@ -1223,7 +1223,7 @@ function openai_create_thread_feedback($client, $pdftext, $json_text, $assistant
     $thread_create_response = $client->threads()->create([]);
     $client->threads()->messages()->create($thread_create_response->id, [
         'role' => 'assistant',
-        'content' => 'Genera una breve retroalimentación para un test de 10 preguntas basándote en el contenido del temario y el JSON proporcionado:
+        'content' => 'Genera una breve retroalimentación para un test basándote en el contenido del temario y el JSON proporcionado:
         Este es el JSON:
         '.$json_text.'\n'.
 

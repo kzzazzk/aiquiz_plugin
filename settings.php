@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-global $CFG;
+global $CFG, $ADMIN;
 
 /**
  * Settings for the PayPal payment gateway
@@ -25,11 +25,16 @@ global $CFG;
 
 use aiquiz\settings\admin_setting_apikey;
 use aiquiz\settings\admin_setting_model;
+use aiquiz\settings\admin_setting_prompt;
+use aiquiz\settings\admin_setting_prompt_feedback;
+use aiquiz\settings\admin_setting_prompt_question;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/vendor/autoload.php');
 require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configselect.php');
 require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configpasswordunmask.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_prompt_question.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_prompt_feedback.php');
 require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
 require_once($CFG->dirroot . '/mod/aiquiz/lib.php');
 
@@ -118,25 +123,33 @@ if ($ADMIN->fulltree) {
             $modelOptions,
             'quiz_gen_assistant_id',
         ));
+        $settings->add(new admin_setting_prompt_question(
+            'questiongenerationprompt', // config key
+            get_string('questiongenerationpromptlabel', 'mod_aiquiz'),
+            '',
+            get_string('questiongenerationpromptdescription', 'mod_aiquiz'),
+            'quiz_gen_assistant_id'
+        ));
+
 
         $settings->add(new admin_setting_model(
             'mod_aiquiz/feedbackgenmodel',
             get_string('feedbackgenmodel', 'aiquiz'),
             get_string('feedbackgenmodeldescription', 'aiquiz'),
-            'gpt-4.1-nano   ',
+            'gpt-4.1-nano',
             $modelOptions,
             'feedback_gen_assistant_id'
         ));
 
-        global $CFG;
-        if(!get_config('mod_aiquiz', 'quiz_gen_assistant_id') || !get_config('mod_aiquiz', 'feedback_gen_assistant_id')){
-            $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
-            $yourApiKey = $env['OPENAI_API_KEY'];
-            $assistant_id = quiz_generation_assistant_create($client);
-            set_config('quiz_gen_assistant_id', $assistant_id, 'mod_aiquiz');
-            $assistant_id = feedback_generation_assistant_create($client);
-            set_config('feedback_gen_assistant_id', $assistant_id, 'mod_aiquiz');
-        }
+
+        $settings->add(new admin_setting_prompt_feedback(
+            'feedbackgenerationprompt', // config key
+            get_string('feedbackgenerationpromptlabel', 'mod_aiquiz'), // label
+            '',
+            get_string('feedbackgenerationpromptdescription', 'mod_aiquiz'),
+            'feedback_gen_assistant_id',
+        ));
+
     }
 }
 

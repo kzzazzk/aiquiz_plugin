@@ -9,6 +9,7 @@ use mod_aiquiz\aiquiz_structure;
 use mod_quiz\question\bank\qbank_helper;
 use \mod_quiz\structure;
 use \html_writer;
+use qbank_previewquestion\question_preview_options;
 use quiz_nav_panel_base;
 use quiz_attempt_nav_panel;
 
@@ -146,7 +147,7 @@ class aiquizedit_renderer extends edit_renderer
             'checkbox' => $this->get_checkbox_render($structure, $slot),
             'questionnumber' => $this->question_number($structure->get_displayed_number_for_slot($slot)),
             'questionname' => $this->aiquiz_get_question_name_for_slot($structure, $slot, $pageurl),
-            'questionicons' => $this->get_action_icon($structure, $slot, $pageurl),
+//            'questionicons' => $this->get_action_icon($structure, $slot, $pageurl),
             'questiondependencyicon' => ($structure->can_be_edited() ? $this->question_dependency_icon($structure, $slot) : ''),
             'versionselection' => false,
             'draftversion' => $structure->get_question_in_slot($slot)->status == question_version_status::QUESTION_STATUS_DRAFT,

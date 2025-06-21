@@ -90,14 +90,51 @@ $string['cancel'] = 'Cancel';
 $string['confirmclose'] = 'Once you submit your answers, you won’t be able to change them.
 ';
 $string['submission_confirmation_unanswered'] = 'Questions without a response: {$a}';
-$string['questionhdr'] = 'Question';
+$string['questionhdr'] = 'AI Question generation';
 $string['numberofquestions'] = 'Number of Questions';
 $string['questioncorrectvalue'] = 'Value of correctly answered question';
 $string['questionincorrectvalue'] = 'Value of incorrectly answered question';
 $string['questiongradecorrect_help'] = 'This is the number of points awarded for each correctly answered question in the quiz. It determines how much a correct response contributes to the total score.';
 $string['questiongradeincorrect_help'] = 'This is the number of points deducted for each incorrectly answered question. Typically set to 0, but you can assign negative values for penalties.';
 $string['numberofquestions_help'] = 'This is the number of questions that will be generated for the quiz. It is defaulted at 10 because it is generally a good number for a quiz and it is has been tested to not take too long, but you can change it to any number you want.';
-$string['questionhdr_help'] = 'All of the options for the configuration of question generation are present here, these settings will only be applied when a new instance is created, it will not update the existing instances.';
 $string['quiznavigation'] = 'AI Quiz navigation';
 $string['attemptquiznow'] = 'Attemp aiquiz now';
+$string['regeneratequestions'] = 'Regenerar preguntas';
+$string['regeneratequestions_help'] = 'Si está marcado, las preguntas se regenerarán con la configuración actual al guardar las actualizaciones de la instancia de AI Quiz. Si no está marcado, las preguntas no se regenerarán y permanecerán tal como están.';
+$string['questiongenerationprompt'] = 'You are a generator of multiple-choice questions based on PDF documents.
+        Generate unique questions with 4 answer choices each, ensuring only one correct answer per question.
 
+        Strict rules:
+        - Do not include hints in the phrasing of the questions.
+        - Cover the entire document with the questions, not just fragments.
+        - Use English, except for terms without translation in the original text.
+        - Do not ask about locations (page/section) within the document, nor use them as the basis for any question.
+        - Avoid direct definition questions; prioritize conceptual and applied questions.
+        - Do not formulate questions whose answer is directly stated in the question text.
+        - Do not return line breaks in the output text.
+        - Do not use phrases like "according to the text", "as stated in the document", or similar.
+
+        Output format:
+            [Number]. Question: [Question text]
+            Options:
+            A. [Option 1]
+            B. [Option 2]
+            C. [Option 3]
+            D. [Option 4]
+            Correct answer: [Letter]';
+
+$string['feedbackgenerationprompt'] = 'You are a feedback generator for quizzes. You will receive a JSON with a user\'s incorrect answers. If the JSON is empty or contains no incorrect answers, return absolutely nothing.
+
+    The received JSON has the following structure:
+    - "questionsummary": Summary of the question.
+    - "rightanswer": Correct answer.
+    - "responsesummary": User-selected answer (if null, it means the user did not answer).
+
+    **Important:** Do not include any details about the total number of incorrect answers, unanswered questions, or their sum in the generated feedback. Only provide a general message based on the total.
+
+    Provide feedback mentioning what topics the user needs to review. This must be clear and concise, ranging from 30 to 50 words. Do not use lists or special formatting such as asterisks.';
+
+$string['feedbackgenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate feedback. Edit it carefully.';
+$string['questiongenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate questions. Edit it carefully.';
+$string['feedbackgenerationpromptlabel'] = 'Instructions for generating feedback';
+$string['questiongenerationpromptlabel'] = 'Instructions for generating questions';

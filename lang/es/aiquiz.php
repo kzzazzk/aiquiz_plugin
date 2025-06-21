@@ -94,13 +94,49 @@ $string['cancel'] = 'Cancelar';
 $string['confirmclose'] = 'Una vez que envíes tus respuestas, no podrás cambiarlas.
 ';
 $string['submission_confirmation_unanswered'] = 'Preguntas sin respuesta: {$a}';
-$string['questionhdr'] = 'Preguntas';
+$string['questionhdr'] = 'Generación de preguntas con IA';
 $string['numberofquestions'] = 'Número de preguntas';
 $string['questioncorrectvalue'] = 'Valor de la pregunta respondida correctamente';
 $string['questionincorrectvalue'] = 'Valor de la pregunta respondida incorrectamente';
 $string['questiongradecorrect_help'] = 'Este es el número de puntos otorgados por cada pregunta respondida correctamente en el cuestionario. Determina cuánto contribuye una respuesta correcta a la puntuación total.';
 $string['questiongradeincorrect_help'] = 'Este es el número de puntos que se descuentan por cada pregunta respondida incorrectamente. Generalmente se establece en 0, pero puedes asignar valores negativos para penalizaciones.';
 $string['numberofquestions_help'] = 'Este es el número de preguntas que se generarán para el cuestionario. Por defecto está en 10 porque es generalmente un buen número para un cuestionario y se ha probado que no toma demasiado tiempo, pero puedes cambiarlo a cualquier número que quieras.';
-$string['questionhdr_help'] = 'Aquí están todas las opciones para la configuración de la generación de preguntas. Estas configuraciones solo se aplicarán cuando se cree una nueva instancia, no actualizarán las instancias existentes.';
 $string['quiznavigation'] = 'Navegación de AI Quiz';
 $string['attemptquiznow'] = 'Realizar intento de AI Quiz ahora';
+$string['regeneratequestions'] = 'Regenerar preguntas';
+$string['regeneratequestions_help'] = 'Si está marcado, las preguntas se regenerarán con la configuración actual al guardar las actualizaciones de la instancia de AI Quiz. Si no está marcado, las preguntas no se regenerarán y permanecerán tal como están.';
+$string['questiongenerationprompt'] = 'Eres un generador de preguntas de opción múltiple basadas en documentos PDF.
+        Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
+
+        Reglas estrictas:
+        - No incluyas pistas en la redacción de las preguntas.
+        - Cubre todo el documento con las preguntas, no solo fragmentos.
+        - Usa español, salvo términos sin traducción en el texto original.
+        - No preguntes sobre ubicaciones (página/sección) dentro del documento, ni tampoco las uses como fundamento de pregunta.
+        - Evita preguntas de definición directa; prioriza preguntas conceptuales y aplicadas.
+        - No formules preguntas cuya respuesta se mencione directamente en el enunciado.
+        - No devuelvas saltos de línea en el texto.
+        - No utilices frases como "según el texto", "de acuerdo con el documento" o similares.
+
+        Formato de salida:
+            [Número]. Pregunta: [Texto de la pregunta]
+            Opciones:
+            A. [Opción 1]
+            B. [Opción 2]
+            C. [Opción 3]
+            D. [Opción 4]
+            Respuesta correcta: [Letra]';
+$string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
+
+    El JSON recibido contiene la siguiente estructura:
+    - "questionsummary": Resumen de la pregunta.
+    - "rightanswer": Respuesta correcta.
+    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
+    
+    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
+
+    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
+$string['feedbackgenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar retroalimentación. Edítalo con cuidado.';
+$string['questiongenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar preguntas. Edítalo con cuidado.';
+$string['feedbackgenerationpromptlabel'] = 'Instrucciones para generar retroalimentación';
+$string['questiongenerationpromptlabel'] = 'Instrucciones para generar preguntas';
