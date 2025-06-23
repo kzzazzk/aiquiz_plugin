@@ -2,12 +2,15 @@
 
 
 defined('MOODLE_INTERNAL') || die();
+global $CFG;
 
 require_once($CFG->dirroot.'/mod/aiquiz/classes/local/structure/slot_random.php');
 require_once($CFG->dirroot.'/mod/aiquiz/attemptlib.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/openai_adapter.php');
 
 use mod_aiquiz\local\structure\aiquiz_slot_random;
 use qbank_previewquestion\question_preview_options;
+use mod_aiquiz\ai\openai_adapter;
 
 function aiquiz_has_attempts($quizid) {
     global $DB;
@@ -1099,15 +1102,11 @@ function aiquiz_feedback_record_for_grade($grade, $quiz) {
     return $feedback;
 }
 
-function ai_feedback_generation($course_module_id) {
+function process_responses_and_generate_feedback($course_module_id) {
     global $DB, $CFG;
     // Retrieve the stored persistent filename from the DB.
     $quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
-    $persistentfilename = $DB->get_field('aiquiz', 'generativefilename', [
-        'id' => $quizid
-    ]);
     $attemptid = optional_param('attempt', 0, PARAM_INT);
-    $fs = get_file_storage();
     $context = context_module::instance($course_module_id);
     // Directly retrieve the file from Moodle's File API.
     $numquestions = $DB->count_records('aiquiz_slots',['quizid' => $quizid]);
@@ -1144,7 +1143,10 @@ function ai_feedback_generation($course_module_id) {
         $response = '¡Excelente! Sin errores.';
     }
     else{
-        $response = generate_feedback($filtered_question_attempt_info, $course_module_id);
+        $pdftext = get_stored_feedbacksource($course_module_id);
+        $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
+        $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
+        $response = $openaiadapter->generate_feedback($filtered_question_attempt_info, $pdftext);
         $response = cheer_text_generator($response, $grade);
     }
     // Store the generated feedback.
@@ -1187,75 +1189,18 @@ function remove_answer_info($question_summary) {
     return $question_summary; // no colon found, return full string
 }
 
-function generate_feedback($json_text, $coursemodule_id)
+
+
+function get_stored_feedbacksource($coursemodule_id)
 {
-    global $CFG;
-    $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
-    $client = OpenAI::client($env['OPENAI_API_KEY']);
     $filename = 'feedbacksource_'.$coursemodule_id.'.pdf';
     $fs = new file_storage();
     $context = context_module::instance($coursemodule_id);
     $pdfFile = $fs->get_file($context->id, 'mod_aiquiz', 'feedbacksource', 0, '/', $filename);
-    $pdftext = $pdfFile->get_content();
-    $assistant_id = get_config('mod_aiquiz', 'feedback_gen_assistant_id');
-    $create_thread_response = openai_create_thread_feedback($client, $pdftext,$json_text, $assistant_id);
-    return $create_thread_response;
-}
-function feedback_generation_assistant_create($client){
-    $response = $client->assistants()->create([
-        'instructions' => 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
-
-    El JSON recibido contiene la siguiente estructura:
-    - "questionsummary": Resumen de la pregunta.
-    - "rightanswer": Respuesta correcta.
-    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
-    
-    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
-
-    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.',
-        'name' => 'Quiz Feedback Generator',
-        'model' => get_config('mod_aiquiz','feedbackgenmodel'),
-    ]);
-    return $response['id'];
+    return $pdfFile->get_content();
 }
 
-function openai_create_thread_feedback($client, $pdftext, $json_text, $assistant_id){
-    $thread_create_response = $client->threads()->create([]);
-    $client->threads()->messages()->create($thread_create_response->id, [
-        'role' => 'assistant',
-        'content' => 'Genera una breve retroalimentación para un test basándote en el contenido del temario y el JSON proporcionado:
-        Este es el JSON:
-        '.$json_text.'\n'.
 
-        'Este es el contenido del temario:'
-        .$pdftext,
-    ]);
-    $response = $client->threads()->runs()->create(
-        threadId: $thread_create_response->id,
-        parameters: [
-            'assistant_id' => $assistant_id,
-        ],
-    );
-
-    $maxAttempts = 100; // or however many times you want to check
-    $attempt = 0;
-
-    do {
-        sleep(1); // wait for a second (adjust as needed)
-        $runStatus = $response = $client->threads()->runs()->retrieve(
-            threadId: $thread_create_response->id,
-            runId: $response->id,
-        );
-        $attempt++;
-    } while ($runStatus->status !== 'completed' && $attempt < $maxAttempts);
-
-    if ($runStatus->status === 'completed') {
-        $response = $client->threads()->messages()->list($thread_create_response->id);
-        return $response->data[0]->content[0]->text->value;
-    } else {
-        throw new Exception('Run did not complete in the expected time.');
-    }
-}
 function aiquiz_delete_attempt($attempt, $quiz) {
     global $DB;
     if (is_numeric($attempt)) {

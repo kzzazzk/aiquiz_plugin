@@ -102,7 +102,8 @@ if ($status == quiz_attempt::OVERDUE) {
 } else if ($status == quiz_attempt::IN_PROGRESS) {
     redirect($nexturl);
 } else {
+
     // Attempt abandoned or finished.
-    ai_feedback_generation($cmid);
+    process_responses_and_generate_feedback($cmid);
     redirect($attemptobj->review_url());
 }

@@ -8,7 +8,9 @@ require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
 use admin_setting_configtextarea;
+use mod_aiquiz\ai\openai_adapter;
 use OpenAI;
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/openai_adapter.php');
 
 class admin_setting_prompt_question extends admin_setting_configtextarea {
 
@@ -29,12 +31,11 @@ class admin_setting_prompt_question extends admin_setting_configtextarea {
         global $CFG;
         $result = parent::write_setting($data);
         $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
-        $yourApiKey = $env['OPENAI_API_KEY'];
-        $client = OpenAI::client($yourApiKey);
+        $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
 
         if(is_openai_api_key_valid($env['OPENAI_API_KEY']) || is_openai_apikey_empty()){
             if(get_config('mod_aiquiz', $this->featureid) == false){
-                $assistant_id = quiz_generation_assistant_create($client);
+                $assistant_id = $openaiadapter->create_question_assistant();
                 set_config( $this->featureid, $assistant_id, 'mod_aiquiz');
             }
             else{

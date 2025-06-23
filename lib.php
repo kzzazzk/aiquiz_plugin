@@ -30,13 +30,15 @@
  */
 
 
+use mod_aiquiz\observer;
 use mod_aiquiz\question\bank\aiquiz_custom_view;
 use mod_quiz\question\bank\custom_view;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\PdfParserException;
-use mod_aiquiz\observer;
+use mod_aiquiz\ai\openai_adapter;
 
 require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/custom_view.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/openai_adapter.php');
 require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/vendor/autoload.php');
@@ -94,7 +96,7 @@ function aiquiz_add_instance($moduleinstance, $mform)
         observer::add_vault_category($context->id, $coursename);
     }
 
-    generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
+    process_file_and_generate_questions($moduleinstance);
     return $aiquizid;
 }
 
@@ -150,7 +152,7 @@ function aiquiz_update_instance($moduleinstance, $mform = null)
         global $CFG;
         $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
         aiquiz_delete_all_questions($moduleinstance->instance);
-        generate_quiz_questions($moduleinstance, $env['OPENAI_API_KEY']);
+        process_file_and_generate_questions($moduleinstance);
     }
 
     return true;
@@ -759,10 +761,9 @@ function aiquiz_update_effective_access($quiz, $userid)
     return $quiz;
 }
 
-function generate_quiz_questions($data, $apikey)
+function process_file_and_generate_questions($data)
 {
     global $CFG, $DB;
-    //OpenAI\Exceptions\ErrorException
     $tempDir = get_temp_directory($CFG);
     $fs = get_file_storage();
     $pdfFiles = [];
@@ -790,7 +791,7 @@ function generate_quiz_questions($data, $apikey)
     }
 
     // Persist the merged PDF in Moodle's File API
-    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data);
+    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data->coursemodule);
     get_course($data->course);
     $sectioninfo = get_fast_modinfo($data->course)->get_section_info($data->section);
     $sectionname = get_section_name($data->course, $sectioninfo);
@@ -807,7 +808,13 @@ function generate_quiz_questions($data, $apikey)
 
     if ($mergedPdfTempFilename) {
         try {
-            $response = call_api($mergedPdfTempFilename, $data, $apikey);
+            $pdf_text = extractTextFromPdf($mergedPdfTempFilename);
+            store_file_in_moodle_file_storage($mergedPdfTempFilename, $data->coursemodule, $pdf_text);
+
+            $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
+            $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
+            $response = $openaiadapter->generate_questions($pdf_text, $data->numberofquestions);
+
             $formattedResponse = filter_text_format($response);
             add_question_to_question_bank($formattedResponse, $question_category_id, $data);
         } finally {
@@ -821,17 +828,17 @@ function generate_quiz_questions($data, $apikey)
 /**
  * Persists the merged PDF using the Moodle File API.
  */
-function store_file($mergedPdfTempFilename, $filearea, $data)
+function store_file($mergedPdfTempFilename, $filearea, $coursemodule)
 {
     $fs = get_file_storage();
-    $context = context_module::instance($data->coursemodule);
+    $context = context_module::instance($coursemodule);
 
     if ($filearea == 'feedbacksource') {
         $prefix = 'feedbacksource_';
     } else {
         $prefix = 'merged_moodle_pdf_';
     }
-    $filename = $prefix . $data->coursemodule . '.pdf';
+    $filename = $prefix . $coursemodule . '.pdf';
 
     // Assume file does not exist initially
     $fileexists = false;
@@ -1171,18 +1178,15 @@ function filter_text_format($text)
 
 }
 
-function call_api($filepath, $data, $apikey)
+
+function store_file_in_moodle_file_storage($filepath, $coursemodule, $pdf_text)
 {
     global $CFG;
-    $client = OpenAI::client($apikey);
-    $pdf_text = extractTextFromPdf($filepath);
     $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
     file_put_contents($tempFile, $pdf_text);
-    store_file($tempFile, 'feedbacksource', $data);
+    store_file($tempFile, 'feedbacksource', $coursemodule);
     unlink($tempFile);
-    $assistant_id = get_config('mod_aiquiz', 'quiz_gen_assistant_id');
-    $create_thread_response = openai_create_thread($client, $pdf_text, $assistant_id, $data);
-    return $create_thread_response;
+    return $pdf_text;
 }
 function extractTextFromPdf($filePath) {
     $parser = new \Smalot\PdfParser\Parser();
@@ -1190,51 +1194,7 @@ function extractTextFromPdf($filePath) {
     $text = $pdf->getText();
     return $text;
 }
-function quiz_generation_assistant_create($client)
-{
-    global $DB;
-    $response = $client->assistants()->create([
-        'instructions' => $DB->get_field('config', 'value', ['name' => 'questiongenerationprompt']),
-        'name' => 'Quiz Question Generator',
-        'model' => get_config('mod_aiquiz', 'questiongenmodel'),
-    ]);
-    return $response['id'];
-}
-
 //OpenAI\Exceptions\ErrorException
-function openai_create_thread($client, $text, $assistant_id, $data)
-{
-    $thread_create_response = $client->threads()->create([]);
-    $client->threads()->messages()->create($thread_create_response->id, [
-        'role' => 'assistant',
-        'content' => "Genera $data->numberofquestions preguntas para un cuestionario basándote en el siguiente contenido:\n" . $text,
-    ]);
-    $response = $client->threads()->runs()->create(
-        threadId: $thread_create_response->id,
-        parameters: [
-            'assistant_id' => $assistant_id,
-        ],
-    );
-
-    $maxAttempts = 100; // or however many times you want to check
-    $attempt = 0;
-
-    do {
-        sleep(1); // wait for a second (adjust as needed)
-        $runStatus = $response = $client->threads()->runs()->retrieve(
-            threadId: $thread_create_response->id,
-            runId: $response->id,
-        );
-        $attempt++;
-    } while ($runStatus->status !== 'completed' && $attempt < $maxAttempts);
-
-    if ($runStatus->status === 'completed') {
-        $response = $client->threads()->messages()->list($thread_create_response->id);
-        return $response->data[0]->content[0]->text->value;
-    } else {
-        throw new Exception('Run did not complete in the expected time.');
-    }
-}
 
 function aiquiz_update_grades($quiz, $userid = 0, $nullifnone = true)
 {

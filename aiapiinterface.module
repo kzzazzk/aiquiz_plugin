@@ -1,7 +1,0 @@
-<?php
-interface ai_api_interface
-{
-    public function request_questions($content);
-    public function request_feedback($content);
-
-}
