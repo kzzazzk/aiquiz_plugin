@@ -101,40 +101,41 @@ $string['quiznavigation'] = 'AI Quiz navigation';
 $string['attemptquiznow'] = 'Attemp aiquiz now';
 $string['regeneratequestions'] = 'Regenerar preguntas';
 $string['regeneratequestions_help'] = 'Si está marcado, las preguntas se regenerarán con la configuración actual al guardar las actualizaciones de la instancia de AI Quiz. Si no está marcado, las preguntas no se regenerarán y permanecerán tal como están.';
-$string['questiongenerationprompt'] = 'You are a generator of multiple-choice questions based on PDF documents.
-        Generate unique questions with 4 answer choices each, ensuring only one correct answer per question.
+$string['questiongenerationprompt'] = 'Eres un generador de preguntas de opción múltiple basadas en documentos PDF.
+        Genera preguntas únicas con 4 opciones de respuesta cada una, asegurando una única respuesta correcta por pregunta.
 
-        Strict rules:
-        - Do not include hints in the phrasing of the questions.
-        - Cover the entire document with the questions, not just fragments.
-        - Use English, except for terms without translation in the original text.
-        - Do not ask about locations (page/section) within the document, nor use them as the basis for any question.
-        - Avoid direct definition questions; prioritize conceptual and applied questions.
-        - Do not formulate questions whose answer is directly stated in the question text.
-        - Do not return line breaks in the output text.
-        - Do not use phrases like "according to the text", "as stated in the document", or similar.
+        Reglas estrictas:
+        - No incluyas pistas en la redacción de las preguntas.
+        - Cubre todo el documento con las preguntas, no solo fragmentos.
+        - Usa español, salvo términos sin traducción en el texto original.
+        - No preguntes sobre ubicaciones (página/sección) dentro del documento, ni tampoco las uses como fundamento de pregunta.
+        - Evita preguntas de definición directa; prioriza preguntas conceptuales y aplicadas.
+        - No formules preguntas cuya respuesta se mencione directamente en el enunciado.
+        - No devuelvas saltos de línea en el texto.
+        - No utilices frases como "según el texto", "de acuerdo con el documento" o similares.
 
-        Output format:
-            [Number]. Question: [Question text]
-            Options:
-            A. [Option 1]
-            B. [Option 2]
-            C. [Option 3]
-            D. [Option 4]
-            Correct answer: [Letter]';
+        Formato de salida:
+            [Número]. Pregunta: [Texto de la pregunta]
+            Opciones:
+            A. [Opción 1]
+            B. [Opción 2]
+            C. [Opción 3]
+            D. [Opción 4]
+            Respuesta correcta: [Letra]';
+$string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
 
-$string['feedbackgenerationprompt'] = 'You are a feedback generator for quizzes. You will receive a JSON with a user\'s incorrect answers. If the JSON is empty or contains no incorrect answers, return absolutely nothing.
+    El JSON recibido contiene la siguiente estructura:
+    - "questionsummary": Resumen de la pregunta.
+    - "rightanswer": Respuesta correcta.
+    - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
+    
+    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
 
-    The received JSON has the following structure:
-    - "questionsummary": Summary of the question.
-    - "rightanswer": Correct answer.
-    - "responsesummary": User-selected answer (if null, it means the user did not answer).
-
-    **Important:** Do not include any details about the total number of incorrect answers, unanswered questions, or their sum in the generated feedback. Only provide a general message based on the total.
-
-    Provide feedback mentioning what topics the user needs to review. This must be clear and concise, ranging from 30 to 50 words. Do not use lists or special formatting such as asterisks.';
+    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
 
 $string['feedbackgenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate feedback. Edit it carefully.';
 $string['questiongenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate questions. Edit it carefully.';
 $string['feedbackgenerationpromptlabel'] = 'Instructions for generating feedback';
 $string['questiongenerationpromptlabel'] = 'Instructions for generating questions';
+$string['file_absence'] =  'You need to upload at least one file in the {$a->name} section before creating an AI Quiz instance in it.';
+

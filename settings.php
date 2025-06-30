@@ -43,7 +43,7 @@ require_once($CFG->dirroot . '/mod/aiquiz/lib.php');
 if ($ADMIN->fulltree) {
     $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
     $settings->add(new admin_setting_heading('defaultsettings', get_string('openaisettings','aiquiz'), get_string('openaisettingsdescription', 'aiquiz')));
-    if (is_openai_apikey_empty()) {
+    if (!is_openai_apikey_empty()) {
         //si la apikey es vacía o no válida
         $settings->add(new admin_setting_apikey(
             'mod_aiquiz/apikey',

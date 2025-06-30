@@ -103,7 +103,7 @@ if ($status == quiz_attempt::OVERDUE) {
     redirect($nexturl);
 } else {
 
-    // Attempt abandoned or finished.
+    // Attempt finished.
     process_responses_and_generate_feedback($cmid);
     redirect($attemptobj->review_url());
 }

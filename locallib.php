@@ -1122,18 +1122,10 @@ function process_responses_and_generate_feedback($course_module_id) {
         }
     }
     foreach ($filtered_question_attempt_info as $question_attempt) {
-        $question_attempt->questionsummary = remove_answer_info($question_attempt->questionsummary);
+        $question_attempt->questionsummary = extract_answer_info_from_summary($question_attempt->questionsummary);
     }
 
-    // Add the length of the JSON object to the data.
-    $filtered_question_attempt_info_length = $filtered_question_attempt_info == null?  0 : $grade;
-
-
-    // Add the length field to the data.
-    $filtered_question_attempt_info[] = ['totalsum' => $filtered_question_attempt_info_length];
-
     $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    $filtered_question_attempt_info = str_replace("\n", '', $filtered_question_attempt_info);
 
     // Call the API using the file content and question attempt info.
     if($grade < 2){
@@ -1165,20 +1157,20 @@ function process_responses_and_generate_feedback($course_module_id) {
     }
 }
 
-function cheer_text_generator($response_text, $grade){
-    if ($grade >= 8 && $grade < 10) {
-        $cheertext =  "¡Buen trabajo! Muy bien.";
-    } elseif ($grade >= 6 && $grade < 8) {
-        $cheertext =  "Buen intento, sigue así.";
-    } elseif ($grade >= 5 && $grade < 6) {
-        $cheertext =  "Buen intento, mejora posible.";
-    } elseif ($grade >= 2 && $grade < 5) {
-        $cheertext =  "Revisión parcial sugerida.";
+    function cheer_text_generator($response_text, $grade){
+        if ($grade >= 8 && $grade < 10) {
+            $cheertext =  "¡Buen trabajo! Muy bien.";
+        } elseif ($grade >= 6 && $grade < 8) {
+            $cheertext =  "Buen intento, sigue así.";
+        } elseif ($grade >= 5 && $grade < 6) {
+            $cheertext =  "Buen intento, mejora posible.";
+        } elseif ($grade >= 2 && $grade < 5) {
+            $cheertext =  "Revisión parcial sugerida.";
+        }
+        return $cheertext . ' ' . $response_text;
     }
-    return $cheertext . ' ' . $response_text;
-}
 
-function remove_answer_info($question_summary) {
+function extract_answer_info_from_summary($question_summary) {
     $question_summary = trim($question_summary); // clean up whitespace
     $pos = strpos($question_summary, ':');
 
@@ -1435,7 +1427,7 @@ function is_openai_apikey_empty() {
     global $CFG;
     $envFile = $CFG->dirroot . '/mod/aiquiz/.env';
     $env = parse_ini_file($envFile);
-    return strlen($env['OPENAI_API_KEY']) === 0;
+    return strlen($env['OPENAI_API_KEY']) !== 0;
 }
 
 function delete_api_key_from_env() {

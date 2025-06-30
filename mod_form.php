@@ -60,7 +60,7 @@ class mod_aiquiz_mod_form extends mod_quiz_mod_form
         $mform->removeElement('feedbacktext[0]');
 
 
-        $this->form_modif();
+        $this->add_question_section();
 
         global $DB, $CFG, $OUTPUT, $PAGE;
         if (!empty($this->_instance)) {
@@ -80,7 +80,7 @@ class mod_aiquiz_mod_form extends mod_quiz_mod_form
         $files = get_pdfs_in_section($data);
         $envFile = $CFG->dirroot . '/mod/aiquiz/.env';
         $env = parse_ini_file($envFile);
-        if (is_openai_apikey_empty()) {
+        if (!is_openai_apikey_empty()) {
             redirect($CFG->wwwroot . '/course/view.php?id=' . $course,
                 get_string('apikeyempty', 'aiquiz'),
                 null,
@@ -95,7 +95,8 @@ class mod_aiquiz_mod_form extends mod_quiz_mod_form
             );
         } elseif (count($files) === 0) {
             redirect($CFG->wwwroot . '/course/view.php?id=' . $course,
-                "You need to upload at least one file in the \"$name\" section before creating an AI Quiz instance in it.",
+                get_string('file_absence', 'aiquiz', [
+                    'name' => $name]),
                 null,
                 \core\output\notification::NOTIFY_ERROR
             );
@@ -148,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function () {
         $mform->setDefault('regeneratequestions', 0);
         $mform->insertElementBefore($mform->removeElement('regeneratequestions'), 'layouthdr');
     }
-    private function form_modif()
+    private function add_question_section()
     {
         $mform = $this->_form;
 

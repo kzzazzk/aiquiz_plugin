@@ -45,22 +45,36 @@ require_once($CFG->dirroot . '/vendor/autoload.php');
 
 function aiquiz_supports($feature)
 {
-    switch($feature) {
-        case FEATURE_GROUPS:                    return true;
-        case FEATURE_GROUPINGS:                 return true;
-        case FEATURE_MOD_INTRO:                 return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS:   return true;
-        case FEATURE_COMPLETION_HAS_RULES:      return true;
-        case FEATURE_GRADE_HAS_GRADE:           return true;
-        case FEATURE_GRADE_OUTCOMES:            return true;
-        case FEATURE_BACKUP_MOODLE2:            return true;
-        case FEATURE_SHOW_DESCRIPTION:          return true;
-        case FEATURE_CONTROLS_GRADE_VISIBILITY: return true;
-        case FEATURE_USES_QUESTIONS:            return true;
-        case FEATURE_PLAGIARISM:                return true;
-        case FEATURE_MOD_PURPOSE:               return MOD_PURPOSE_ASSESSMENT;
+    switch ($feature) {
+        case FEATURE_GROUPS:
+            return true;
+        case FEATURE_GROUPINGS:
+            return true;
+        case FEATURE_MOD_INTRO:
+            return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
+            return true;
+        case FEATURE_COMPLETION_HAS_RULES:
+            return true;
+        case FEATURE_GRADE_HAS_GRADE:
+            return true;
+        case FEATURE_GRADE_OUTCOMES:
+            return true;
+        case FEATURE_BACKUP_MOODLE2:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION:
+            return true;
+        case FEATURE_CONTROLS_GRADE_VISIBILITY:
+            return true;
+        case FEATURE_USES_QUESTIONS:
+            return true;
+        case FEATURE_PLAGIARISM:
+            return true;
+        case FEATURE_MOD_PURPOSE:
+            return MOD_PURPOSE_ASSESSMENT;
 
-        default: return null;
+        default:
+            return null;
     }
 }
 
@@ -148,7 +162,7 @@ function aiquiz_update_instance($moduleinstance, $mform = null)
         aiquiz_repaginate_questions($moduleinstance->id, $moduleinstance->questionsperpage);
     }
     // If the quiz has been changed, we need to update the events.
-    if($moduleinstance->regeneratequestions == 1){
+    if ($moduleinstance->regeneratequestions == 1) {
         global $CFG;
         $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
         aiquiz_delete_all_questions($moduleinstance->instance);
@@ -194,12 +208,12 @@ function aiquiz_delete_instance($id)
     $DB->delete_records('question_categories', ['contextid' => $contextid]);
 
 
-
     return true;
 }
 
 
-function aiquiz_delete_all_questions($quizid) {
+function aiquiz_delete_all_questions($quizid)
+{
     global $DB;
 
     // Get the course module ID for the aiquiz instance.
@@ -216,7 +230,7 @@ function aiquiz_delete_all_questions($quizid) {
     $slots = $DB->get_records('question_references', ['usingcontextid' => $context->id], '', 'questionbankentryid');
 
     // Extract unique questionbankentryids.
-    $entryids = array_unique(array_map(function($slot) {
+    $entryids = array_unique(array_map(function ($slot) {
         return $slot->questionbankentryid;
     }, $slots));
 
@@ -493,9 +507,10 @@ function mod_aiquiz_output_fragment_quiz_question_bank($args)
     return $renderer->aiquiz_question_bank_contents($questionbank, $pagevars);
 }
 
-function mod_aiquiz_core_calendar_provide_event_action(calendar_event $event,
-                                                     \core_calendar\action_factory $factory,
-                                                     int $userid = 0) {
+function mod_aiquiz_core_calendar_provide_event_action(calendar_event                $event,
+                                                       \core_calendar\action_factory $factory,
+                                                       int                           $userid = 0)
+{
     global $CFG, $USER;
 
     require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
@@ -761,66 +776,58 @@ function aiquiz_update_effective_access($quiz, $userid)
     return $quiz;
 }
 
-function process_file_and_generate_questions($data)
-{
+/**
+ * Processes PDF files from a course section, generates questions using OpenAI, and stores them in Moodle
+ *
+ * @param object $data Contains course module information and quiz settings
+ */
+function process_file_and_generate_questions($data) {
+    // Include required global variables and libraries
     global $CFG, $DB;
-    $tempDir = get_temp_directory($CFG);
+    require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
+
+    // Initialize file storage and get PDF files from section
     $fs = get_file_storage();
-    $pdfFiles = [];
     $files = get_pdfs_in_section($data);
     $pdffilenames = get_pdf_names($files);
+    $converted = [];
+    $tempDir = get_temp_directory($CFG);
+
+    // Process each PDF file
     foreach ($files as $pdf) {
+        // Get file content and store temporarily
         $pdfFile = $fs->get_file($pdf->contextid, $pdf->component, $pdf->filearea, $pdf->itemid, $pdf->filepath, $pdf->filename);
-        $file_content = $pdfFile->get_content();
+        $tempFile = $tempDir . uniqid('moodle_pdf_', true) . '.pdf';
+        file_put_contents($tempFile, $pdfFile->get_content());
 
-        $tempFilename = $tempDir . uniqid('moodle_pdf_', true) . '.pdf';
-        file_put_contents($tempFilename, $file_content);
-        $convertedFile = convert_pdf($tempFilename, $tempDir);
-        if ($convertedFile) {
-            $pdfFiles[] = $convertedFile;
+        // Convert PDF and clean up temp file
+        if ($convertedFile = convert_pdf($tempFile, $tempDir)) {
+            $converted[] = $convertedFile;
         }
-        unlink($tempFilename);
+        unlink($tempFile);
     }
 
-    if (count($pdfFiles) != 1) {
-        $mergedPdfTempFilename = merge_pdfs($pdfFiles, $tempDir);
-        $pdffilename = implode(' + ', $pdffilenames);
-    } else {
-        $mergedPdfTempFilename = $pdfFiles[0];
-        $pdffilename = $pdffilenames[0];
-    }
+    $mergedPdf = count($converted) > 1
+        ? merge_pdfs($converted, $tempDir)
+        : ($converted[0]);
 
-    // Persist the merged PDF in Moodle's File API
-    $persistentfilename = store_file($mergedPdfTempFilename, 'pdfdata', $data->coursemodule);
-    get_course($data->course);
-    $sectioninfo = get_fast_modinfo($data->course)->get_section_info($data->section);
-    $sectionname = get_section_name($data->course, $sectioninfo);
-
-    $existing_category = $DB->get_record('question_categories', [
-        'name' => "$sectionname: Cuestionario $data->name basado en $mergedPdfTempFilename",
+    $pdffilename = count($converted) > 1
+        ? implode(' + ', $pdffilenames)
+        : ($pdffilenames[0]);
+    $sectionname = get_section_name($data->course, get_fast_modinfo($data->course)->get_section_info($data->section));
+    $existing = $DB->get_record('question_categories', [
+        'name' => "$sectionname: Cuestionario $data->name basado en $pdffilename"
     ]);
+    $qcatid = $existing ? $existing->id : create_question_category($data, $sectionname, $pdffilename);
 
-    $question_category_id = $existing_category
-        ? $existing_category->id
-        : create_question_category($data, $sectionname, $pdffilename);
-    $cm_instance = $DB->get_field('course_modules', 'instance', ['id' => $data->coursemodule]);
-    $DB->set_field('aiquiz', 'generativefilename', $persistentfilename, ['id' => $cm_instance]);
-
-    if ($mergedPdfTempFilename) {
-        try {
-            $pdf_text = extractTextFromPdf($mergedPdfTempFilename);
-            store_file_in_moodle_file_storage($mergedPdfTempFilename, $data->coursemodule, $pdf_text);
-
-            $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
-            $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
-            $response = $openaiadapter->generate_questions($pdf_text, $data->numberofquestions);
-
-            $formattedResponse = filter_text_format($response);
-            add_question_to_question_bank($formattedResponse, $question_category_id, $data);
-        } finally {
-            // Always clean up the temporary file
-            unlink($mergedPdfTempFilename);
-        }
+    if ($mergedPdf) {
+        $pdftext = extractTextFromPdf($mergedPdf);
+        store_file_in_moodle_file_storage($data->coursemodule, $pdftext);
+        $apikey = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env')['OPENAI_API_KEY'];
+        $openai = new openai_adapter($apikey);
+        $response = $openai->generate_questions($pdftext, $data->numberofquestions);
+        add_question_to_question_bank(filter_text_format($response), $qcatid, $data);
+        unlink($mergedPdf);
     }
 }
 
@@ -878,7 +885,6 @@ function store_file($mergedPdfTempFilename, $filearea, $coursemodule)
 }
 
 
-
 function get_temp_directory($CFG)
 {
     $tempDir = $CFG->dataroot . '/temp/aiquiz_pdf/';
@@ -902,29 +908,29 @@ function convert_pdf($inputFile, $tempDir)
 {
     $outputFile = $tempDir . uniqid('converted_moodle_pdf_', true) . '.pdf';
     $gsCmd = 'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dBATCH -sOutputFile="' . $outputFile . '" "' . $inputFile . '" 2>&1';
-    exec($gsCmd, $output, $returnVar);
+    exec($gsCmd);
     return $outputFile;
 }
 
-function merge_pdfs($pdfFiles, $tempDir)
+function merge_pdfs($conversed_pdf_files, $tempDir)
 {
     $mergedPdfTempFilename = $tempDir . uniqid('merged_moodle_pdf_', true) . '.pdf';
 
-    $mergeResult = mergePDFs($pdfFiles, $mergedPdfTempFilename);
-    foreach ($pdfFiles as $pdfFile) {
-        unlink($pdfFile);
+    $mergeResult = mergePDFs($conversed_pdf_files, $mergedPdfTempFilename);
+    foreach ($conversed_pdf_files as $conversed_pfd_file) {
+        unlink($conversed_pfd_file);
     }
 
     return $mergeResult ? $mergedPdfTempFilename : null;
 }
 
-function create_question_category($data, $sectionname, $mergedPdfTempFilename)
+function create_question_category($course, $sectionname, $pdffilename)
 {
     global $DB, $USER;
-    $context_id = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $data->coursemodule]);
+    $context_id = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $course->coursemodule]);
     // Create the "Top for [instance_name]" category (parent = 0).
     $top_category = new stdClass();
-    $top_category->name = "Top for $data->name";
+    $top_category->name = "Top for $course->name";
     $top_category->info = '';
     $top_category->stamp = make_unique_id_code();
     $top_category->contextid = $context_id;
@@ -934,8 +940,8 @@ function create_question_category($data, $sectionname, $mergedPdfTempFilename)
 
 // Create the "Default for [instance_name]" category (parent = top_category id).
     $default_category = new stdClass();
-    $default_category->name = "Default for $data->name";
-    $default_category->info = "The default category for questions shared in context \'$data->name\'.";
+    $default_category->name = "Default for $course->name";
+    $default_category->info = "The default category for questions shared in context \'$course->name\'.";
     $default_category->stamp = make_unique_id_code();
     $default_category->contextid = $context_id;
     $default_category->parent = $top_category->id;  // Parent is the "Top for [instance_name]" category.
@@ -944,7 +950,7 @@ function create_question_category($data, $sectionname, $mergedPdfTempFilename)
 
     $question_category = new stdClass();
 
-    $question_category->name = "$sectionname: $data->name basado en $mergedPdfTempFilename";
+    $question_category->name = "$sectionname: $course->name basado en $pdffilename";
     $question_category->contextid = $context_id;
     $question_category->info = 'Categoría de preguntas generadas por IA de la sección ' . $sectionname;
     $top_question_category = $DB->get_field('question_categories', 'id', ['contextid' => $context_id, 'parent' => 0]);
@@ -1179,7 +1185,7 @@ function filter_text_format($text)
 }
 
 
-function store_file_in_moodle_file_storage($filepath, $coursemodule, $pdf_text)
+function store_file_in_moodle_file_storage($coursemodule, $pdf_text)
 {
     global $CFG;
     $tempFile = tempnam(get_temp_directory($CFG), 'pdf_to_text');
@@ -1188,12 +1194,15 @@ function store_file_in_moodle_file_storage($filepath, $coursemodule, $pdf_text)
     unlink($tempFile);
     return $pdf_text;
 }
-function extractTextFromPdf($filePath) {
+
+function extractTextFromPdf($filePath)
+{
     $parser = new \Smalot\PdfParser\Parser();
     $pdf = $parser->parseFile($filePath);
     $text = $pdf->getText();
     return $text;
 }
+
 //OpenAI\Exceptions\ErrorException
 
 function aiquiz_update_grades($quiz, $userid = 0, $nullifnone = true)

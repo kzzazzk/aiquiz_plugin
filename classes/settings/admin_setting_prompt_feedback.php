@@ -33,7 +33,7 @@ class admin_setting_prompt_feedback extends admin_setting_configtextarea {
         $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
         $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
 
-        if(is_openai_api_key_valid($env['OPENAI_API_KEY']) || is_openai_apikey_empty()){
+        if(is_openai_api_key_valid($env['OPENAI_API_KEY']) || !is_openai_apikey_empty()){
             if(get_config('mod_aiquiz', $this->featureid) == false){
                 $assistant_id = $openaiadapter->create_feedback_assistant();
                 set_config( $this->featureid, $assistant_id, 'mod_aiquiz');

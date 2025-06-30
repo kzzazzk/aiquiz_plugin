@@ -2,7 +2,8 @@
 global $CFG;
 require_once($CFG->dirroot.'/vendor/autoload.php');
 
-function xmldb_aiquiz_install() {
+function xmldb_aiquiz_install()
+{
     global $DB;
     if (get_config('mod_aiquiz', 'questiongenmodel') === false) {
         set_config('questiongenmodel', 'gpt-4.1-mini', 'mod_aiquiz');
@@ -12,14 +13,6 @@ function xmldb_aiquiz_install() {
         set_config('feedbackgenmodel', 'gpt-4.1-nano', 'mod_aiquiz');
     }
 
-    set_config('questiongenerationprompt', get_string('questiongenerationprompt','aiquiz'));
-    set_config('feedbackgenerationprompt', get_string('feedbackgenerationprompt','aiquiz'));
-
-//    if (get_config('mod_aiquiz', 'questiongenerationprompt') === false) {
-//        set_config('questiongenerationprompt', get_string('questiongenerationprompt','aiquiz'), 'mod_aiquiz');
-//    }
-//
-//    if (get_config('mod_aiquiz', 'feedbackgenerationprompt') === false) {
-//        set_config('feedbackgenerationprompt', get_string('feedbackgenerationprompt','aiquiz'), 'mod_aiquiz');
-//    }
+    set_config('questiongenerationprompt', get_string('questiongenerationprompt', 'aiquiz'));
+    set_config('feedbackgenerationprompt', get_string('feedbackgenerationprompt', 'aiquiz'));
 }
