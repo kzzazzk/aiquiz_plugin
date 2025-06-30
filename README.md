@@ -2,16 +2,10 @@
 AIQuiz is a Moodle plugin that generates quizzes dynamically using artificial intelligence. It leverages the OpenAI API to create questions and answers based on syllabus PDFs or other content, allowing educators to effortlessly build personalized, AI-powered assessments. The plugin also supports PDF parsing and merging, enabling easy extraction of text and integration of multiple documents.
 
 Key features include:
-
 - Automatic question generation from uploaded syllabus PDFs.
-
-- Support for multiple question types with AI-generated feedback.
-
-- Integration with OpenAI’s GPT models via the official PHP client.
-
-- PDF manipulation using FPDF, FPDI, and PDFParser libraries.
-
+- Automatic feedback generation for each user attempt of the quiz.
 - Easy setup and configuration with Moodle’s standard plugin interface.
+- The same funcitonalities the Moodle Core Quiz module offer, like report viewing, and user and group overrides for quizzes.
 
 ## Requirements
 
