@@ -25,15 +25,13 @@ class admin_setting_prompt_question extends admin_setting_configtextarea {
         }
     }
 
-
-
     public function write_setting($data) {
         global $CFG;
         $result = parent::write_setting($data);
         $env = parse_ini_file($CFG->dirroot.'/mod/aiquiz/.env');
         $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
 
-        if(is_openai_api_key_valid($env['OPENAI_API_KEY']) && !is_openai_apikey_empty()){
+        if(is_openai_api_key_valid($env['OPENAI_API_KEY']) || !is_openai_apikey_empty()){
             if(get_config('mod_aiquiz', $this->featureid) == false){
                 $assistant_id = $openaiadapter->create_question_assistant();
                 set_config( $this->featureid, $assistant_id, 'mod_aiquiz');
@@ -46,6 +44,5 @@ class admin_setting_prompt_question extends admin_setting_configtextarea {
         }
         return $result;
     }
-
 
 }

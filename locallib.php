@@ -1068,37 +1068,34 @@ function aiquiz_has_feedback($quiz) {
     return $cache[$quiz->id];
 }
 
-function aiquiz_feedback_for_grade($grade, $quiz, $context) {
+function aiquiz_feedback_for_grade($attempt, $context, $attempts = null,$maxornot = false) {
 
-    if (is_null($grade)) {
-        return '';
+    if (!$maxornot){
+        $feedback = aiquiz_feedback_record_for_grade($attempt);
     }
+    else {
+        if (is_array($attempts) && count($attempts) > 0) {
+            // Find the attempt with the highest sumgrades
+            $max_attempt = $attempts[0]->id;
+            foreach ($attempts as $att) {
+                if (isset($att->sumgrades) && $att->sumgrades > $max_attempt->sumgrades) {
+                    $max_attempt = $att->id;
+                }
+            }
 
-    $feedback = aiquiz_feedback_record_for_grade($grade, $quiz);
-
-    if (empty($feedback->feedbacktext)) {
-        return '';
+            // Now get the feedback for the max_attempt
+            $feedback = aiquiz_feedback_record_for_grade($max_attempt);
+        }
     }
-
-    // Clean the text, ready for display.
-    $formatoptions = new stdClass();
-    $formatoptions->noclean = true;
-    $feedbacktext = file_rewrite_pluginfile_urls($feedback->feedbacktext, 'pluginfile.php',
-        $context->id, 'mod_aiquiz', 'feedback', $feedback->id);
-    $feedbacktext = format_text($feedbacktext, $feedback->feedbacktextformat, $formatoptions);
-
-    return $feedbacktext;
+    return $feedback;
 }
-function aiquiz_feedback_record_for_grade($grade, $quiz) {
+function aiquiz_feedback_record_for_grade($attempt) {
     global $DB;
 
     // With CBM etc, it is possible to get -ve grades, which would then not match
-    // any feedback. Therefore, we replace -ve grades with 0.
-    $grade = max($grade, 0);
+    // any feedback. Therefore, we replace -ve grades with 0.$grade = max($grade, 0);
 
-    $feedback = $DB->get_record_select('aiquiz_feedback',
-        'quizid = ? AND mingrade <= ? AND ? < maxgrade', array($quiz->id, $grade, $grade));
-
+    $feedback = $DB->get_field('aiquiz_feedback','feedbacktext', ['attemptid' => $attempt], MUST_EXIST);
     return $feedback;
 }
 
@@ -1144,17 +1141,11 @@ function process_responses_and_generate_feedback($course_module_id) {
     // Store the generated feedback.
     $aiquiz_feedback = new stdClass();
     $aiquiz_feedback->quizid = $DB->get_field('course_modules', 'instance', ['id' => $course_module_id]);
+    $aiquiz_feedback->attemptid = $attemptid;
     $aiquiz_feedback->feedbacktext = $response;
     $aiquiz_feedback->feedbacktextformat = FORMAT_HTML;
-    $aiquiz_feedback->maxgrade = 11;
 
-
-    $existing_feedback = $DB->get_record('aiquiz_feedback', array('quizid' => $DB->get_field('course_modules','instance', ['id' => $course_module_id])));
-    if ($existing_feedback) {
-        $DB->set_field('aiquiz_feedback', 'feedbacktext', $aiquiz_feedback->feedbacktext, array('quizid' => $aiquiz_feedback->quizid));
-    } else {
-        $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
-    }
+    $DB->insert_record('aiquiz_feedback', $aiquiz_feedback);
 }
 
     function cheer_text_generator($response_text, $grade){

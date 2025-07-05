@@ -72,6 +72,7 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
     }
 
     public function view_table($quiz, $context, $viewobj) {
+        global $DB;
         if (!$viewobj->attempts) {
             return '';
         }
@@ -169,7 +170,8 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
 
             if ($viewobj->feedbackcolumn && $attemptobj->is_finished()) {
                 if ($attemptoptions->overallfeedback) {
-                    $row[] = aiquiz_feedback_for_grade($attemptgrade, $quiz, $context);
+                    error_log('ESTO EST AAAA: '. print_r($attemptobj->get_attemptid(), true));
+                    $row[] = aiquiz_feedback_for_grade($attemptobj->get_attemptid(), $quiz);
                 } else {
                     $row[] = '';
                 }
@@ -187,7 +189,18 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
         $output .= html_writer::table($table);
         return $output;
     }
+    public function view_page($course, $quiz, $cm, $context, $viewobj) {
+        $output = '';
+
+        $output .= $this->view_page_tertiary_nav($viewobj);
+        $output .= $this->view_information($quiz, $cm, $context, $viewobj->infomessages);
+        $output .= $this->view_table($quiz, $context, $viewobj);
+        $output .= $this->view_result_info($quiz, $context, $cm, $viewobj);
+        $output .= $this->box($this->view_page_buttons($viewobj), 'quizattempt');
+        return $output;
+    }
     public function view_result_info($quiz, $context, $cm, $viewobj) {
+        global $DB, $USER;
         $output = '';
         if (!$viewobj->numattempts && !$viewobj->gradecolumn && is_null($viewobj->mygrade)) {
             return $output;
@@ -220,9 +233,13 @@ class mod_aiquiz_renderer extends mod_quiz_renderer
             $resultinfo .= html_writer::div($viewobj->gradebookfeedback, 'quizteacherfeedback') . "\n";
         }
         if ($viewobj->feedbackcolumn) {
+            error_log('ESTO ES ESO 1: '. print_r($USER->id, true));
+            error_log('ESTO ES ESO 2: '. print_r($quiz->id, true));
+            $attempts = $DB->get_records('aiquiz_attempts', array('quiz' => $quiz->id, 'userid' => $USER->id),'attempt');
+            //esto es para el feedback global
             $resultinfo .= $this->heading(get_string('overallfeedback', 'quiz'), 3);
             $resultinfo .= html_writer::div(
-                    aiquiz_feedback_for_grade($viewobj->mygrade, $quiz, $context),
+                    aiquiz_feedback_for_grade($viewobj->mygrade, $quiz, $attempts,'max'),
                     'quizgradefeedback') . "\n";
         }
 

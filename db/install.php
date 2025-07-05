@@ -13,6 +13,6 @@ function xmldb_aiquiz_install()
         set_config('feedbackgenmodel', 'gpt-4.1-nano', 'mod_aiquiz');
     }
 
-    set_config('questiongenerationprompt', get_string('questiongenerationprompt', 'aiquiz'));
-    set_config('feedbackgenerationprompt', get_string('feedbackgenerationprompt', 'aiquiz'));
+    set_config('questiongenerationprompt', get_string('questiongenerationprompt', 'aiquiz'),'mod_aiquiz');
+    set_config('feedbackgenerationprompt', get_string('feedbackgenerationprompt', 'aiquiz'),'mod_aiquiz');
 }
