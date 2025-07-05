@@ -451,7 +451,7 @@ abstract class aiquiz_attempts_report_table extends table_sql {
         // This part is the same for all cases. Join the users and quiz_attempts tables.
         $from = " {user} u";
         $from .= "\n{$userfields->joins}";
-        $from .= "\nLEFT JOIN {quiz_attempts} quiza ON
+        $from .= "\nLEFT JOIN {aiquiz_attempts} quiza ON
                                     quiza.userid = u.id AND quiza.quiz = :quizid";
         $params = array_merge($userfields->params, ['quizid' => $this->quiz->id]);
 
@@ -546,7 +546,7 @@ abstract class aiquiz_attempts_report_table extends table_sql {
         // It is only used in a subselect to help crappy databases (see MDL-30122)
         // therefore, it is better to use a very simple join, which may include
         // too many records, than to do a super-accurate join.
-        $qubaids = new qubaid_join("{quiz_attempts} {$alias}quiza", "{$alias}quiza.uniqueid",
+        $qubaids = new qubaid_join("{aiquiz_attempts} {$alias}quiza", "{$alias}quiza.uniqueid",
                 "{$alias}quiza.quiz = :{$alias}quizid", array("{$alias}quizid" => $this->sql->params['quizid']));
 
         $dm = new question_engine_data_mapper();

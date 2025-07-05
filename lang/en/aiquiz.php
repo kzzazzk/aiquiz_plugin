@@ -25,8 +25,8 @@
 
 
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'AI Quiz';
-$string['modulename'] = 'AI Quiz';
+$string['pluginname'] = 'AIQuiz';
+$string['modulename'] = 'AIQuiz';
 $string['modulenameplural'] = 'AI Quizzes';
 $string['modulename_help'] = 'The AI Quiz plugin enables teachers to create personalized quizzes with AI-generated questions based on uploaded documents in a certain section. It includes all standard quiz features plus:
 

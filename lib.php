@@ -46,35 +46,20 @@ require_once($CFG->dirroot . '/vendor/autoload.php');
 function aiquiz_supports($feature)
 {
     switch ($feature) {
-        case FEATURE_GROUPS:
-            return true;
-        case FEATURE_GROUPINGS:
-            return true;
-        case FEATURE_MOD_INTRO:
-            return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS:
-            return true;
-        case FEATURE_COMPLETION_HAS_RULES:
-            return true;
-        case FEATURE_GRADE_HAS_GRADE:
-            return true;
-        case FEATURE_GRADE_OUTCOMES:
-            return true;
-        case FEATURE_BACKUP_MOODLE2:
-            return true;
-        case FEATURE_SHOW_DESCRIPTION:
-            return true;
-        case FEATURE_CONTROLS_GRADE_VISIBILITY:
-            return true;
-        case FEATURE_USES_QUESTIONS:
-            return true;
-        case FEATURE_PLAGIARISM:
-            return true;
-        case FEATURE_MOD_PURPOSE:
-            return MOD_PURPOSE_ASSESSMENT;
-
-        default:
-            return null;
+        case FEATURE_MOD_PURPOSE: return MOD_PURPOSE_ASSESSMENT;
+        case FEATURE_GROUPS: return true;
+        case FEATURE_GROUPINGS: return true;
+        case FEATURE_MOD_INTRO: return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS: return true;
+        case FEATURE_COMPLETION_HAS_RULES: return true;
+        case FEATURE_GRADE_HAS_GRADE: return true;
+        case FEATURE_GRADE_OUTCOMES:return true;
+        case FEATURE_BACKUP_MOODLE2: return true;
+        case FEATURE_SHOW_DESCRIPTION: return true;
+        case FEATURE_CONTROLS_GRADE_VISIBILITY: return true;
+        case FEATURE_USES_QUESTIONS: return true;
+        case FEATURE_PLAGIARISM: return true;
+        default: return null;
     }
 }
 
@@ -924,13 +909,13 @@ function merge_pdfs($conversed_pdf_files, $tempDir)
     return $mergeResult ? $mergedPdfTempFilename : null;
 }
 
-function create_question_category($course, $sectionname, $pdffilename)
+function create_question_category($quizinstance, $sectionname, $pdffilename)
 {
     global $DB, $USER;
-    $context_id = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $course->coursemodule]);
+    $context_id = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $quizinstance->coursemodule]);
     // Create the "Top for [instance_name]" category (parent = 0).
     $top_category = new stdClass();
-    $top_category->name = "Top for $course->name";
+    $top_category->name = "Top for $quizinstance->name";
     $top_category->info = '';
     $top_category->stamp = make_unique_id_code();
     $top_category->contextid = $context_id;
@@ -940,8 +925,8 @@ function create_question_category($course, $sectionname, $pdffilename)
 
 // Create the "Default for [instance_name]" category (parent = top_category id).
     $default_category = new stdClass();
-    $default_category->name = "Default for $course->name";
-    $default_category->info = "The default category for questions shared in context \'$course->name\'.";
+    $default_category->name = "Default for $quizinstance->name";
+    $default_category->info = "The default category for questions shared in context \'$quizinstance->name\'.";
     $default_category->stamp = make_unique_id_code();
     $default_category->contextid = $context_id;
     $default_category->parent = $top_category->id;  // Parent is the "Top for [instance_name]" category.
@@ -950,7 +935,7 @@ function create_question_category($course, $sectionname, $pdffilename)
 
     $question_category = new stdClass();
 
-    $question_category->name = "$sectionname: $course->name basado en $pdffilename";
+    $question_category->name = "$sectionname: $quizinstance->name basado en $pdffilename";
     $question_category->contextid = $context_id;
     $question_category->info = 'Categoría de preguntas generadas por IA de la sección ' . $sectionname;
     $top_question_category = $DB->get_field('question_categories', 'id', ['contextid' => $context_id, 'parent' => 0]);

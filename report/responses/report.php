@@ -54,7 +54,7 @@ class aiquiz_responses_report extends aiquiz_attempts_report {
     public function display($quiz, $cm, $course) {
         global $OUTPUT, $DB;
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->init(
-                'responses', 'aiquiz_responses_settings_form', $quiz, $cm, $course);
+                'responses', 'quiz_responses_settings_form', $quiz, $cm, $course);
 
         $options = new aiquiz_responses_options('responses', $quiz, $cm, $course);
         if ($fromform = $this->form->get_data()) {

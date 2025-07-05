@@ -34,7 +34,7 @@ function aiquiz_report_list($context) {
         return $reportlist;
     }
 
-    $reports = $DB->get_records('quiz_reports', null, 'displayorder DESC', 'name, capability');
+    $reports = $DB->get_records('aiquiz_reports', null, 'displayorder DESC', 'name, capability');
     $reportdirs = core_component::get_plugin_list('quiz');
 
     // Order the reports tab in descending order of displayorder.
@@ -168,4 +168,11 @@ function aiquiz_report_grade_method_sql($grademethod, $quizattemptsalias = 'quiz
                                  qa2.state = 'finished' AND
                                qa2.attempt > $quizattemptsalias.attempt))";
     }
+}
+function aiquiz_report_qm_filter_select($quiz, $quizattemptsalias = 'quiza') {
+    if ($quiz->attempts == 1) {
+        // This quiz only allows one attempt.
+        return '';
+    }
+    return aiquiz_report_grade_method_sql($quiz->grademethod, $quizattemptsalias);
 }

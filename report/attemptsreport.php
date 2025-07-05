@@ -87,7 +87,7 @@ abstract class aiquiz_attempts_report  extends quiz_default_report {
         list($currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins) = $this->get_students_joins(
                 $cm, $course);
 
-        $this->qmsubselect = quiz_report_qm_filter_select($quiz);
+        $this->qmsubselect = aiquiz_report_qm_filter_select($quiz);
 
         $this->form = new $formclass($this->get_base_url(),
                 array('quiz' => $quiz, 'currentgroup' => $currentgroup, 'context' => $this->context));

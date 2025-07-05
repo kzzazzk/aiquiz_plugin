@@ -25,9 +25,9 @@
 
 
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'AI Quiz';
-$string['modulename'] = 'AI Quiz';
-$string['modulenameplural'] = 'AI Quizzes';
+$string['pluginname'] = 'AIQuiz';
+$string['modulename'] = 'AIQuiz';
+$string['modulenameplural'] = 'AI Quiz';
 $string['modulename_help'] = 'La actividad AI Quiz permite al profesor crear cuestionarios personalizados con preguntas generadas automáticamente por IA a partir de documentos PDF que se suben a una sección del curso.
 
 El profesor define el número de preguntas y la puntuación para respuestas correctas e incorrectas. Las preguntas generadas se guardan en la categoría asociada a la instancia del cuestionario, identificadas según los documentos utilizados y la sección.

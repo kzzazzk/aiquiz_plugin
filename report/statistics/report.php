@@ -849,7 +849,7 @@ class aiquiz_statistics_report extends quiz_default_report {
         }
 
         // Find the number of attempts since the cached statistics were computed.
-        list($fromqa, $whereqa, $qaparams) = quiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $whichattempts, true);
+        list($fromqa, $whereqa, $qaparams) = aiquiz_statistics_attempts_sql($quizid, $groupstudentsjoins, $whichattempts, true);
         $count = $DB->count_records_sql("
                 SELECT COUNT(1)
                 FROM $fromqa
