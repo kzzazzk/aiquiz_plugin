@@ -565,6 +565,7 @@ class aiquiz_statistics_report extends quiz_default_report {
         $questions = aiquiz_report_get_significant_questions($quiz);
 
         // Only load main question not sub questions.
+        error_log('QUBAIDS HASH CODE: ' . $qubaids->get_hash_code());
         $questionstatistics = $DB->get_records_select('question_statistics',
                 'hashcode = ? AND slot IS NOT NULL AND variant IS NULL',
             [$qubaids->get_hash_code()]);
@@ -615,7 +616,6 @@ class aiquiz_statistics_report extends quiz_default_report {
         foreach ($fieldstoplot as $fieldtoplot => $notused) {
             $max = max($max, max($ydata[$fieldtoplot]));
         }
-
         // Set Y properties.
         $yaxis = $chart->get_yaxis(0, true);
         $yaxis->set_stepsize(10);

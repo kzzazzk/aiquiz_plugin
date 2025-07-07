@@ -35,10 +35,10 @@ use mod_aiquiz\question\bank\aiquiz_custom_view;
 use mod_quiz\question\bank\custom_view;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\PdfParserException;
-use mod_aiquiz\ai\openai_adapter;
+use mod_aiquiz\ai\OpenAIAdapter;
 
 require_once($CFG->dirroot . '/mod/aiquiz/classes/question/bank/custom_view.php');
-require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/openai_adapter.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/OpenAIAdapter.php');
 require_once($CFG->dirroot . '/mod/aiquiz/attemptlib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/vendor/autoload.php');
@@ -809,7 +809,7 @@ function process_file_and_generate_questions($data) {
         $pdftext = extractTextFromPdf($mergedPdf);
         store_file_in_moodle_file_storage($data->coursemodule, $pdftext);
         $apikey = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env')['OPENAI_API_KEY'];
-        $openai = new openai_adapter($apikey);
+        $openai = new OpenAIAdapter($apikey);
         $response = $openai->generate_questions($pdftext, $data->numberofquestions);
         add_question_to_question_bank(filter_text_format($response), $qcatid, $data);
         unlink($mergedPdf);

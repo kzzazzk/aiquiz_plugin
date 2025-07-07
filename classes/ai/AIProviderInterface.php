@@ -3,7 +3,7 @@
 namespace mod_aiquiz\ai;
 
 
-interface ai_api_interface
+interface AIProviderInterface
 {
     public function generate_questions($document_content, $numberofquestions);
 

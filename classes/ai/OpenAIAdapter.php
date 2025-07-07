@@ -3,8 +3,8 @@
 namespace mod_aiquiz\ai;
 
 use OpenAI;
-require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/ai_api_interface.php');
-class openai_adapter implements ai_api_interface
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/AIProviderInterface.php');
+class OpenAIAdapter implements AIProviderInterface
 {
     private $client;
 
@@ -17,8 +17,7 @@ class openai_adapter implements ai_api_interface
     {
         global $DB;
         $response = $this->client->assistants()->create([
-            'instructions' => $DB->get_field('config', 'value', ['name' => 'questiongenerationprompt']),
-            'name' => 'Quiz Question Generator',
+            'instructions' => get_config('mod_aiquiz', 'questiongenerationprompt'),
             'model' => get_config('mod_aiquiz', 'questiongenmodel'),
         ]);
         return $response['id'];

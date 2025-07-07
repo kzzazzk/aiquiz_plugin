@@ -6,11 +6,11 @@ global $CFG;
 
 require_once($CFG->dirroot.'/mod/aiquiz/classes/local/structure/slot_random.php');
 require_once($CFG->dirroot.'/mod/aiquiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/openai_adapter.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/ai/OpenAIAdapter.php');
 
 use mod_aiquiz\local\structure\aiquiz_slot_random;
 use qbank_previewquestion\question_preview_options;
-use mod_aiquiz\ai\openai_adapter;
+use mod_aiquiz\ai\OpenAIAdapter;
 
 function aiquiz_has_attempts($quizid) {
     global $DB;
@@ -1134,7 +1134,7 @@ function process_responses_and_generate_feedback($course_module_id) {
     else{
         $pdftext = get_stored_feedbacksource($course_module_id);
         $env = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env');
-        $openaiadapter = new openai_adapter($env['OPENAI_API_KEY']);
+        $openaiadapter = new OpenAIAdapter($env['OPENAI_API_KEY']);
         $response = $openaiadapter->generate_feedback($filtered_question_attempt_info, $pdftext);
         $response = cheer_text_generator($response, $grade);
     }

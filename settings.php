@@ -25,14 +25,13 @@ global $CFG, $ADMIN;
 
 use aiquiz\settings\admin_setting_apikey;
 use aiquiz\settings\admin_setting_model;
-use aiquiz\settings\admin_setting_prompt;
 use aiquiz\settings\admin_setting_prompt_feedback;
 use aiquiz\settings\admin_setting_prompt_question;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/vendor/autoload.php');
-require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configselect.php');
-require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/aiquiz_admin_setting_configpasswordunmask.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_apikey.php');
+require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_model.php');
 require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_prompt_question.php');
 require_once($CFG->dirroot . '/mod/aiquiz/classes/settings/admin_setting_prompt_feedback.php');
 require_once($CFG->dirroot . '/mod/aiquiz/locallib.php');
