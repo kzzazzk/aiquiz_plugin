@@ -122,7 +122,7 @@ $string['questiongenerationprompt'] = 'Eres un generador de preguntas de opción
             C. [Opción 3]
             D. [Opción 4]
             Respuesta correcta: [Letra]';
-$string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
+$string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. 
 
     El JSON recibido contiene la siguiente estructura:
     - "questionsummary": Resumen de la pregunta.
@@ -132,8 +132,11 @@ $string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación p
     **Importante:** 
     - No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
     - Escribe el mensaje impersonalmente, como si fuera un asistente que proporciona retroalimentación al usuario.
+    - No generalices sobre qué temas debe repasar el usuario para mejorar su calificación.
+    - Comienza la retroalimentación con "Se recomienda"
 
-    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
+
+    Proporciona retroalimentación mencionando qué aspectos específicos del contenido del documento necesita el usuario repasar teniendo en cuenta las preguntas en las que ha fallado, esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
 
 $string['feedbackgenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate feedback. Edit it carefully.';
 $string['questiongenerationpromptdescription'] = 'This is the set of instructions the AI uses to generate questions. Edit it carefully.';
