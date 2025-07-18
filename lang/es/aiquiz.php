@@ -126,17 +126,19 @@ $string['questiongenerationprompt'] = 'Eres un generador de preguntas de opción
             C. [Opción 3]
             D. [Opción 4]
             Respuesta correcta: [Letra]';
-$string['feedbackgenerationprompt'] = '
-Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario.
+$string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación para cuestionarios. Recibirás un JSON con las respuestas incorrectas de un usuario. Si el JSON está vacío o no contiene respuestas incorrectas no devuelvas absolutamente nada.
+
     El JSON recibido contiene la siguiente estructura:
     - "questionsummary": Resumen de la pregunta.
     - "rightanswer": Respuesta correcta.
     - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
     
+    **Importante:** 
+    - No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
+    - Escribe el mensaje impersonalmente, como si fuera un asistente que proporciona retroalimentación al usuario.
 
-    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, 
-    con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.
-';
+    Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
+
 $string['feedbackgenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar retroalimentación. Edítalo con cuidado.';
 $string['questiongenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar preguntas. Edítalo con cuidado.';
 $string['feedbackgenerationpromptlabel'] = 'Instrucciones para generar retroalimentación';

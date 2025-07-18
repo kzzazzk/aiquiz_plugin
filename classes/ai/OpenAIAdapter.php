@@ -18,6 +18,7 @@ class OpenAIAdapter implements AIProviderInterface
         global $DB;
         $response = $this->client->assistants()->create([
             'instructions' => get_config('mod_aiquiz', 'questiongenerationprompt'),
+            'name' => 'Quiz Question Generator',
             'model' => get_config('mod_aiquiz', 'questiongenmodel'),
         ]);
         return $response['id'];
@@ -60,7 +61,7 @@ class OpenAIAdapter implements AIProviderInterface
     {
         global $DB;
         $response = $this->client->assistants()->create([
-            'instructions' => $DB->get_field('config', 'value', ['name' => 'questiongenerationprompt']),
+            'instructions' => $DB->get_field('config', 'value', ['name' => 'feedbackgenerationprompt']),
             'name' => 'Quiz Feedback Generator',
             'model' => get_config('mod_aiquiz', 'feedbackgenmodel'),
         ]);

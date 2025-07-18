@@ -129,7 +129,9 @@ $string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación p
     - "rightanswer": Respuesta correcta.
     - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
     
-    **Importante:** No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
+    **Importante:** 
+    - No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
+    - Escribe el mensaje impersonalmente, como si fuera un asistente que proporciona retroalimentación al usuario.
 
     Proporciona retroalimentación mencionando qué temas necesita el usuario repasar esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
 
