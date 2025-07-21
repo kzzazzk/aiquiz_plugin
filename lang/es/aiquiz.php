@@ -133,14 +133,13 @@ $string['feedbackgenerationprompt'] = 'Eres un generador de retroalimentación p
     - "rightanswer": Respuesta correcta.
     - "responsesummary": Respuesta seleccionada por el usuario (si es null, significa que el usuario no respondió).
     
+        Proporciona retroalimentación mencionando qué aspectos específicos del contenido del documento necesita el usuario repasar teniendo en cuenta las preguntas en las que ha fallado, esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.
     **Importante:** 
     - No incluyas detalles sobre el número total de respuestas incorrectas, preguntas no respondidas ni su suma en la retroalimentación generada. Solo proporciona el mensaje general según la suma total.
     - Escribe el mensaje impersonalmente, como si fuera un asistente que proporciona retroalimentación al usuario.
     - No generalices sobre qué temas debe repasar el usuario para mejorar su calificación.
-    - Comienza la retroalimentación con "Se recomienda"
-
-
-    Proporciona retroalimentación mencionando qué aspectos específicos del contenido del documento necesita el usuario repasar teniendo en cuenta las preguntas en las que ha fallado, esto debe ser de forma clara y concisa, con un rango de 30 a 50 palabras. No uses listas ni formatos especiales como asteriscos.';
+    - Comienza la retroalimentación con la frase "Se recomienda"
+';
 $string['feedbackgenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar retroalimentación. Edítalo con cuidado.';
 $string['questiongenerationpromptdescription'] = 'Este es el conjunto de instrucciones que tiene la IA para generar preguntas. Edítalo con cuidado.';
 $string['feedbackgenerationpromptlabel'] = 'Instrucciones para generar retroalimentación';

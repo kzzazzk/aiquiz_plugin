@@ -1125,10 +1125,11 @@ function process_responses_and_generate_feedback($course_module_id) {
     $filtered_question_attempt_info = json_encode($filtered_question_attempt_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
     // Call the API using the file content and question attempt info.
-    if($grade < 2){
-        $response = 'Revisión completa sugerida.';
-    }
-    elseif($grade == 10){
+//    if($grade < 2){
+//        $response = 'Revisión completa sugerida.';
+//    }
+    // else
+    if($grade == 10){
         $response = '¡Excelente! Sin errores.';
     }
     else{
@@ -1157,6 +1158,9 @@ function process_responses_and_generate_feedback($course_module_id) {
             $cheertext =  "Buen intento, mejora posible.";
         } elseif ($grade >= 2 && $grade < 5) {
             $cheertext =  "Revisión parcial sugerida.";
+        }
+        else{
+            $cheertext =  "Revisión completa sugerida.";
         }
         return $cheertext . ' ' . $response_text;
     }
