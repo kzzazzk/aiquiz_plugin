@@ -804,13 +804,15 @@ function process_file_and_generate_questions($data) {
         'name' => "$sectionname: Cuestionario $data->name basado en $pdffilename"
     ]);
     $qcatid = $existing ? $existing->id : create_question_category($data, $sectionname, $pdffilename);
-
+    error_log("Question category ID: $qcatid");
     if ($mergedPdf) {
         $pdftext = extractTextFromPdf($mergedPdf);
+        error_log("Extracted PDF text: " . substr($pdftext, 0, 100) . "..."); // Log first 100 characters
         store_file_in_moodle_file_storage($data->coursemodule, $pdftext);
         $apikey = parse_ini_file($CFG->dirroot . '/mod/aiquiz/.env')['OPENAI_API_KEY'];
         $openai = new OpenAIAdapter($apikey);
         $response = $openai->generate_questions($pdftext, $data->numberofquestions);
+        error_log("Response from OpenAI: " . print_r($response, true));
         add_question_to_question_bank(filter_text_format($response), $qcatid, $data);
         unlink($mergedPdf);
     }

@@ -47,13 +47,13 @@ class OpenAIAdapter implements AIProviderInterface
                 threadId: $thread_create_response->id,
                 runId: $response->id,
             );
-        } while ($runStatus->status !== 'completed');
+        } while ($runStatus->status !== 'completed' || $runStatus->status !== 'failed' || $runStatus->status !== 'cancelled');
 
         if ($runStatus->status === 'completed') {
             $response = $this->client->threads()->messages()->list($thread_create_response->id);
             return $response->data[0]->content[0]->text->value;
         } else {
-            throw new Exception('Run did not complete in the expected time.');
+            throw new Exception('Run did not complete.');
         }
     }
 
@@ -88,23 +88,18 @@ class OpenAIAdapter implements AIProviderInterface
             ],
         );
 
-        $maxAttempts = 100; // or however many times you want to check
-        $attempt = 0;
-
         do {
             sleep(1); // wait for a second (adjust as needed)
             $runStatus = $response = $this->client->threads()->runs()->retrieve(
                 threadId: $thread_create_response->id,
                 runId: $response->id,
             );
-            $attempt++;
-        } while ($runStatus->status !== 'completed' && $attempt < $maxAttempts);
-
+        } while ($runStatus->status !== 'completed'|| $runStatus->status !== 'failed' || $runStatus->status !== 'cancelled');
         if ($runStatus->status === 'completed') {
             $response = $this->client->threads()->messages()->list($thread_create_response->id);
             return $response->data[0]->content[0]->text->value;
         } else {
-            throw new Exception('Run did not complete in the expected time.');
+            throw new Exception('Run did not complete.');
         }
     }
 }
